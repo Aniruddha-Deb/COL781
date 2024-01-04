@@ -1,0 +1,5 @@
+-I/opt/homebrew/include
+-std=c++17
+-lglew
+-lglm
+-lsdl
