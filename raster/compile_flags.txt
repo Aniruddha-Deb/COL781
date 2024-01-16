@@ -1,0 +1,4 @@
+-I/opt/homebrew/include
+-std=c++17
+-lSDL2
+-lSDL_Image
