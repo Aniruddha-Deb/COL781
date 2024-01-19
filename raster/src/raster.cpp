@@ -20,10 +20,10 @@
      see the pixels! Set displayScale to 1 to see it at the correct size.
      Then you can increase frameWidth and frameHeight as desired. */
 
-const int frameWidth = 40;
-const int frameHeight = 40;
+const int frameWidth = 80;
+const int frameHeight = 80;
 
-const int displayScale = 10;
+const int displayScale = 5;
 
 SDL_Surface *framebuffer = NULL;
 
@@ -111,7 +111,22 @@ float value_4xmsaa_rot(glm::vec2 (&triangle)[3], int x, int y)
     if (membership_check(triangle, pt4))
         alpha += 0.25;
 
-    return alpha; // figure out blending @Salil
+    return alpha;
+}
+
+void render_background() {
+    Uint32 *pixels = (Uint32 *)framebuffer->pixels;
+    SDL_PixelFormat *format = framebuffer->format;
+    Uint32 background;
+    for (int i = 0; i < frameHeight; i++)
+    {
+        for (int j = 0; j < frameWidth; j++)
+        {
+            float l = (200.0 * i + 50) / frameHeight;
+            background = SDL_MapRGBA(format, l, l, l, 255);
+            pixels[(frameHeight - i - 1) * frameWidth + j] = background;
+        }
+    }
 }
 
 void render_naive(glm::vec2 (&triangle)[3])
@@ -124,14 +139,21 @@ void render_naive(glm::vec2 (&triangle)[3])
     {
         for (int j = 0; j < frameWidth; j++)
         {
-            Uint32 background;
-            float l = (200.0 * i + 50) / frameHeight;
-            background = SDL_MapRGBA(format, l, l, l, 255);
+            Uint32 background = pixels[(frameHeight - i - 1) * frameWidth + j];
             Uint32 foreground;
             float v = value_4xmsaa_rot(triangle, j, i);
             foreground = SDL_MapRGBA(format, 0, 153, 0, 255 * v);
             pixels[(frameHeight - i - 1) * frameWidth + j] = pix_blend(foreground, background);
         }
+    }
+}
+
+void render_triangles(std::vector<glm::vec2> &verts, std::vector<glm::vec3> &idxs) {
+
+    render_background();
+    for (auto idx : idxs) {
+        glm::vec2 triangle[3] = {verts[idx.x], verts[idx.y], verts[idx.z]};
+        render_naive(triangle);
     }
 }
 
@@ -170,6 +192,16 @@ int main(int argc, char *args[])
     else
     {
         // Display and interaction
+        std::vector<glm::vec2> verts = {
+            glm::vec2(0.1, 0.5),
+            glm::vec2(0.4, 0.1),
+            glm::vec2(0.9, 0.8),
+            glm::vec2(0.4, 0.35)
+        };
+        std::vector<glm::vec3> idxs = {
+            glm::vec3(0, 1, 3),
+            glm::vec3(1, 2, 3)
+        };
         while (!quit)
         {
             // Event handling
@@ -177,8 +209,7 @@ int main(int argc, char *args[])
 
             /* Set pixel data.
                CHANGE THIS TO YOUR OWN CODE! */
-            glm::vec2 triangle[3] = {glm::vec2(0.1, 0.1), glm::vec2(0.9, 0.5), glm::vec2(0.5, 0.9)};
-            render_naive(triangle);
+            render_triangles(verts, idxs);
 
             // Update screen to apply the changes
             SDL_BlitScaled(framebuffer, NULL, windowSurface, NULL);
