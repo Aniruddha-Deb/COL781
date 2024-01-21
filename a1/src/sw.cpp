@@ -131,6 +131,102 @@ namespace COL781 {
 			}
 			values[name] = (void*)(new T(value));
 		}
+                
+	// Creates a window with the given title, size, and samples per pixel.
+	bool Rasterizer::initialize(const std::string &title, int width, int height, int spp) {
+            // TODO
+            return false;
+        }
+
+	// Returns true if the user has requested to quit the program.
+	bool Rasterizer::shouldQuit() {
+            // TODO
+            return false;
+        }
+
+	/** Shader programs **/
+
+	// Creates a new shader program, i.e. a pair of a vertex shader and a fragment shader.
+	ShaderProgram Rasterizer::createShaderProgram(const VertexShader &vs, const FragmentShader &fs) {
+            // TODO
+            ShaderProgram sp;
+            return sp;
+        }
+
+	// Makes the given shader program active. Future draw calls will use its vertex and fragment shaders.
+	void Rasterizer::useShaderProgram(const ShaderProgram &program) {
+            // TODO
+
+        }
+
+	// Sets the value of a uniform variable.
+	// T is only allowed to be float, int, glm::vec2/3/4, glm::mat2/3/4.
+        // Use a similar pattern as setVertexAttribs does
+	template <typename T> void setUniform(ShaderProgram &program, const std::string &name, T value) {
+            // TODO
+        }
+
+	// Deletes the given shader program.
+	void deleteShaderProgram(ShaderProgram &program) {
+            // TODO
+        }
+
+	/** Objects **/
+
+	// Creates an object, i.e. a collection of vertices and triangles.
+	// Vertex attribute arrays store the vertex data.
+	// A triangle index array stores the indices of the triangles.
+	Object Rasterizer::createObject() {
+                /*
+		struct Object {
+			using Buffer = std::vector<float>;
+			std::vector<Buffer> attributeValues;
+			std::vector<int> attributeDims;
+			std::vector<glm::ivec3> indices;
+		};
+                */
+                Object obj;
+                return obj; // itna hi karna hai kya? Shouldn't we return an 
+                            // object* (this would be copied out?)
+        }
+
+        // copied from hw.cpp
+        void setAttribs(Object &object, int attribIndex, int n, int dim, const float* data) {
+            if (n >= object.attributeValues.size()) {
+                object.attributeValues.resize(n+1);
+                object.attributeDims.resize(n+1);
+            }
+            Object::Buffer b;
+            for (int i=0; i<dim; i++) {
+                b[i] = data[i];
+            }
+            object.attributeValues[n] = b;
+            object.attributeDims[n] = dim;
+        }
+
+	template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const float* data) {
+		setAttribs(object, attribIndex, n, 1, data);
+	}
+
+	template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec2* data) {
+		setAttribs(object, attribIndex, n, 2, (float*)data);
+	}
+
+	template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec3* data) {
+		setAttribs(object, attribIndex, n, 3, (float*)data);
+	}
+
+	template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec4* data) {
+		setAttribs(object, attribIndex, n, 4, (float*)data);
+	}
+
+	// Sets the indices of the triangles.
+	void Rasterizer::setTriangleIndices(Object &object, int n, glm::ivec3* indices) {
+            if (n >= object.indices.size()) {
+                object.indices.resize(n+1);
+            }
+            object.indices[n] = *indices;
+        }
 
 	}
 }

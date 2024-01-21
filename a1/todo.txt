@@ -1,0 +1,27 @@
+- [ ] bool initialize(const std::string &title, int width, int height, int spp=1);
+- [ ] bool shouldQuit(); 
+
+    /** Shader programs **/
+- [ ] ShaderProgram createShaderProgram(const VertexShader &vs, const FragmentShader &fs);
+- [ ] void useShaderProgram(const ShaderProgram &program);
+- [ ] template <typename T> void setUniform(ShaderProgram &program, const std::string &name, T value);
+- [ ] void deleteShaderProgram(ShaderProgram &program);
+
+	/** Objects **/
+- [X] Object createObject();
+- [X] template <typename T> void setVertexAttribs(Object &object, int attribIndex, int n, const T* data);
+- [X] void setTriangleIndices(Object &object, int n, glm::ivec3* indices);
+
+	/** Drawing **/
+- [ ] void enableDepthTest();
+- [ ] void clear(glm::vec4 color);
+- [ ] void drawObject(const Object &object);
+- [ ] void show(); 
+
+	/** Built-in shaders **/
+- [ ] VertexShader vsIdentity();
+- [ ] VertexShader vsColor();
+- [ ] VertexShader vsTransform();
+- [ ] VertexShader vsColorTransform();
+- [ ] FragmentShader fsConstant(); 
+- [ ] FragmentShader fsIdentity(); 
