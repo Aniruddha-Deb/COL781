@@ -114,7 +114,8 @@ float value_4xmsaa_rot(glm::vec2 (&triangle)[3], int x, int y)
     return alpha;
 }
 
-void render_background() {
+void render_background()
+{
     Uint32 *pixels = (Uint32 *)framebuffer->pixels;
     SDL_PixelFormat *format = framebuffer->format;
     Uint32 background;
@@ -148,10 +149,12 @@ void render_naive(glm::vec2 (&triangle)[3])
     }
 }
 
-void render_triangles(std::vector<glm::vec2> &verts, std::vector<glm::vec3> &idxs) {
+void render_triangles(std::vector<glm::vec2> &verts, std::vector<glm::vec3> &idxs)
+{
 
     render_background();
-    for (auto idx : idxs) {
+    for (auto idx : idxs)
+    {
         glm::vec2 triangle[3] = {verts[idx.x], verts[idx.y], verts[idx.z]};
         render_naive(triangle);
     }
@@ -192,16 +195,9 @@ int main(int argc, char *args[])
     else
     {
         // Display and interaction
-        std::vector<glm::vec2> verts = {
-            glm::vec2(0.1, 0.5),
-            glm::vec2(0.4, 0.1),
-            glm::vec2(0.9, 0.8),
-            glm::vec2(0.4, 0.35)
-        };
-        std::vector<glm::vec3> idxs = {
-            glm::vec3(0, 1, 3),
-            glm::vec3(1, 2, 3)
-        };
+        std::vector<glm::vec2> verts = {glm::vec2(0.1, 0.5), glm::vec2(0.4, 0.1), glm::vec2(0.9, 0.8),
+                                        glm::vec2(0.4, 0.35)};
+        std::vector<glm::vec3> idxs = {glm::vec3(0, 1, 3), glm::vec3(1, 2, 3)};
         while (!quit)
         {
             // Event handling
@@ -238,7 +234,8 @@ bool initialize()
     {
         int screenWidth = frameWidth * displayScale;
         int screenHeight = frameHeight * displayScale;
-        window = SDL_CreateWindow("COL781", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth, screenHeight, SDL_WINDOW_SHOWN);
+        window = SDL_CreateWindow("COL781", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth, screenHeight,
+                                  SDL_WINDOW_SHOWN);
         if (window == NULL)
         {
             printf("Window could not be created! SDL_Error: %s", SDL_GetError());
@@ -247,7 +244,8 @@ bool initialize()
         else
         {
             windowSurface = SDL_GetWindowSurface(window);
-            framebuffer = SDL_CreateRGBSurface(0, frameWidth, frameHeight, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+            framebuffer =
+                SDL_CreateRGBSurface(0, frameWidth, frameHeight, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
         }
     }
     return success;

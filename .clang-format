@@ -1,0 +1,14 @@
+---
+BasedOnStyle: Microsoft
+Cpp11BracedListStyle: 'true'
+DerivePointerAlignment: 'true'
+IndentWidth: '4'
+Language: Cpp
+NamespaceIndentation: Inner
+SortIncludes: 'false'
+SortUsingDeclarations: 'false'
+Standard: Cpp11
+TabWidth: '4'
+UseTab: Never
+
+...
