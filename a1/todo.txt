@@ -1,5 +1,5 @@
-- [ ] bool initialize(const std::string &title, int width, int height, int spp=1);
-- [ ] bool shouldQuit(); 
+- [X] bool initialize(const std::string &title, int width, int height, int spp=1);
+- [X] bool shouldQuit(); 
 
     /** Shader programs **/
 - [ ] ShaderProgram createShaderProgram(const VertexShader &vs, const FragmentShader &fs);
@@ -14,14 +14,14 @@
 
 	/** Drawing **/
 - [ ] void enableDepthTest();
-- [ ] void clear(glm::vec4 color);
+- [X] void clear(glm::vec4 color);
 - [ ] void drawObject(const Object &object);
-- [ ] void show(); 
+- [X] void show(); 
 
 	/** Built-in shaders **/
-- [ ] VertexShader vsIdentity();
-- [ ] VertexShader vsColor();
-- [ ] VertexShader vsTransform();
-- [ ] VertexShader vsColorTransform();
-- [ ] FragmentShader fsConstant(); 
-- [ ] FragmentShader fsIdentity(); 
+- [X] VertexShader vsIdentity();
+- [X] VertexShader vsColor();
+- [X] VertexShader vsTransform();
+- [X] VertexShader vsColorTransform();
+- [X] FragmentShader fsConstant(); 
+- [X] FragmentShader fsIdentity(); 
