@@ -180,8 +180,8 @@ namespace Software
             int screenWidth = width;
             int screenHeight = height; // do we multiply with spp here? I think spp is for aliasing.
             spp = _spp;
-            window = SDL_CreateWindow("COL781", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth, screenHeight,
-                                      SDL_WINDOW_SHOWN);
+            window = SDL_CreateWindow("COL781", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth,
+                                      screenHeight, SDL_WINDOW_SHOWN);
             if (window == NULL)
             {
                 printf("Window could not be created! SDL_Error: %s", SDL_GetError());
@@ -258,7 +258,7 @@ namespace Software
         };
         */
         Object obj;
-        return obj; 
+        return obj;
     }
 
     void setAttribs(Object &object, int attribIndex, int n, int dim, const float *data)
@@ -309,8 +309,6 @@ namespace Software
 
     /** Drawing **/
 
-    /*
-     * Our old SDL triangle rendering code
     bool membership_check(glm::vec2 (&triangle)[3], glm::vec2 &pt)
     {
         for (int k = 0; k < 3; k++)
@@ -329,14 +327,14 @@ namespace Software
         return true;
     }
 
-    glm::vec2 pix_to_pt(int x, int y)
+    glm::vec2 pix_to_pt(int x, int y, SDL_Surface &framebuffer)
     {
-        return glm::vec2((float(x) + 0.5) / frameWidth, (float(y) + 0.5) / frameHeight);
+        return glm::vec2(-1 + 2 * float(x) / (framebuffer.w), -1 + 2 * (float(y) + 1) / (framebuffer.h));
     }
 
-    Uint32 pix_blend(Uint32 new_pix, Uint32 old_pix)
+    Uint32 pix_blend(Uint32 new_pix, Uint32 old_pix, SDL_Surface &framebuffer)
     {
-        SDL_PixelFormat *format = framebuffer->format;
+        SDL_PixelFormat *format = framebuffer.format;
         Uint8 r_new, g_new, b_new, a_new;
         SDL_GetRGBA(new_pix, format, &r_new, &g_new, &b_new, &a_new);
         Uint8 r_old, g_old, b_old, a_old;
@@ -360,77 +358,97 @@ namespace Software
             return -1;
     }
 
-    // sampling will need to be adaptive this time, based on spp.
-    float value_4xmsaa_rot(glm::vec2 (&triangle)[3], int x, int y)
+    float value_supersample(glm::vec4 (&triangle)[3], glm::vec2 pix, float pix_w, int spp)
     {
-        glm::vec2 pt1 = pix_to_pt(x, y) + glm::vec2(0.3 / frameWidth, 0.2 / frameHeight);
-        glm::vec2 pt2 = pix_to_pt(x, y) + glm::vec2(-0.2 / frameWidth, 0.3 / frameHeight);
-        glm::vec2 pt3 = pix_to_pt(x, y) + glm::vec2(-0.3 / frameWidth, -0.2 / frameHeight);
-        glm::vec2 pt4 = pix_to_pt(x, y) + glm::vec2(0.2 / frameWidth, -0.3 / frameHeight);
 
-        float alpha = 0;
+        int samples_inside = 0;
+        int w = sqrt(spp);
+        int pitch = pix_w / w;
+        auto tl_sample = pix + glm::vec2(pitch / 2, pitch / 2);
 
-        if (membership_check(triangle, pt1))
-            alpha += 0.25;
-        if (membership_check(triangle, pt2))
-            alpha += 0.25;
-        if (membership_check(triangle, pt3))
-            alpha += 0.25;
-        if (membership_check(triangle, pt4))
-            alpha += 0.25;
+        for (int i = 0; i < w; i++)
+        {
+            for (int j = 0; j < w; j++)
+            {
+                auto pt = tl_sample + glm::vec2(pitch * i, pitch * j);
+                if (membership_check(triangle, pt))
+                    samples_inside++;
+            }
+        }
 
-        return alpha;
+        return ((float)samples_inside) / spp;
     }
 
-    void render_naive(glm::vec2 (&triangle)[3])
+    // sampling will need to be adaptive this time, based on spp.
+    // float value_4xmsaa_rot(glm::vec2 (&triangle)[3], int x, int y)
+    // {
+    //     glm::vec2 pt1 = pix_to_pt(x, y) + glm::vec2(0.3 / frameWidth, 0.2 / frameHeight);
+    //     glm::vec2 pt2 = pix_to_pt(x, y) + glm::vec2(-0.2 / frameWidth, 0.3 / frameHeight);
+    //     glm::vec2 pt3 = pix_to_pt(x, y) + glm::vec2(-0.3 / frameWidth, -0.2 / frameHeight);
+    //     glm::vec2 pt4 = pix_to_pt(x, y) + glm::vec2(0.2 / frameWidth, -0.3 / frameHeight);
+
+    //     float alpha = 0;
+
+    //     if (membership_check(triangle, pt1))
+    //         alpha += 0.25;
+    //     if (membership_check(triangle, pt2))
+    //         alpha += 0.25;
+    //     if (membership_check(triangle, pt3))
+    //         alpha += 0.25;
+    //     if (membership_check(triangle, pt4))
+    //         alpha += 0.25;
+
+    //     return alpha;
+    // }
+
+    void render_naive(glm::vec2 (&triangle)[3], SDL_Surface &framebuffer)
     {
 
-        Uint32 *pixels = (Uint32 *)framebuffer->pixels;
-        SDL_PixelFormat *format = framebuffer->format;
-
-        for (int i = 0; i < frameHeight; i++)
+        Uint32 *pixels = (Uint32 *)framebuffer.pixels;
+        SDL_PixelFormat *format = framebuffer.format;
+        int frameHeight = framebuffer.h;
+        int frameWidth = framebuffer.w;
+        for (int i = 0; i < frameWidth; i++)
         {
-            for (int j = 0; j < frameWidth; j++)
+            for (int j = 0; j < frameHeight; j++)
             {
                 Uint32 background = pixels[(frameHeight - i - 1) * frameWidth + j];
                 Uint32 foreground;
-                float v = value_4xmsaa_rot(triangle, j, i);
+                float v =
+                    value_supersample(triangle, pix_to_pt(i, j, framebuffer)[0], pix_to_pt(i, j, framebuffer)[1], spp);
                 foreground = SDL_MapRGBA(format, 0, 153, 0, 255 * v);
                 pixels[(frameHeight - i - 1) * frameWidth + j] = pix_blend(foreground, background);
             }
         }
     }
 
-    void render_triangles(std::vector<glm::vec2> &verts, std::vector<glm::vec3> &idxs)
-    {
-
-        render_background();
-        for (auto idx : idxs)
-        {
-            glm::vec2 triangle[3] = {verts[idx.x], verts[idx.y], verts[idx.z]};
-            render_naive(triangle);
-        }
-    }
-    */
-
     // Enable depth testing.
-    void Rasterizer::enableDepthTest() {
+    void Rasterizer::enableDepthTest()
+    {
         // set boolean for this in rasterizer?
     }
 
     // Clear the framebuffer, setting all pixels to the given color.
-    void Rasterizer::clear(glm::vec4 color) {
+    void Rasterizer::clear(glm::vec4 color)
+    {
         SDL_FillRect(framebuffer, NULL, SDL_MapRGBA(framebuffer->format, color[0], color[1], color[2], color[3]));
     }
 
     // Draws the triangles of the given object.
-    void Rasterizer::drawObject(const Object &object) {
+    void Rasterizer::drawObject(const Object &object)
+    {
         // Implement the rendering pipeline here
         // object --vs--> verts in NDC --rasterize--> fragments --fs--> colors
+        for (auto idx : object.indices)
+        {
+            glm::vec4 triangle[3] = {object.attributeValues[idx.x], verts[idx.y], verts[idx.z]};
+            render_naive(triangle);
+        }
     }
 
     // Displays the framebuffer on the screen.
-    void Rasterizer::show() {
+    void Rasterizer::show()
+    {
         auto windowSurface = SDL_GetWindowSurface(window);
         SDL_BlitScaled(framebuffer, NULL, windowSurface, NULL);
         SDL_UpdateWindowSurface(window);
