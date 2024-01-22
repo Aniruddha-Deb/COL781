@@ -7,7 +7,7 @@ public:
 	/** Windows **/
 
 	// Creates a window with the given title, size, and samples per pixel.
-	bool initialize(const std::string &title, int width, int height, int spp=1);
+	bool initialize(const std::string &title, int width, int height, int spp=4);
 
 	// Returns true if the user has requested to quit the program.
 	bool shouldQuit(); 

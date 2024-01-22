@@ -205,7 +205,7 @@ namespace Software
         {
             if (e.type == SDL_QUIT)
             {
-                quit = true;
+                return true;
             }
         }
         return false;
@@ -258,23 +258,62 @@ namespace Software
         };
         */
         Object obj;
+        obj.attributeValues = std::vector<Object::Buffer>();
+        obj.attributeDims = std::vector<int>();
+        obj.indices = std::vector<glm::ivec3>();
         return obj;
+    }
+
+    void printObject(const Object& obj) {
+        // Print the number of attribute buffers
+        std::cout << "Number of attribute buffers: " << obj.attributeValues.size() << "\n";
+        
+        // Iterate over each attribute buffer and print its dimensions and values
+        int i = 0;
+        for (const auto& buf : obj.attributeValues) {
+            std::cout << "Attribute buffer " << i++ << " dimensions: ";
+            
+            if (!obj.attributeDims.empty()) {
+                std::cout << obj.attributeDims[i-1];
+                
+                if (std::next(obj.attributeDims.begin(), i) != obj.attributeDims.end()) {
+                    std::cout << " x ";
+                }
+            }
+            
+            std::cout << "\n";
+            
+            for (float val : buf) {
+                std::cout << val << " ";
+            }
+            
+            std::cout << "\n\n";
+        }
+        
+        // Print the number of indices
+        std::cout << "Number of indices: " << obj.indices.size() << "\n";
+        
+        // Iterate over each index and print its value
+        for (const glm::ivec3& idx : obj.indices) {
+            std::cout << "[ " << idx.x << ", " << idx.y << ", " << idx.z << " ]\n";
+        }
     }
 
     void setAttribs(Object &object, int attribIndex, int n, int dim, const float *data)
     {
-        if (n >= object.attributeValues.size())
-        {
-            object.attributeValues.resize(n + 1);
-            object.attributeDims.resize(n + 1);
+        if (attribIndex + n >= object.attributeValues.size()) {
+            object.attributeValues.resize(attribIndex + n + 1);
+            object.attributeDims.resize(attribIndex + n + 1);
         }
-        Object::Buffer b;
-        for (int i = 0; i < dim; i++)
-        {
-            b[i] = data[i];
+        for (int v=0; v<n; v++) {
+            Object::Buffer b(dim, 0);
+            for (int i = 0; i < dim; i++)
+            {
+                b[i] = data[v*dim + i];
+            }
+            object.attributeValues[attribIndex + v] = b;
+            object.attributeDims[attribIndex + v] = dim;
         }
-        object.attributeValues[n] = b;
-        object.attributeDims[n] = dim;
     }
 
     template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const float *data)
@@ -300,17 +339,21 @@ namespace Software
     // Sets the indices of the triangles.
     void Rasterizer::setTriangleIndices(Object &object, int n, glm::ivec3 *indices)
     {
-        if (n >= object.indices.size())
-        {
-            object.indices.resize(n + 1);
+        object.indices.resize(n);
+        for (int i=0; i<n; i++) {
+            object.indices[i] = indices[i];
         }
-        object.indices[n] = *indices;
+
+        printObject(object);
     }
 
     /** Drawing **/
 
     bool membership_check(glm::vec2 (&triangle)[3], glm::vec2 &pt)
     {
+        // std::cout << triangle[0].x << " " << triangle[0].y << std::endl;
+        // std::cout << triangle[1].x << " " << triangle[1].y << std::endl;
+        // std::cout << triangle[2].x << " " << triangle[2].y << std::endl;
         for (int k = 0; k < 3; k++)
         {
             glm::vec2 v1 = triangle[k % 3];
@@ -319,6 +362,7 @@ namespace Software
             glm::vec2 t(-s.y, s.x);
 
             float dot = glm::dot(t, pt - v1);
+            // std::cout << dot << std::endl;
             if (dot < 0)
             {
                 return false;
@@ -327,14 +371,8 @@ namespace Software
         return true;
     }
 
-    glm::vec2 pix_to_pt(int x, int y, SDL_Surface &framebuffer)
+    Uint32 pix_blend(Uint32 new_pix, Uint32 old_pix, SDL_PixelFormat* format)
     {
-        return glm::vec2(-1 + 2 * float(x) / (framebuffer.w), -1 + 2 * (float(y) + 1) / (framebuffer.h));
-    }
-
-    Uint32 pix_blend(Uint32 new_pix, Uint32 old_pix, SDL_Surface &framebuffer)
-    {
-        SDL_PixelFormat *format = framebuffer.format;
         Uint8 r_new, g_new, b_new, a_new;
         SDL_GetRGBA(new_pix, format, &r_new, &g_new, &b_new, &a_new);
         Uint8 r_old, g_old, b_old, a_old;
@@ -349,21 +387,11 @@ namespace Software
         return color;
     }
 
-    int value_binary(glm::vec2 (&triangle)[3], int x, int y)
+    float value_supersample(glm::vec2 (&triangle)[3], glm::vec2 pix, float pix_w, int spp)
     {
-        glm::vec2 pt = pix_to_pt(x, y);
-        if (membership_check(triangle, pt))
-            return 255;
-        else
-            return -1;
-    }
-
-    float value_supersample(glm::vec4 (&triangle)[3], glm::vec2 pix, float pix_w, int spp)
-    {
-
         int samples_inside = 0;
         int w = sqrt(spp);
-        int pitch = pix_w / w;
+        int pitch = pix_w / (w + 1);
         auto tl_sample = pix + glm::vec2(pitch / 2, pitch / 2);
 
         for (int i = 0; i < w; i++)
@@ -379,45 +407,30 @@ namespace Software
         return ((float)samples_inside) / spp;
     }
 
-    // sampling will need to be adaptive this time, based on spp.
-    // float value_4xmsaa_rot(glm::vec2 (&triangle)[3], int x, int y)
-    // {
-    //     glm::vec2 pt1 = pix_to_pt(x, y) + glm::vec2(0.3 / frameWidth, 0.2 / frameHeight);
-    //     glm::vec2 pt2 = pix_to_pt(x, y) + glm::vec2(-0.2 / frameWidth, 0.3 / frameHeight);
-    //     glm::vec2 pt3 = pix_to_pt(x, y) + glm::vec2(-0.3 / frameWidth, -0.2 / frameHeight);
-    //     glm::vec2 pt4 = pix_to_pt(x, y) + glm::vec2(0.2 / frameWidth, -0.3 / frameHeight);
+    glm::vec2 pix_to_pt(int x, int y, int w, int h)
+    {
+        return glm::vec2(-1 + 2 * float(x) / w, -1 + 2 * float(y) / h);
+    }
 
-    //     float alpha = 0;
-
-    //     if (membership_check(triangle, pt1))
-    //         alpha += 0.25;
-    //     if (membership_check(triangle, pt2))
-    //         alpha += 0.25;
-    //     if (membership_check(triangle, pt3))
-    //         alpha += 0.25;
-    //     if (membership_check(triangle, pt4))
-    //         alpha += 0.25;
-
-    //     return alpha;
-    // }
-
-    void render_naive(glm::vec2 (&triangle)[3], SDL_Surface &framebuffer)
+    void render_naive(glm::vec2 (&triangle)[3], SDL_Surface* framebuffer, int spp)
     {
 
-        Uint32 *pixels = (Uint32 *)framebuffer.pixels;
-        SDL_PixelFormat *format = framebuffer.format;
-        int frameHeight = framebuffer.h;
-        int frameWidth = framebuffer.w;
-        for (int i = 0; i < frameWidth; i++)
+        Uint32 *pixels = (Uint32 *)framebuffer->pixels;
+        SDL_PixelFormat *format = framebuffer->format;
+        int h = framebuffer->h;
+        int w = framebuffer->w;
+        float pw = 2.f/w;
+        for (int i = 0; i < w; i++)
         {
-            for (int j = 0; j < frameHeight; j++)
+            for (int j = 0; j < h; j++)
             {
-                Uint32 background = pixels[(frameHeight - i - 1) * frameWidth + j];
+                Uint32 background = pixels[(h - j - 1) * w + i];
                 Uint32 foreground;
-                float v =
-                    value_supersample(triangle, pix_to_pt(i, j, framebuffer)[0], pix_to_pt(i, j, framebuffer)[1], spp);
+                glm::vec2 pix_tl(pix_to_pt(i, j, w, h)[0], pix_to_pt(i, j, w, h)[1]);
+                float v = value_supersample(triangle, pix_tl, pw, spp);
                 foreground = SDL_MapRGBA(format, 0, 153, 0, 255 * v);
-                pixels[(frameHeight - i - 1) * frameWidth + j] = pix_blend(foreground, background);
+                pixels[(h - j - 1) * w + i] = 
+                    pix_blend(foreground, background, framebuffer->format);
             }
         }
     }
@@ -428,10 +441,23 @@ namespace Software
         // set boolean for this in rasterizer?
     }
 
+    Uint32 vec4_to_color(SDL_PixelFormat* fmt, glm::vec4 color) {
+        return SDL_MapRGBA(fmt,
+                (Uint8)(color[0]*255),
+                (Uint8)(color[1]*255),
+                (Uint8)(color[2]*255),
+                (Uint8)(color[3]*255));
+    }
+
     // Clear the framebuffer, setting all pixels to the given color.
     void Rasterizer::clear(glm::vec4 color)
     {
-        SDL_FillRect(framebuffer, NULL, SDL_MapRGBA(framebuffer->format, color[0], color[1], color[2], color[3]));
+        SDL_FillRect(framebuffer, NULL, vec4_to_color(framebuffer->format, color));
+    }
+
+    glm::vec2 buffer_to_vec2(std::vector<float> buf) {
+        assert(buf.size() >= 2);
+        return glm::vec2(buf[0], buf[1]); //, buf[2], buf[3]);
     }
 
     // Draws the triangles of the given object.
@@ -439,10 +465,14 @@ namespace Software
     {
         // Implement the rendering pipeline here
         // object --vs--> verts in NDC --rasterize--> fragments --fs--> colors
+        // TODO use vertex shader to get vertices in NDC
         for (auto idx : object.indices)
         {
-            glm::vec4 triangle[3] = {object.attributeValues[idx.x], verts[idx.y], verts[idx.z]};
-            render_naive(triangle);
+            glm::vec2 triangle[3] = {buffer_to_vec2(object.attributeValues[idx.x]),
+                                     buffer_to_vec2(object.attributeValues[idx.y]),
+                                     buffer_to_vec2(object.attributeValues[idx.z])};
+
+            render_naive(triangle, framebuffer, spp);
         }
     }
 

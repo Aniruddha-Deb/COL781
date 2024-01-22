@@ -1,7 +1,7 @@
 #include "../src/a1.hpp"
 
-// namespace R = COL781::Software;
-namespace R = COL781::Hardware;
+namespace R = COL781::Software;
+// namespace R = COL781::Hardware;
 using namespace glm;
 
 int main() {
@@ -30,7 +30,7 @@ int main() {
 	};
 	R::Object shape = r.createObject();
 	r.setVertexAttribs(shape, 0, 4, vertices);
-	r.setVertexAttribs(shape, 1, 4, colors);
+	// r.setVertexAttribs(shape, 1, 4, colors);
 	r.setTriangleIndices(shape, 2, triangles);
     while (!r.shouldQuit()) {
         r.clear(vec4(1.0, 1.0, 1.0, 1.0));
