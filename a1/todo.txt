@@ -2,10 +2,10 @@
 - [X] bool shouldQuit(); 
 
     /** Shader programs **/
-- [ ] ShaderProgram createShaderProgram(const VertexShader &vs, const FragmentShader &fs);
-- [ ] void useShaderProgram(const ShaderProgram &program);
-- [ ] template <typename T> void setUniform(ShaderProgram &program, const std::string &name, T value);
-- [ ] void deleteShaderProgram(ShaderProgram &program);
+- [X] ShaderProgram createShaderProgram(const VertexShader &vs, const FragmentShader &fs);
+- [X] void useShaderProgram(const ShaderProgram &program);
+- [X] template <typename T> void setUniform(ShaderProgram &program, const std::string &name, T value);
+- [X] void deleteShaderProgram(ShaderProgram &program);
 
 	/** Objects **/
 - [X] Object createObject();

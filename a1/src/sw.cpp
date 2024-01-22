@@ -216,30 +216,30 @@ namespace Software
     // Creates a new shader program, i.e. a pair of a vertex shader and a fragment shader.
     ShaderProgram Rasterizer::createShaderProgram(const VertexShader &vs, const FragmentShader &fs)
     {
-        // TODO
         ShaderProgram sp;
+        sp.vs = vs;
+        sp.fs = fs;
         return sp;
     }
 
     // Makes the given shader program active. Future draw calls will use its vertex and fragment shaders.
     void Rasterizer::useShaderProgram(const ShaderProgram &program)
     {
-        // TODO
-        // We'd need some class variables to be able to use this.
+        shader_program = program;
     }
 
     // Sets the value of a uniform variable.
     // T is only allowed to be float, int, glm::vec2/3/4, glm::mat2/3/4.
-    // Use a similar pattern as setVertexAttribs does
-    template <typename T> void setUniform(ShaderProgram &program, const std::string &name, T value)
+    template <typename T> void Rasterizer::setUniform(ShaderProgram &program, const std::string &name, T value)
     {
-        // TODO
+        program.uniforms.set(name, value);
     }
 
     // Deletes the given shader program.
-    void deleteShaderProgram(ShaderProgram &program)
+    void Rasterizer::deleteShaderProgram(ShaderProgram &program)
     {
-        // TODO
+        ShaderProgram sp;
+        shader_program = sp;
     }
 
     /** Objects **/
@@ -258,8 +258,7 @@ namespace Software
         };
         */
         Object obj;
-        return obj; // itna hi karna hai kya? Shouldn't we return an
-                    // object* (this would be copied out?)
+        return obj; 
     }
 
     void setAttribs(Object &object, int attribIndex, int n, int dim, const float *data)
