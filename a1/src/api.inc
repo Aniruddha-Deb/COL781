@@ -80,6 +80,7 @@ private:
 	SDL_Window *window;
 	bool quit;
         // added by me. Ask in class/moodle if possible.
+        // Asked. Waiting on update.
         int spp;
         SDL_Surface *framebuffer;
         ShaderProgram shader_program;
