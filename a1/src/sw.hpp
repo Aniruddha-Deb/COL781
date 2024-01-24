@@ -30,8 +30,20 @@ namespace Software
         // A class to contain all the uniform variables
       public:
         // any type allowed
-        template <typename T> T get(const std::string &name) const;
-        template <typename T> void set(const std::string &name, T value);
+        template <typename T> T get(const std::string &name) const
+        {
+            return *(T *)values.at(name);
+        }
+
+        template <typename T> void set(const std::string &name, T value)
+        {
+            auto it = values.find(name);
+            if (it != values.end())
+            {
+                delete it->second;
+            }
+            values[name] = (void *)(new T(value));
+        }
 
       private:
         std::map<std::string, void *> values;

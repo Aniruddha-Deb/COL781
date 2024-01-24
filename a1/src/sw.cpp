@@ -151,20 +151,6 @@ namespace Software
         values[index] = value;
     }
 
-    template <typename T> T Uniforms::get(const std::string &name) const
-    {
-        return *(T *)values.at(name);
-    }
-
-    template <typename T> void Uniforms::set(const std::string &name, T value)
-    {
-        auto it = values.find(name);
-        if (it != values.end())
-        {
-            delete it->second;
-        }
-        values[name] = (void *)(new T(value));
-    }
     // Creates a window with the given title, size, and samples per pixel.
     bool Rasterizer::initialize(const std::string &title, int width, int height, int _spp)
     {
@@ -218,13 +204,14 @@ namespace Software
         ShaderProgram sp;
         sp.vs = vs;
         sp.fs = fs;
+        sp.uniforms = Uniforms();
         return sp;
     }
 
     // Makes the given shader program active. Future draw calls will use its vertex and fragment shaders.
     void Rasterizer::useShaderProgram(const ShaderProgram &program)
     {
-        shader_program = program;
+        shader_program = &program;
     }
 
     // Sets the value of a uniform variable.
@@ -233,13 +220,13 @@ namespace Software
     {
         program.uniforms.set(name, value);
     }
-    template void Rasterizer::setUniform<glm::vec4>(ShaderProgram &program, const std::string &name, glm::vec4 value);
 
     // Deletes the given shader program.
     void Rasterizer::deleteShaderProgram(ShaderProgram &program)
     {
-        ShaderProgram sp;
-        shader_program = sp;
+        if (&program == shader_program) {
+            shader_program = nullptr;
+        }
     }
 
     /** Objects **/
@@ -337,6 +324,38 @@ namespace Software
     template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec4 *data)
     {
         setAttribs(object, attribIndex, n, 4, (float *)data);
+    }
+
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, float value) {
+            sp.uniforms.set<float>(name, value);
+    }
+
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, int value) {
+            sp.uniforms.set<int>(name, value);
+    }
+
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec2 value) {
+            sp.uniforms.set<glm::vec2>(name, value);
+    }
+
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat2 value) {
+            sp.uniforms.set<glm::mat2>(name, value);
+    }
+
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec3 value) {
+            sp.uniforms.set<glm::vec3>(name, value);
+    }
+
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat3 value) {
+            sp.uniforms.set<glm::mat3>(name, value);
+    }
+
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec4 value) {
+            sp.uniforms.set<glm::vec4>(name, value);
+    }
+
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat4 value) {
+            sp.uniforms.set<glm::mat4>(name, value);
     }
 
     // Sets the indices of the triangles.
@@ -524,12 +543,12 @@ namespace Software
                 vertex_attribs[vertex].set(attribute, GetAttribs(object.attributeValues, attribute, vertex));
             }
             vertex_pos[vertex] =
-                shader_program.vs(shader_program.uniforms, vertex_attribs[vertex], vertex_attribs[vertex]);
+                shader_program->vs(shader_program->uniforms, vertex_attribs[vertex], vertex_attribs[vertex]);
         }
         for (glm::ivec3 idx : object.indices)
         {
-            render_naive(idx, vertex_attribs, vertex_pos, shader_program.uniforms, object.attributeValues.size() - 1,
-                         shader_program.fs, framebuffer, spp);
+            render_naive(idx, vertex_attribs, vertex_pos, shader_program->uniforms, object.attributeValues.size() - 1,
+                         shader_program->fs, framebuffer, spp);
         }
     }
 

@@ -2,8 +2,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 // Program with perspective correct interpolation of vertex attributes.
 
-// namespace R = COL781::Software;
-namespace R = COL781::Hardware;
+namespace R = COL781::Software;
+// namespace R = COL781::Hardware;
 using namespace glm;
 int main() {
 	R::Rasterizer r;
@@ -18,13 +18,13 @@ int main() {
     vec4 vertices[] = {
         vec4( -0.8,  -0.8, 0.0, 1.0),
         vec4(  0.8,  -0.8, 0.0, 1.0),
-		vec4( -0.8,   0.8, 0.0, 1.0),
+	vec4( -0.8,   0.8, 0.0, 1.0),
         vec4(  0.8,   0.8, 0.0, 1.0)
     };
     vec4 colors[] = {
-		vec4(0.0, 0.4, 0.6, 1.0),
+	vec4(0.0, 0.4, 0.6, 1.0),
         vec4(1.0, 1.0, 0.4, 1.0),
-		vec4(0.0, 0.4, 0.6, 1.0),
+	vec4(0.0, 0.4, 0.6, 1.0),
         vec4(1.0, 1.0, 0.4, 1.0)
     };
 	ivec3 triangles[] = {

@@ -83,6 +83,6 @@ private:
         // Asked. Waiting on update.
         int spp;
         SDL_Surface *framebuffer;
-        ShaderProgram shader_program;
+        const ShaderProgram* shader_program;
 
 };
