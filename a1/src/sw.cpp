@@ -165,7 +165,6 @@ namespace Software
         }
         values[name] = (void *)(new T(value));
     }
-
     // Creates a window with the given title, size, and samples per pixel.
     bool Rasterizer::initialize(const std::string &title, int width, int height, int _spp)
     {
@@ -234,6 +233,7 @@ namespace Software
     {
         program.uniforms.set(name, value);
     }
+    template void Rasterizer::setUniform<glm::vec4>(ShaderProgram &program, const std::string &name, glm::vec4 value);
 
     // Deletes the given shader program.
     void Rasterizer::deleteShaderProgram(ShaderProgram &program)
@@ -315,13 +315,7 @@ namespace Software
         {
             object.attributeDims.resize(attribIndex + 1, 0);
         }
-        for (int v = 0; v < n; v++)
-        {
-            for (int i = 0; i < dim; i++)
-            {
-                object.attributeValues[attribIndex].emplace_back(data[v * dim + i]);
-            }
-        }
+        object.attributeValues[attribIndex].insert(object.attributeValues[attribIndex].begin(), data, data + n * dim);
         object.attributeDims[attribIndex] = dim;
     }
 
@@ -460,7 +454,7 @@ namespace Software
     {
         return abs((p2.x - p1.x) * (p1.y - p.y) - (p1.x - p.x) * (p2.y - p1.y)) / glm::distance(p1, p2);
     }
-    float interpolate(glm::vec2 (&triangle)[3], glm::vec2 pix, glm::vec3 attribute)
+    glm::vec4 interpolate(glm::vec2 (&triangle)[3], glm::vec2 pix, std::vector<glm::vec4> attribute)
     {
         float phi1 = distance_point_to_line(pix, triangle[1], triangle[2]) /
                      distance_point_to_line(triangle[0], triangle[1], triangle[2]);
@@ -468,22 +462,14 @@ namespace Software
                      distance_point_to_line(triangle[1], triangle[0], triangle[2]);
         float phi3 = distance_point_to_line(pix, triangle[0], triangle[1]) /
                      distance_point_to_line(triangle[2], triangle[0], triangle[1]);
-        return (phi1 * attribute.x + phi2 * attribute.y + phi3 * attribute.z);
+        return (phi1 * attribute[0] + phi2 * attribute[1] + phi3 * attribute[2]);
     }
-    void render_naive(glm::ivec3 idx, const Object &object, SDL_Surface *framebuffer, int spp)
+    void render_naive(glm::ivec3 idx, std::vector<Attribs> &vertex_attribs, std::vector<glm::vec4> &vertex_pos,
+                      const Uniforms &uniforms, int attribute_cnt, FragmentShader fs, SDL_Surface *framebuffer, int spp)
     {
-
-        glm::vec2 triangle[3] = {
-            glm::vec2(object.attributeValues[0][4 * idx.x], object.attributeValues[0][4 * idx.x + 1]),
-            glm::vec2(object.attributeValues[0][4 * idx.y], object.attributeValues[0][4 * idx.y + 1]),
-            glm::vec2(object.attributeValues[0][4 * idx.z], object.attributeValues[0][4 * idx.z + 1])};
-        glm::vec4 color[3] = {
-            glm::vec4(object.attributeValues[1][4 * idx.x], object.attributeValues[1][4 * idx.x + 1],
-                      object.attributeValues[1][4 * idx.x + 2], object.attributeValues[1][4 * idx.x + 3]),
-            glm::vec4(object.attributeValues[1][4 * idx.y], object.attributeValues[1][4 * idx.y + 1],
-                      object.attributeValues[1][4 * idx.y + 2], object.attributeValues[1][4 * idx.y + 3]),
-            glm::vec4(object.attributeValues[1][4 * idx.z], object.attributeValues[1][4 * idx.z + 1],
-                      object.attributeValues[1][4 * idx.z + 2], object.attributeValues[1][4 * idx.z + 3])};
+        glm::vec2 triangle[3] = {glm::vec2(vertex_pos[idx.x].x, vertex_pos[idx.x].y),
+                                 glm::vec2(vertex_pos[idx.y].x, vertex_pos[idx.y].y),
+                                 glm::vec2(vertex_pos[idx.z].x, vertex_pos[idx.z].y)};
         Uint32 *pixels = (Uint32 *)framebuffer->pixels;
         SDL_PixelFormat *format = framebuffer->format;
         int h = framebuffer->h;
@@ -499,26 +485,51 @@ namespace Software
                 // float v = value_supersample(triangle, pix_tl, pw, spp);
                 if (membership_check(triangle, pix_tl))
                 {
-                    foreground = SDL_MapRGBA(
-                        format, 255 * interpolate(triangle, pix_tl, glm::vec3(color[0].x, color[1].x, color[2].x)),
-                        255 * interpolate(triangle, pix_tl, glm::vec3(color[0].y, color[1].y, color[2].y)),
-                        255 * interpolate(triangle, pix_tl, glm::vec3(color[0].z, color[1].z, color[2].z)),
-                        255 * interpolate(triangle, pix_tl, glm::vec3(color[0].w, color[1].w, color[2].w)));
+                    Attribs fragment_attributes;
+                    for (int attribute = 0; attribute < attribute_cnt; attribute++)
+                    {
+                        fragment_attributes.set(attribute,
+                                                interpolate(triangle, pix_tl,
+                                                            {vertex_attribs[idx.x].get<glm::vec4>(attribute),
+                                                             vertex_attribs[idx.y].get<glm::vec4>(attribute),
+                                                             vertex_attribs[idx.z].get<glm::vec4>(attribute)}));
+                    }
+                    foreground =
+                        vec4_to_color(format, fs(uniforms, fragment_attributes)); // THis is where e1 throws exception
                     pixels[(h - j - 1) * w + i] = pix_blend(foreground, background, framebuffer->format);
                 }
             }
         }
     }
 
+    glm::vec4 GetAttribs(const std::vector<std::vector<float>> &attributeValues, int attrib_idx, int vertex_idx)
+    {
+        return glm::vec4(attributeValues[attrib_idx][4 * vertex_idx], attributeValues[attrib_idx][4 * vertex_idx + 1],
+                         attributeValues[attrib_idx][4 * vertex_idx + 2],
+                         attributeValues[attrib_idx][4 * vertex_idx + 3]);
+    }
     // Draws the triangles of the given object.
     void Rasterizer::drawObject(const Object &object)
     {
         // Implement the rendering pipeline here
         // object --vs--> verts in NDC --rasterize--> fragments --fs--> colors
         // TODO use vertex shader to get vertices in NDC
+        int vertex_count = object.attributeValues[0].size() / object.attributeDims[0];
+        std::vector<Attribs> vertex_attribs(vertex_count);
+        std::vector<glm::vec4> vertex_pos(vertex_count);
+        for (int vertex = 0; vertex < vertex_count; vertex++)
+        {
+            for (int attribute = 0; attribute < object.attributeValues.size(); attribute++)
+            {
+                vertex_attribs[vertex].set(attribute, GetAttribs(object.attributeValues, attribute, vertex));
+            }
+            vertex_pos[vertex] =
+                shader_program.vs(shader_program.uniforms, vertex_attribs[vertex], vertex_attribs[vertex]);
+        }
         for (glm::ivec3 idx : object.indices)
         {
-            render_naive(idx, object, framebuffer, spp);
+            render_naive(idx, vertex_attribs, vertex_pos, shader_program.uniforms, object.attributeValues.size() - 1,
+                         shader_program.fs, framebuffer, spp);
         }
     }
 

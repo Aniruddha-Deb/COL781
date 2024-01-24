@@ -28,7 +28,7 @@ int main() {
     while (!r.shouldQuit()) {
         r.clear(vec4(1.0, 1.0, 1.0, 1.0));
         r.useShaderProgram(program);
-        // r.setUniform<vec4>(program, "color", vec4(0.0, 0.6, 0.0, 1.0));
+        r.setUniform<vec4>(program, "color", vec4(0.0, 0.6, 0.0, 1.0));
 		r.drawObject(tickmark);
         r.show();
     }
