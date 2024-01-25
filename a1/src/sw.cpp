@@ -483,23 +483,23 @@ namespace Software
     {
         return abs((p2.x - p1.x) * (p1.y - p.y) - (p1.x - p.x) * (p2.y - p1.y)) / glm::distance(p1, p2);
     }
-    glm::vec2 operator/(const glm::vec2 &lhs, const glm::vec2 &rhs)
-    {
-        return glm::vec2(lhs.x / rhs.x, lhs.y / rhs.y);
-    }
+    // glm::vec2 operator/(const glm::vec2 &lhs, const glm::vec2 &rhs)
+    // {
+    //     return glm::vec2(lhs.x / rhs.x, lhs.y / rhs.y);
+    // }
 
-    glm::vec3 operator/(const glm::vec3 &lhs, const glm::vec3 &rhs)
-    {
-        return glm::vec3(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z);
-    }
+    // glm::vec3 operator/(const glm::vec3 &lhs, const glm::vec3 &rhs)
+    // {
+    //     return glm::vec3(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z);
+    // }
 
-    glm::vec4 operator/(const glm::vec4 &lhs, const glm::vec4 &rhs)
-    {
-        return glm::vec4(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z, lhs.w / rhs.w);
-    }
+    // glm::vec4(const glm::vec4 &lhs, const glm::vec4 &rhs)
+    // {
+    //     return glm::vec4(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z, lhs.w / rhs.w);
+    // }
     glm::vec4 interpolate(glm::vec3 (&triangle)[3], glm::vec2 pix, std::vector<glm::vec4> attribute, bool depth_enabled)
     {
-        std::cout << depth_enabled << std::endl;
+        // std::cout << depth_enabled << std::endl;
         if (!depth_enabled)
         {
             float phi1 = distance_point_to_line(pix, triangle[1], triangle[2]) /
@@ -512,18 +512,16 @@ namespace Software
         }
         else
         {
-            glm::vec2 norm_triangle[3] = {triangle[0].xy() / triangle[0].z, triangle[1].xy() / triangle[1].z,
-                                          triangle[2].xy() / triangle[2].z};
-            float phi1 = distance_point_to_line(pix, norm_triangle[1], norm_triangle[2]) /
-                         distance_point_to_line(norm_triangle[0], norm_triangle[1], norm_triangle[2]);
-            float phi2 = distance_point_to_line(pix, norm_triangle[0], norm_triangle[2]) /
-                         distance_point_to_line(norm_triangle[1], norm_triangle[0], norm_triangle[2]);
-            float phi3 = distance_point_to_line(pix, norm_triangle[0], norm_triangle[1]) /
-                         distance_point_to_line(norm_triangle[2], norm_triangle[0], norm_triangle[1]);
-            std::cout << ((phi1 * attribute[0] / triangle[0].z + phi2 * attribute[1] / triangle[1].z +
-                           phi3 * attribute[2] / triangle[2].z) /
-                          (phi1 / triangle[0].z + phi2 / triangle[1].z + phi3 / triangle[2].z))[0]
-                      << std::endl;
+            float phi1 = distance_point_to_line(pix, triangle[1], triangle[2]) /
+                         distance_point_to_line(triangle[0], triangle[1], triangle[2]);
+            float phi2 = distance_point_to_line(pix, triangle[0], triangle[2]) /
+                         distance_point_to_line(triangle[1], triangle[0], triangle[2]);
+            float phi3 = distance_point_to_line(pix, triangle[0], triangle[1]) /
+                         distance_point_to_line(triangle[2], triangle[0], triangle[1]);
+            // std::cout << ((phi1 * attribute[0] / triangle[0].z + phi2 * attribute[1] / triangle[1].z +
+            //                phi3 * attribute[2] / triangle[2].z) /
+            //               (phi1 / triangle[0].z + phi2 / triangle[1].z + phi3 / triangle[2].z))[0]
+            //           << std::endl;
             return (phi1 * attribute[0] / triangle[0].z + phi2 * attribute[1] / triangle[1].z +
                     phi3 * attribute[2] / triangle[2].z) /
                    (phi1 / triangle[0].z + phi2 / triangle[1].z + phi3 / triangle[2].z);
@@ -534,6 +532,8 @@ namespace Software
                       const Uniforms &uniforms, int attribute_cnt, FragmentShader fs, SDL_Surface *framebuffer, int spp,
                       bool depth_enabled)
     {
+        std::cout << vertex_pos[idx.x].x << " " << vertex_pos[idx.x].y << " " << vertex_pos[idx.x].z << " "
+                  << vertex_pos[idx.x].w << "\n";
         glm::vec3 triangle[3] = {glm::vec3(vertex_pos[idx.x].x, vertex_pos[idx.x].y, vertex_pos[idx.x].z),
                                  glm::vec3(vertex_pos[idx.y].x, vertex_pos[idx.y].y, vertex_pos[idx.x].z),
                                  glm::vec3(vertex_pos[idx.z].x, vertex_pos[idx.z].y, vertex_pos[idx.x].z)};

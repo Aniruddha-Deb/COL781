@@ -1,7 +1,7 @@
 #include "../src/a1.hpp"
 #include <glm/gtc/matrix_transform.hpp>
-// namespace R = COL781::Software;
-namespace R = COL781::Hardware;
+namespace R = COL781::Software;
+// namespace R = COL781::Hardware;
 using namespace glm;
 
 int main()
@@ -9,17 +9,18 @@ int main()
     R::Rasterizer r;
     if (!r.initialize("Example 1", 640, 480))
         return EXIT_FAILURE;
-    R::ShaderProgram program = r.createShaderProgram(r.vsColorTransform(), r.fsConstant());
+    R::ShaderProgram program = r.createShaderProgram(r.vsColorTransform(), r.fsIdentity());
     vec4 vertices[] = {
         vec4(-0.5, -0.5, 0.1, 1.0),
         vec4(0.25, 0.35, 0.2, 1.0),
         vec4(-0.25, 0.5, 0.1, 1.0),
     };
-    vec4 colors[] = {vec4(0.0, 1.0, 0.0, 1.0), vec4(1.0, 0.0, 0.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0)};
+    vec4 colors[] = {vec4(0.0, 0.0, 0.0, 1.0), vec4(1.0, 0.0, 0.0, 1.0), vec4(1.0, 1.0, 1.0, 1.0)};
     ivec3 triangles[] = {ivec3(0, 1, 2)};
 
     R::Object box = r.createObject();
     r.setVertexAttribs(box, 0, 3, vertices);
+    r.setVertexAttribs(box, 1, 3, colors);
     r.setTriangleIndices(box, 1, triangles);
 
     // Enable depth test.
@@ -31,7 +32,6 @@ int main()
     {
         r.clear(vec4(1.0, 1.0, 1.0, 1.0));
         r.useShaderProgram(program);
-        r.setVertexAttribs(box, 1, 3, colors);
         mvp = mat4(1.0f);
         r.setUniform(program, "transform", mvp);
         // r.setUniform(program, "color", vec4(0.9, 0.6, 0.3, 1.0));
