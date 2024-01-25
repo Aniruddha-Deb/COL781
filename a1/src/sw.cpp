@@ -343,9 +343,9 @@ namespace Software
     glm::vec3 phi(glm::vec2 (&tri)[3], glm::vec2 pt) {
         float norm = dperp(tri[0], tri[1], tri[2]);
         return glm::vec3(
-                dperp(pt, tri[1], tri[2]) / norm,
-                dperp(pt, tri[2], tri[0]) / norm,
-                dperp(pt, tri[0], tri[1]) / norm 
+                dperp(pt, tri[1], tri[2]) / dperp(tri[0], tri[1], tri[2]),
+                dperp(pt, tri[2], tri[0]) / dperp(tri[1], tri[2], tri[0]),
+                dperp(pt, tri[0], tri[1]) / dperp(tri[2], tri[0], tri[1]) 
             );
     }
 
