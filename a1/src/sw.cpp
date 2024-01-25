@@ -369,12 +369,24 @@ namespace Software
     void Rasterizer::enableDepthTest()
     {
         depth_enabled = true;
-        z_buffer = new Uint16[framebuffer->w * framebuffer->h];
+        z_buffer = new float[framebuffer->w * framebuffer->h];
+        for (int i=0; i<framebuffer->w; i++) {
+            for (int j=0; j<framebuffer->h; j++) {
+                z_buffer[framebuffer->h*i + j] = 1000000;
+            }
+        }
     }
 
     void Rasterizer::clear(glm::vec4 color)
     {
         SDL_FillRect(framebuffer, NULL, vec4_to_color(framebuffer->format, color));
+        if (depth_enabled) {
+            for (int i=0; i<framebuffer->w; i++) {
+                for (int j=0; j<framebuffer->h; j++) {
+                    z_buffer[framebuffer->h*i + j] = 1000000;
+                }
+            }
+        }
     }
 
     // Draws the triangles of the given object.
@@ -430,6 +442,17 @@ namespace Software
             for (auto [x, y, pt] : fragments) {
                 glm::vec3 p = phi(tri, pt);
                 glm::vec3 p_pc = phi_pc(hom_tri, p, pt);
+                // nope.
+                // @salil have a look pls thx
+                float z = hom_tri[0].w*p_pc[0]/hom_tri[0].z + hom_tri[1].w*p_pc[1]/hom_tri[1].z + hom_tri[2].w*p_pc[2]/hom_tri[2].z;
+                // std::cout << z << std::endl;
+
+                // glm::vec3 pos_ws = interpolate(hom_tri, p_pc);
+                // p_pc[2] = 1/z
+                if (z > z_buffer[(h-y-1)*w + x]) {
+                    continue; // discard fragment
+                }
+                z_buffer[(h-y-1)*w + x] = p_pc[2];
                 // load and interpolate attributes
                 Attribs interp_attrs;
                 // HACK: find a way to iterate over the attributes present in 

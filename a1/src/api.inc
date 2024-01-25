@@ -86,6 +86,6 @@ private:
         const ShaderProgram* shader_program;
 
         bool depth_enabled = false;
-        Uint16 *z_buffer;
+        float *z_buffer;
 
 };
