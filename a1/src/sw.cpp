@@ -1,15 +1,22 @@
+#include "SDL2/SDL_pixels.h"
 #define GLM_SWIZZLE
 #include "sw.hpp"
 
 #include <iostream>
 #include <vector>
 
+#define RED_MASK   0x0000FF
+#define GREEN_MASK 0x00FF00
+#define BLUE_MASK  0xFF0000
+
 namespace COL781
 {
 namespace Software
 {
 
-    // Forward declarations
+    ////////////////////////////////////////////////////////////////////////////
+    /// Forward declarations
+    ////////////////////////////////////////////////////////////////////////////
 
     template <> float Attribs::get(int index) const;
     template <> glm::vec2 Attribs::get(int index) const;
@@ -21,7 +28,9 @@ namespace Software
     template <> void Attribs::set(int index, glm::vec3 value);
     template <> void Attribs::set(int index, glm::vec4 value);
 
-    // Built-in shaders
+    ////////////////////////////////////////////////////////////////////////////
+    /// Built-in shaders
+    ////////////////////////////////////////////////////////////////////////////
 
     VertexShader Rasterizer::vsIdentity()
     {
@@ -78,7 +87,9 @@ namespace Software
         };
     }
 
-    // Implementation of Attribs and Uniforms classes
+    ////////////////////////////////////////////////////////////////////////////
+    /// Attribs and Uniforms classes
+    ////////////////////////////////////////////////////////////////////////////
 
     void checkDimension(int index, int actual, int requested)
     {
@@ -89,29 +100,6 @@ namespace Software
         }
     }
 
-    template <> float Attribs::get(int index) const
-    {
-        checkDimension(index, dims[index], 1);
-        return values[index].x;
-    }
-
-    template <> glm::vec2 Attribs::get(int index) const
-    {
-        checkDimension(index, dims[index], 2);
-        return glm::vec2(values[index].x, values[index].y);
-    }
-
-    template <> glm::vec3 Attribs::get(int index) const
-    {
-        checkDimension(index, dims[index], 3);
-        return glm::vec3(values[index].x, values[index].y, values[index].z);
-    }
-
-    template <> glm::vec4 Attribs::get(int index) const
-    {
-        checkDimension(index, dims[index], 4);
-        return values[index];
-    }
 
     void expand(std::vector<int> &dims, std::vector<glm::vec4> &values, int index)
     {
@@ -121,39 +109,36 @@ namespace Software
             values.resize(index + 1);
     }
 
-    template <> void Attribs::set(int index, float value)
-    {
-        expand(dims, values, index);
-        dims[index] = 1;
-        values[index].x = value;
-    }
+    // clang-format off
+    template <> float     Attribs::get(int index) const { checkDimension(index, dims[index], 1); return values[index].x; }
+    template <> glm::vec2 Attribs::get(int index) const { checkDimension(index, dims[index], 2); return glm::vec2(values[index].x, values[index].y); }
+    template <> glm::vec3 Attribs::get(int index) const { checkDimension(index, dims[index], 3); return glm::vec3(values[index].x, values[index].y, values[index].z); }
+    template <> glm::vec4 Attribs::get(int index) const { checkDimension(index, dims[index], 4); return values[index]; }
 
-    template <> void Attribs::set(int index, glm::vec2 value)
-    {
-        expand(dims, values, index);
-        dims[index] = 2;
-        values[index].x = value.x;
-        values[index].y = value.y;
-    }
+    template <> void Attribs::set(int index, float     value) { expand(dims, values, index); dims[index] = 1; values[index] = glm::vec4(value, 0, 0, 0); }
+    template <> void Attribs::set(int index, glm::vec2 value) { expand(dims, values, index); dims[index] = 2; values[index] = glm::vec4(value, 0, 0); }
+    template <> void Attribs::set(int index, glm::vec3 value) { expand(dims, values, index); dims[index] = 3; values[index] = glm::vec4(value, 0); }
+    template <> void Attribs::set(int index, glm::vec4 value) { expand(dims, values, index); dims[index] = 4; values[index] = value; }
 
-    template <> void Attribs::set(int index, glm::vec3 value)
-    {
-        expand(dims, values, index);
-        dims[index] = 3;
-        values[index].x = value.x;
-        values[index].y = value.y;
-        values[index].z = value.z;
-    }
+    // Uniforms::get, Uniforms::set in sw.hpp
+    // Type constraining setUniform down here.
 
-    template <> void Attribs::set(int index, glm::vec4 value)
-    {
-        expand(dims, values, index);
-        dims[index] = 4;
-        values[index] = value;
-    }
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, float     value) { sp.uniforms.set<float>    (name, value); }
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, int       value) { sp.uniforms.set<int>      (name, value); }
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec2 value) { sp.uniforms.set<glm::vec2>(name, value); }
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat2 value) { sp.uniforms.set<glm::mat2>(name, value); }
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec3 value) { sp.uniforms.set<glm::vec3>(name, value); }
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat3 value) { sp.uniforms.set<glm::mat3>(name, value); }
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec4 value) { sp.uniforms.set<glm::vec4>(name, value); }
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat4 value) { sp.uniforms.set<glm::mat4>(name, value); }
 
-    // Creates a window with the given title, size, and samples per pixel.
-    bool Rasterizer::initialize(const std::string &title, int width, int height, int _spp)
+    // clang-format on 
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// Rasterizer windowing methods
+    ////////////////////////////////////////////////////////////////////////////
+
+    bool Rasterizer::initialize(const std::string &title, int width, int height, int spp)
     {
         bool success = true;
         if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
@@ -163,9 +148,9 @@ namespace Software
         }
         else
         {
+            SDL_SetHint (SDL_HINT_RENDER_SCALE_QUALITY, "1");
             int screenWidth = width;
-            int screenHeight = height; // do we multiply with spp here? I think spp is for aliasing.
-            spp = _spp;
+            int screenHeight = height;
             window = SDL_CreateWindow("COL781", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth,
                                       screenHeight, SDL_WINDOW_SHOWN);
             if (window == NULL)
@@ -175,15 +160,16 @@ namespace Software
             }
             else
             {
-                // with an alpha channel this time
+                int mult = sqrt(spp);
                 framebuffer =
-                    SDL_CreateRGBSurface(0, width, height, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+                    SDL_CreateRGBSurface(0, width*mult, height*mult, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0);
+                    // SDL_CreateRGBSurface(0, width*mult, height*mult, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
             }
+            // scaling interpolation 
         }
         return success;
     }
 
-    // Returns true if the user has requested to quit the program.
     bool Rasterizer::shouldQuit()
     {
         SDL_Event e;
@@ -197,9 +183,10 @@ namespace Software
         return false;
     }
 
-    /** Shader programs **/
+    ////////////////////////////////////////////////////////////////////////////
+    /// Shader Program methods
+    ////////////////////////////////////////////////////////////////////////////
 
-    // Creates a new shader program, i.e. a pair of a vertex shader and a fragment shader.
     ShaderProgram Rasterizer::createShaderProgram(const VertexShader &vs, const FragmentShader &fs)
     {
         ShaderProgram sp;
@@ -209,20 +196,11 @@ namespace Software
         return sp;
     }
 
-    // Makes the given shader program active. Future draw calls will use its vertex and fragment shaders.
     void Rasterizer::useShaderProgram(const ShaderProgram &program)
     {
         shader_program = &program;
     }
 
-    // Sets the value of a uniform variable.
-    // T is only allowed to be float, int, glm::vec2/3/4, glm::mat2/3/4.
-    template <typename T> void Rasterizer::setUniform(ShaderProgram &program, const std::string &name, T value)
-    {
-        program.uniforms.set(name, value);
-    }
-
-    // Deletes the given shader program.
     void Rasterizer::deleteShaderProgram(ShaderProgram &program)
     {
         if (&program == shader_program)
@@ -231,11 +209,10 @@ namespace Software
         }
     }
 
-    /** Objects **/
+    ////////////////////////////////////////////////////////////////////////////
+    /// Objects
+    ////////////////////////////////////////////////////////////////////////////
 
-    // Creates an object, i.e. a collection of vertices and triangles.
-    // Vertex attribute arrays store the vertex data.
-    // A triangle index array stores the indices of the triangles.
     Object Rasterizer::createObject()
     {
         /*
@@ -247,47 +224,33 @@ namespace Software
         };
         */
         Object obj;
-        obj.attributeValues = std::vector<Object::Buffer>();
-        obj.attributeDims = std::vector<int>();
-        obj.indices = std::vector<glm::ivec3>();
         return obj;
     }
 
     void printObject(const Object &obj)
     {
-        // Print the number of attribute buffers
         std::cout << "Number of attribute buffers: " << obj.attributeValues.size() << "\n";
 
-        // Iterate over each attribute buffer and print its dimensions and values
         int i = 0;
         for (const auto &buf : obj.attributeValues)
         {
             std::cout << "Attribute buffer " << i++ << " dimensions: ";
-
             if (!obj.attributeDims.empty())
             {
                 std::cout << obj.attributeDims[i - 1];
-
                 if (std::next(obj.attributeDims.begin(), i) != obj.attributeDims.end())
                 {
                     std::cout << " x ";
                 }
             }
-
             std::cout << "\n";
-
             for (float val : buf)
             {
                 std::cout << val << " ";
             }
-
             std::cout << "\n\n";
         }
-
-        // Print the number of indices
         std::cout << "Number of indices: " << obj.indices.size() << "\n";
-
-        // Iterate over each index and print its value
         for (const glm::ivec3 &idx : obj.indices)
         {
             std::cout << "[ " << idx.x << ", " << idx.y << ", " << idx.z << " ]\n";
@@ -304,71 +267,19 @@ namespace Software
         {
             object.attributeDims.resize(attribIndex + 1, 0);
         }
-        object.attributeValues[attribIndex].insert(object.attributeValues[attribIndex].begin(), data, data + n * dim);
+        object.attributeValues[attribIndex].insert(
+                object.attributeValues[attribIndex].begin(), data, data + n * dim);
         object.attributeDims[attribIndex] = dim;
     }
 
-    template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const float *data)
-    {
-        setAttribs(object, attribIndex, n, 1, data);
-    }
+    // clang-format off
+    template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const float     *data) { setAttribs(object, attribIndex, n, 1, (float *)data); }
+    template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec2 *data) { setAttribs(object, attribIndex, n, 2, (float *)data); }
+    template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec3 *data) { setAttribs(object, attribIndex, n, 3, (float *)data); }
+    template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec4 *data) { setAttribs(object, attribIndex, n, 4, (float *)data); }
 
-    template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec2 *data)
-    {
-        setAttribs(object, attribIndex, n, 2, (float *)data);
-    }
+    // clang-format on
 
-    template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec3 *data)
-    {
-        setAttribs(object, attribIndex, n, 3, (float *)data);
-    }
-
-    template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec4 *data)
-    {
-        setAttribs(object, attribIndex, n, 4, (float *)data);
-    }
-
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, float value)
-    {
-        sp.uniforms.set<float>(name, value);
-    }
-
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, int value)
-    {
-        sp.uniforms.set<int>(name, value);
-    }
-
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec2 value)
-    {
-        sp.uniforms.set<glm::vec2>(name, value);
-    }
-
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat2 value)
-    {
-        sp.uniforms.set<glm::mat2>(name, value);
-    }
-
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec3 value)
-    {
-        sp.uniforms.set<glm::vec3>(name, value);
-    }
-
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat3 value)
-    {
-        sp.uniforms.set<glm::mat3>(name, value);
-    }
-
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec4 value)
-    {
-        sp.uniforms.set<glm::vec4>(name, value);
-    }
-
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat4 value)
-    {
-        sp.uniforms.set<glm::mat4>(name, value);
-    }
-
-    // Sets the indices of the triangles.
     void Rasterizer::setTriangleIndices(Object &object, int n, glm::ivec3 *indices)
     {
         object.indices.resize(n);
@@ -380,13 +291,12 @@ namespace Software
         printObject(object);
     }
 
-    /** Drawing **/
+    ////////////////////////////////////////////////////////////////////////////
+    /// Rendering
+    ////////////////////////////////////////////////////////////////////////////
 
-    bool membership_check(glm::vec3 (&triangle)[3], glm::vec2 &pt)
+    bool ptInTriangle(glm::vec3 (&triangle)[3], glm::vec2 &pt)
     {
-        // std::cout << triangle[0].x << " " << triangle[0].y << std::endl;
-        // std::cout << triangle[1].x << " " << triangle[1].y << std::endl;
-        // std::cout << triangle[2].x << " " << triangle[2].y << std::endl;
         for (int k = 0; k < 3; k++)
         {
             glm::vec2 v1 = triangle[k % 3].xy();
@@ -395,7 +305,6 @@ namespace Software
             glm::vec2 t(-s.y, s.x);
 
             float dot = glm::dot(t, pt - v1);
-            // std::cout << dot << std::endl;
             if (dot < 0)
             {
                 return false;
@@ -404,51 +313,9 @@ namespace Software
         return true;
     }
 
-    Uint32 pix_blend(Uint32 new_pix, Uint32 old_pix, SDL_PixelFormat *format)
-    {
-        Uint8 r_new, g_new, b_new, a_new;
-        SDL_GetRGBA(new_pix, format, &r_new, &g_new, &b_new, &a_new);
-        Uint8 r_old, g_old, b_old, a_old;
-        SDL_GetRGBA(old_pix, format, &r_old, &g_old, &b_old, &a_old);
-        Uint32 color;
-        float alpha_new = a_new / (float)255, alpha_old = a_old / (float)255;
-        r_new = r_new * alpha_new + r_old * (1 - alpha_new);
-        g_new = g_new * alpha_new + g_old * (1 - alpha_new);
-        b_new = b_new * alpha_new + b_old * (1 - alpha_new);
-        a_new = 255 * (alpha_new + alpha_old * (1 - alpha_new));
-        color = SDL_MapRGBA(format, r_new, g_new, b_new, a_new);
-        return color;
-    }
-
-    float value_supersample(glm::vec3 (&triangle)[3], glm::vec3 pix, float pix_w, int spp)
-    {
-        int samples_inside = 0;
-        int w = sqrt(spp);
-        int pitch = pix_w / (w + 1);
-        auto tl_sample = pix.xy() + glm::vec2(pitch / 2, pitch / 2);
-
-        for (int i = 0; i < w; i++)
-        {
-            for (int j = 0; j < w; j++)
-            {
-                auto pt = tl_sample + glm::vec2(pitch * i, pitch * j);
-                if (membership_check(triangle, pt))
-                    samples_inside++;
-            }
-        }
-
-        return ((float)samples_inside) / spp;
-    }
-
     glm::vec2 pix_to_pt(int x, int y, int w, int h)
     {
         return glm::vec2(-1 + 2 * float(x) / w, -1 + 2 * float(y) / h);
-    }
-
-    void Rasterizer::enableDepthTest()
-    {
-        depth_enabled = true;
-        z_buffer = new Uint16[framebuffer->w * framebuffer->h];
     }
 
     Uint32 vec4_to_color(SDL_PixelFormat *fmt, glm::vec4 color)
@@ -458,27 +325,6 @@ namespace Software
     }
 
     // Clear the framebuffer, setting all pixels to the given color.
-    void Rasterizer::clear(glm::vec4 color)
-    {
-        SDL_FillRect(framebuffer, NULL, vec4_to_color(framebuffer->format, color));
-    }
-
-    glm::vec2 buffer_to_vec2(std::vector<float> buf)
-    {
-        assert(buf.size() >= 2);
-        return glm::vec2(buf[0], buf[1]); //, buf[2], buf[3]);
-    }
-    glm::vec3 buffer_to_vec3(std::vector<float> buf)
-    {
-        assert(buf.size() >= 3);
-        return glm::vec3(buf[0], buf[1], buf[2]); //, buf[2], buf[3]);
-    }
-    glm::vec4 buffer_to_vec4(std::vector<float> buf)
-    {
-        assert(buf.size() >= 4);
-        return glm::vec4(buf[0], buf[1], buf[2], buf[3]);
-    }
-
     float distance_point_to_line(glm::vec2 p, glm::vec2 p1, glm::vec2 p2)
     {
         return abs((p2.x - p1.x) * (p1.y - p.y) - (p1.x - p.x) * (p2.y - p1.y)) / glm::distance(p1, p2);
@@ -499,7 +345,6 @@ namespace Software
     // }
     glm::vec4 interpolate(glm::vec3 (&triangle)[3], glm::vec2 pix, std::vector<glm::vec4> attribute, bool depth_enabled)
     {
-        // std::cout << depth_enabled << std::endl;
         if (!depth_enabled)
         {
             float phi1 = distance_point_to_line(pix, triangle[1], triangle[2]) /
@@ -512,6 +357,7 @@ namespace Software
         }
         else
         {
+            std::cout << triangle[0].z << " " << triangle[1].z << " " << triangle[2].z << std::endl;
             float phi1 = distance_point_to_line(pix, triangle[1], triangle[2]) /
                          distance_point_to_line(triangle[0], triangle[1], triangle[2]);
             float phi2 = distance_point_to_line(pix, triangle[0], triangle[2]) /
@@ -532,8 +378,8 @@ namespace Software
                       const Uniforms &uniforms, int attribute_cnt, FragmentShader fs, SDL_Surface *framebuffer, int spp,
                       bool depth_enabled)
     {
-        std::cout << vertex_pos[idx.x].x << " " << vertex_pos[idx.x].y << " " << vertex_pos[idx.x].z << " "
-                  << vertex_pos[idx.x].w << "\n";
+        // std::cout << vertex_pos[idx.x].x << " " << vertex_pos[idx.x].y << " " << vertex_pos[idx.x].z << " "
+        //           << vertex_pos[idx.x].w << "\n";
         glm::vec3 triangle[3] = {glm::vec3(vertex_pos[idx.x].x, vertex_pos[idx.x].y, vertex_pos[idx.x].z),
                                  glm::vec3(vertex_pos[idx.y].x, vertex_pos[idx.y].y, vertex_pos[idx.x].z),
                                  glm::vec3(vertex_pos[idx.z].x, vertex_pos[idx.z].y, vertex_pos[idx.x].z)};
@@ -551,7 +397,7 @@ namespace Software
                 // glm::vec4 fragment_coords = interpolate(triangle, pix_tl, vertex_pos);
                 glm::vec2 pix_tl = pix_to_pt(i, j, w, h);
                 // float v = value_supersample(triangle, pix_tl, pw, spp);
-                if (membership_check(triangle, pix_tl))
+                if (ptInTriangle(triangle, pix_tl))
                 {
                     Attribs fragment_attributes;
                     for (int attribute = 0; attribute < attribute_cnt; attribute++)
@@ -566,7 +412,7 @@ namespace Software
                     foreground = vec4_to_color(format, fs(uniforms, fragment_attributes));
                     // if (depth_enabled && z_buffer[(h-j-1)*w + i] > z ) {
 
-                    pixels[(h - j - 1) * w + i] = pix_blend(foreground, background, framebuffer->format);
+                    pixels[(h - j - 1) * w + i] = foreground;
                     // }
                 }
             }
@@ -578,6 +424,21 @@ namespace Software
         return glm::vec4(attributeValues[attrib_idx][4 * vertex_idx], attributeValues[attrib_idx][4 * vertex_idx + 1],
                          attributeValues[attrib_idx][4 * vertex_idx + 2],
                          attributeValues[attrib_idx][4 * vertex_idx + 3]);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// Rasterizer methods
+    ////////////////////////////////////////////////////////////////////////////
+
+    void Rasterizer::enableDepthTest()
+    {
+        depth_enabled = true;
+        z_buffer = new Uint16[framebuffer->w * framebuffer->h];
+    }
+
+    void Rasterizer::clear(glm::vec4 color)
+    {
+        SDL_FillRect(framebuffer, NULL, vec4_to_color(framebuffer->format, color));
     }
 
     // Draws the triangles of the given object.
@@ -607,7 +468,29 @@ namespace Software
     void Rasterizer::show()
     {
         auto windowSurface = SDL_GetWindowSurface(window);
-        SDL_BlitScaled(framebuffer, NULL, windowSurface, NULL);
+        int w = framebuffer->w;
+        int b = w/windowSurface->w;
+        int buf, avg[3];
+        Uint8 px[3];
+        for (int i=0; i<windowSurface->h; i++) {
+            for (int j=0; j<windowSurface->w; j++) {
+                avg[0] = avg[1] = avg[2] = 0;
+                for (int k=0; k<b; k++) {
+                    for (int l=0; l<b; l++) {
+                        buf = ((Uint32*)framebuffer->pixels)[w*(i*b + k) + j*b + l];
+                        SDL_GetRGB(buf, framebuffer->format, px, (px+1), (px+2));
+                        avg[0] += px[0];
+                        avg[1] += px[1];
+                        avg[2] += px[2];
+                    }
+                }
+                avg[0] /= b*b;
+                avg[1] /= b*b;
+                avg[2] /= b*b;
+                ((Uint32*)windowSurface->pixels)[windowSurface->w*i + j] = SDL_MapRGB(windowSurface->format, avg[0], avg[1], avg[2]);
+            }
+        }
+        // SDL_BlitScaled(framebuffer, NULL, windowSurface, NULL);
         SDL_UpdateWindowSurface(window);
     }
 

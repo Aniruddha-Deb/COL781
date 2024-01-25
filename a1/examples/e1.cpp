@@ -6,7 +6,7 @@ using namespace glm;
 
 int main() {
 	R::Rasterizer r;
-    if (!r.initialize("Example 1", 640, 480, 4))
+    if (!r.initialize("Example 1", 640, 480, 1))
         return EXIT_FAILURE;
     R::ShaderProgram program = r.createShaderProgram(
         r.vsIdentity(),

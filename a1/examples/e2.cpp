@@ -10,10 +10,10 @@ int main()
     if (!r.initialize("Example 2", 640, 480))
         return EXIT_FAILURE;
     R::ShaderProgram program = r.createShaderProgram(r.vsColorTransform(), r.fsIdentity());
-    vec4 vertices[] = {vec4(0.0, -0.8, 1.0, 1.0), vec4(0.8, 0.0, 2.0, 1.0), vec4(0.0, 0.8, 3.0, 1.0),
-                       vec4(-0.8, 0.0, 4.0, 1.0)};
-    vec4 colors[] = {vec4(0.0, 1.0, 0.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0),
-                     vec4(0.0, 1.0, 0.0, 1.0)};
+    vec4 vertices[] = {vec4(0.0, -0.8, 0.1, 1.0), vec4(0.8, 0.0, 0.3, 1.0), vec4(0.0, 0.8, 0.5, 1.0),
+                       vec4(-0.8, 0.0, 0.7, 1.0)};
+    vec4 colors[] = {vec4(0.0, 1.0, 0.0, 1.0), vec4(1.0, 0.0, 1.0, 1.0), vec4(0.0, 0.0, 1.0, 1.0),
+                     vec4(0.0, 1.0, 1.0, 1.0)};
     ivec3 triangles[] = {ivec3(0, 1, 2), ivec3(0, 2, 3)};
     R::Object shape = r.createObject();
     r.setVertexAttribs(shape, 0, 4, vertices);
@@ -26,7 +26,7 @@ int main()
         r.clear(vec4(1.0, 1.0, 1.0, 1.0));
         r.useShaderProgram(program);
         mvp = mat4(1.0f);
-        mvp = rotate(mvp, radians(20.0f), normalize(vec3(0.0f, 1.0f, 1.0f)));
+        mvp = rotate(mvp, radians(100.0f), normalize(vec3(0.0f, 1.0f, 1.0f)));
         r.setUniform(program, "transform", mvp);
         r.drawObject(shape);
         r.show();
