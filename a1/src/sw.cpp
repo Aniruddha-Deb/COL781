@@ -1,3 +1,4 @@
+#define GLM_SWIZZLE
 #include "sw.hpp"
 
 #include <iostream>
@@ -372,15 +373,15 @@ namespace Software
 
     /** Drawing **/
 
-    bool membership_check(glm::vec2 (&triangle)[3], glm::vec2 &pt)
+    bool membership_check(glm::vec3 (&triangle)[3], glm::vec2 &pt)
     {
         // std::cout << triangle[0].x << " " << triangle[0].y << std::endl;
         // std::cout << triangle[1].x << " " << triangle[1].y << std::endl;
         // std::cout << triangle[2].x << " " << triangle[2].y << std::endl;
         for (int k = 0; k < 3; k++)
         {
-            glm::vec2 v1 = triangle[k % 3];
-            glm::vec2 v2 = triangle[(k + 1) % 3];
+            glm::vec2 v1 = triangle[k % 3].xy();
+            glm::vec2 v2 = triangle[(k + 1) % 3].xy();
             glm::vec2 s = v2 - v1;
             glm::vec2 t(-s.y, s.x);
 
@@ -410,12 +411,12 @@ namespace Software
         return color;
     }
 
-    float value_supersample(glm::vec2 (&triangle)[3], glm::vec2 pix, float pix_w, int spp)
+    float value_supersample(glm::vec3 (&triangle)[3], glm::vec3 pix, float pix_w, int spp)
     {
         int samples_inside = 0;
         int w = sqrt(spp);
         int pitch = pix_w / (w + 1);
-        auto tl_sample = pix + glm::vec2(pitch / 2, pitch / 2);
+        auto tl_sample = pix.xy() + glm::vec2(pitch / 2, pitch / 2);
 
         for (int i = 0; i < w; i++)
         {
@@ -435,10 +436,10 @@ namespace Software
         return glm::vec2(-1 + 2 * float(x) / w, -1 + 2 * float(y) / h);
     }
 
-    // Enable depth testing.
     void Rasterizer::enableDepthTest()
     {
-        // set boolean for this in rasterizer?
+        depth_enabled = true;
+        z_buffer = new Uint16[framebuffer->w * framebuffer -> h];
     }
 
     Uint32 vec4_to_color(SDL_PixelFormat *fmt, glm::vec4 color)
@@ -473,7 +474,8 @@ namespace Software
     {
         return abs((p2.x - p1.x) * (p1.y - p.y) - (p1.x - p.x) * (p2.y - p1.y)) / glm::distance(p1, p2);
     }
-    glm::vec4 interpolate(glm::vec2 (&triangle)[3], glm::vec2 pix, std::vector<glm::vec4> attribute)
+
+    glm::vec4 interpolate(glm::vec3 (&triangle)[3], glm::vec2 pix, std::vector<glm::vec4> attribute)
     {
         float phi1 = distance_point_to_line(pix, triangle[1], triangle[2]) /
                      distance_point_to_line(triangle[0], triangle[1], triangle[2]);
@@ -483,12 +485,13 @@ namespace Software
                      distance_point_to_line(triangle[2], triangle[0], triangle[1]);
         return (phi1 * attribute[0] + phi2 * attribute[1] + phi3 * attribute[2]);
     }
+
     void render_naive(glm::ivec3 idx, std::vector<Attribs> &vertex_attribs, std::vector<glm::vec4> &vertex_pos,
                       const Uniforms &uniforms, int attribute_cnt, FragmentShader fs, SDL_Surface *framebuffer, int spp)
     {
-        glm::vec2 triangle[3] = {glm::vec2(vertex_pos[idx.x].x, vertex_pos[idx.x].y),
-                                 glm::vec2(vertex_pos[idx.y].x, vertex_pos[idx.y].y),
-                                 glm::vec2(vertex_pos[idx.z].x, vertex_pos[idx.z].y)};
+        glm::vec3 triangle[3] = {glm::vec3(vertex_pos[idx.x].x, vertex_pos[idx.x].y, vertex_pos[idx.x].z),
+                                 glm::vec3(vertex_pos[idx.y].x, vertex_pos[idx.y].y, vertex_pos[idx.x].z),
+                                 glm::vec3(vertex_pos[idx.z].x, vertex_pos[idx.z].y, vertex_pos[idx.x].z)};
         Uint32 *pixels = (Uint32 *)framebuffer->pixels;
         SDL_PixelFormat *format = framebuffer->format;
         int h = framebuffer->h;
@@ -500,7 +503,8 @@ namespace Software
             {
                 Uint32 background = pixels[(h - j - 1) * w + i];
                 Uint32 foreground;
-                glm::vec2 pix_tl(pix_to_pt(i, j, w, h)[0], pix_to_pt(i, j, w, h)[1]);
+                // glm::vec4 fragment_coords = interpolate(triangle, pix_tl, vertex_pos);
+                glm::vec2 pix_tl = pix_to_pt(i, j, w, h);
                 // float v = value_supersample(triangle, pix_tl, pw, spp);
                 if (membership_check(triangle, pix_tl))
                 {
@@ -514,8 +518,11 @@ namespace Software
                                                              vertex_attribs[idx.z].get<glm::vec4>(attribute)}));
                     }
                     foreground =
-                        vec4_to_color(format, fs(uniforms, fragment_attributes)); // THis is where e1 throws exception
-                    pixels[(h - j - 1) * w + i] = pix_blend(foreground, background, framebuffer->format);
+                        vec4_to_color(format, fs(uniforms, fragment_attributes));
+                    // if (depth_enabled && z_buffer[(h-j-1)*w + i] > z ) {
+
+                        pixels[(h - j - 1) * w + i] = pix_blend(foreground, background, framebuffer->format);
+                    // }
                 }
             }
         }
@@ -527,12 +534,11 @@ namespace Software
                          attributeValues[attrib_idx][4 * vertex_idx + 2],
                          attributeValues[attrib_idx][4 * vertex_idx + 3]);
     }
+
     // Draws the triangles of the given object.
     void Rasterizer::drawObject(const Object &object)
     {
         // Implement the rendering pipeline here
-        // object --vs--> verts in NDC --rasterize--> fragments --fs--> colors
-        // TODO use vertex shader to get vertices in NDC
         int vertex_count = object.attributeValues[0].size() / object.attributeDims[0];
         std::vector<Attribs> vertex_attribs(vertex_count);
         std::vector<glm::vec4> vertex_pos(vertex_count);

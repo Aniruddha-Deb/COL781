@@ -81,8 +81,11 @@ private:
 	bool quit;
         // added by me. Ask in class/moodle if possible.
         // Asked. Waiting on update.
-        int spp;
+        int spp = 1;
         SDL_Surface *framebuffer;
         const ShaderProgram* shader_program;
+
+        bool depth_enabled = false;
+        Uint16 *z_buffer;
 
 };
