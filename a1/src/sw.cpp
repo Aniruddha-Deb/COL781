@@ -225,7 +225,8 @@ namespace Software
     // Deletes the given shader program.
     void Rasterizer::deleteShaderProgram(ShaderProgram &program)
     {
-        if (&program == shader_program) {
+        if (&program == shader_program)
+        {
             shader_program = nullptr;
         }
     }
@@ -327,36 +328,44 @@ namespace Software
         setAttribs(object, attribIndex, n, 4, (float *)data);
     }
 
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, float value) {
-            sp.uniforms.set<float>(name, value);
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, float value)
+    {
+        sp.uniforms.set<float>(name, value);
     }
 
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, int value) {
-            sp.uniforms.set<int>(name, value);
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, int value)
+    {
+        sp.uniforms.set<int>(name, value);
     }
 
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec2 value) {
-            sp.uniforms.set<glm::vec2>(name, value);
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec2 value)
+    {
+        sp.uniforms.set<glm::vec2>(name, value);
     }
 
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat2 value) {
-            sp.uniforms.set<glm::mat2>(name, value);
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat2 value)
+    {
+        sp.uniforms.set<glm::mat2>(name, value);
     }
 
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec3 value) {
-            sp.uniforms.set<glm::vec3>(name, value);
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec3 value)
+    {
+        sp.uniforms.set<glm::vec3>(name, value);
     }
 
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat3 value) {
-            sp.uniforms.set<glm::mat3>(name, value);
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat3 value)
+    {
+        sp.uniforms.set<glm::mat3>(name, value);
     }
 
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec4 value) {
-            sp.uniforms.set<glm::vec4>(name, value);
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::vec4 value)
+    {
+        sp.uniforms.set<glm::vec4>(name, value);
     }
 
-    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat4 value) {
-            sp.uniforms.set<glm::mat4>(name, value);
+    template <> void Rasterizer::setUniform(ShaderProgram &sp, const std::string &name, glm::mat4 value)
+    {
+        sp.uniforms.set<glm::mat4>(name, value);
     }
 
     // Sets the indices of the triangles.
@@ -439,7 +448,7 @@ namespace Software
     void Rasterizer::enableDepthTest()
     {
         depth_enabled = true;
-        z_buffer = new Uint16[framebuffer->w * framebuffer -> h];
+        z_buffer = new Uint16[framebuffer->w * framebuffer->h];
     }
 
     Uint32 vec4_to_color(SDL_PixelFormat *fmt, glm::vec4 color)
@@ -474,20 +483,56 @@ namespace Software
     {
         return abs((p2.x - p1.x) * (p1.y - p.y) - (p1.x - p.x) * (p2.y - p1.y)) / glm::distance(p1, p2);
     }
-
-    glm::vec4 interpolate(glm::vec3 (&triangle)[3], glm::vec2 pix, std::vector<glm::vec4> attribute)
+    glm::vec2 operator/(const glm::vec2 &lhs, const glm::vec2 &rhs)
     {
-        float phi1 = distance_point_to_line(pix, triangle[1], triangle[2]) /
-                     distance_point_to_line(triangle[0], triangle[1], triangle[2]);
-        float phi2 = distance_point_to_line(pix, triangle[0], triangle[2]) /
-                     distance_point_to_line(triangle[1], triangle[0], triangle[2]);
-        float phi3 = distance_point_to_line(pix, triangle[0], triangle[1]) /
-                     distance_point_to_line(triangle[2], triangle[0], triangle[1]);
-        return (phi1 * attribute[0] + phi2 * attribute[1] + phi3 * attribute[2]);
+        return glm::vec2(lhs.x / rhs.x, lhs.y / rhs.y);
+    }
+
+    glm::vec3 operator/(const glm::vec3 &lhs, const glm::vec3 &rhs)
+    {
+        return glm::vec3(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z);
+    }
+
+    glm::vec4 operator/(const glm::vec4 &lhs, const glm::vec4 &rhs)
+    {
+        return glm::vec4(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z, lhs.w / rhs.w);
+    }
+    glm::vec4 interpolate(glm::vec3 (&triangle)[3], glm::vec2 pix, std::vector<glm::vec4> attribute, bool depth_enabled)
+    {
+        std::cout << depth_enabled << std::endl;
+        if (!depth_enabled)
+        {
+            float phi1 = distance_point_to_line(pix, triangle[1], triangle[2]) /
+                         distance_point_to_line(triangle[0], triangle[1], triangle[2]);
+            float phi2 = distance_point_to_line(pix, triangle[0], triangle[2]) /
+                         distance_point_to_line(triangle[1], triangle[0], triangle[2]);
+            float phi3 = distance_point_to_line(pix, triangle[0], triangle[1]) /
+                         distance_point_to_line(triangle[2], triangle[0], triangle[1]);
+            return (phi1 * attribute[0] + phi2 * attribute[1] + phi3 * attribute[2]);
+        }
+        else
+        {
+            glm::vec2 norm_triangle[3] = {triangle[0].xy() / triangle[0].z, triangle[1].xy() / triangle[1].z,
+                                          triangle[2].xy() / triangle[2].z};
+            float phi1 = distance_point_to_line(pix, norm_triangle[1], norm_triangle[2]) /
+                         distance_point_to_line(norm_triangle[0], norm_triangle[1], norm_triangle[2]);
+            float phi2 = distance_point_to_line(pix, norm_triangle[0], norm_triangle[2]) /
+                         distance_point_to_line(norm_triangle[1], norm_triangle[0], norm_triangle[2]);
+            float phi3 = distance_point_to_line(pix, norm_triangle[0], norm_triangle[1]) /
+                         distance_point_to_line(norm_triangle[2], norm_triangle[0], norm_triangle[1]);
+            std::cout << ((phi1 * attribute[0] / triangle[0].z + phi2 * attribute[1] / triangle[1].z +
+                           phi3 * attribute[2] / triangle[2].z) /
+                          (phi1 / triangle[0].z + phi2 / triangle[1].z + phi3 / triangle[2].z))[0]
+                      << std::endl;
+            return (phi1 * attribute[0] / triangle[0].z + phi2 * attribute[1] / triangle[1].z +
+                    phi3 * attribute[2] / triangle[2].z) /
+                   (phi1 / triangle[0].z + phi2 / triangle[1].z + phi3 / triangle[2].z);
+        }
     }
 
     void render_naive(glm::ivec3 idx, std::vector<Attribs> &vertex_attribs, std::vector<glm::vec4> &vertex_pos,
-                      const Uniforms &uniforms, int attribute_cnt, FragmentShader fs, SDL_Surface *framebuffer, int spp)
+                      const Uniforms &uniforms, int attribute_cnt, FragmentShader fs, SDL_Surface *framebuffer, int spp,
+                      bool depth_enabled)
     {
         glm::vec3 triangle[3] = {glm::vec3(vertex_pos[idx.x].x, vertex_pos[idx.x].y, vertex_pos[idx.x].z),
                                  glm::vec3(vertex_pos[idx.y].x, vertex_pos[idx.y].y, vertex_pos[idx.x].z),
@@ -515,13 +560,13 @@ namespace Software
                                                 interpolate(triangle, pix_tl,
                                                             {vertex_attribs[idx.x].get<glm::vec4>(attribute),
                                                              vertex_attribs[idx.y].get<glm::vec4>(attribute),
-                                                             vertex_attribs[idx.z].get<glm::vec4>(attribute)}));
+                                                             vertex_attribs[idx.z].get<glm::vec4>(attribute)},
+                                                            depth_enabled));
                     }
-                    foreground =
-                        vec4_to_color(format, fs(uniforms, fragment_attributes));
+                    foreground = vec4_to_color(format, fs(uniforms, fragment_attributes));
                     // if (depth_enabled && z_buffer[(h-j-1)*w + i] > z ) {
 
-                        pixels[(h - j - 1) * w + i] = pix_blend(foreground, background, framebuffer->format);
+                    pixels[(h - j - 1) * w + i] = pix_blend(foreground, background, framebuffer->format);
                     // }
                 }
             }
@@ -554,7 +599,7 @@ namespace Software
         for (glm::ivec3 idx : object.indices)
         {
             render_naive(idx, vertex_attribs, vertex_pos, shader_program->uniforms, object.attributeValues.size() - 1,
-                         shader_program->fs, framebuffer, spp);
+                         shader_program->fs, framebuffer, spp, depth_enabled);
         }
     }
 
