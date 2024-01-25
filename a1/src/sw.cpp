@@ -5,10 +5,6 @@
 #include <iostream>
 #include <vector>
 
-#define RED_MASK   0x0000FF
-#define GREEN_MASK 0x00FF00
-#define BLUE_MASK  0xFF0000
-
 namespace COL781
 {
 namespace Software
@@ -272,12 +268,23 @@ namespace Software
         object.attributeDims[attribIndex] = dim;
     }
 
+    glm::vec4 getAttribs(const Object &object, int attribIndex, int n, int dim) {
+        Object::Buffer buf = object.attributeValues[attribIndex];
+        switch (dim) {
+            case 1: return glm::vec4(buf[dim*n + 0], 0, 0, 0);
+            case 2: return glm::vec4(buf[dim*n + 0], buf[dim*n + 1], 0, 0);
+            case 3: return glm::vec4(buf[dim*n + 0], buf[dim*n + 1], buf[dim*n + 2], 0);
+            case 4: return glm::vec4(buf[dim*n + 0], buf[dim*n + 1], buf[dim*n + 2], buf[dim*n + 3]);
+            default: std::cout << "That dimension is not supported!";
+        }
+        return glm::vec4(-1, -1, -1, -1);
+    }
+
     // clang-format off
     template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const float     *data) { setAttribs(object, attribIndex, n, 1, (float *)data); }
     template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec2 *data) { setAttribs(object, attribIndex, n, 2, (float *)data); }
     template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec3 *data) { setAttribs(object, attribIndex, n, 3, (float *)data); }
     template <> void Rasterizer::setVertexAttribs(Object &object, int attribIndex, int n, const glm::vec4 *data) { setAttribs(object, attribIndex, n, 4, (float *)data); }
-
     // clang-format on
 
     void Rasterizer::setTriangleIndices(Object &object, int n, glm::ivec3 *indices)
@@ -295,16 +302,16 @@ namespace Software
     /// Rendering
     ////////////////////////////////////////////////////////////////////////////
 
-    bool ptInTriangle(glm::vec3 (&triangle)[3], glm::vec2 &pt)
+    bool inTriangle(glm::vec2 &sample, glm::vec2 (&triangle)[3])
     {
         for (int k = 0; k < 3; k++)
         {
-            glm::vec2 v1 = triangle[k % 3].xy();
-            glm::vec2 v2 = triangle[(k + 1) % 3].xy();
+            glm::vec2 v1 = triangle[k % 3];
+            glm::vec2 v2 = triangle[(k + 1) % 3];
             glm::vec2 s = v2 - v1;
             glm::vec2 t(-s.y, s.x);
 
-            float dot = glm::dot(t, pt - v1);
+            float dot = glm::dot(t, sample - v1);
             if (dot < 0)
             {
                 return false;
@@ -313,7 +320,12 @@ namespace Software
         return true;
     }
 
-    glm::vec2 pix_to_pt(int x, int y, int w, int h)
+    float dperp(glm::vec2 p, glm::vec2 p1, glm::vec2 p2)
+    {
+        return abs((p2.x - p1.x) * (p1.y - p.y) - (p1.x - p.x) * (p2.y - p1.y)) / glm::distance(p1, p2);
+    }
+
+    glm::vec2 sampleToPt(int x, int y, int w, int h)
     {
         return glm::vec2(-1 + 2 * float(x) / w, -1 + 2 * float(y) / h);
     }
@@ -324,106 +336,30 @@ namespace Software
                            (Uint8)(color[3] * 255));
     }
 
-    // Clear the framebuffer, setting all pixels to the given color.
-    float distance_point_to_line(glm::vec2 p, glm::vec2 p1, glm::vec2 p2)
-    {
-        return abs((p2.x - p1.x) * (p1.y - p.y) - (p1.x - p.x) * (p2.y - p1.y)) / glm::distance(p1, p2);
-    }
-    // glm::vec2 operator/(const glm::vec2 &lhs, const glm::vec2 &rhs)
-    // {
-    //     return glm::vec2(lhs.x / rhs.x, lhs.y / rhs.y);
-    // }
-
-    // glm::vec3 operator/(const glm::vec3 &lhs, const glm::vec3 &rhs)
-    // {
-    //     return glm::vec3(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z);
-    // }
-
-    // glm::vec4(const glm::vec4 &lhs, const glm::vec4 &rhs)
-    // {
-    //     return glm::vec4(lhs.x / rhs.x, lhs.y / rhs.y, lhs.z / rhs.z, lhs.w / rhs.w);
-    // }
-    glm::vec4 interpolate(glm::vec3 (&triangle)[3], glm::vec2 pix, std::vector<glm::vec4> attribute, bool depth_enabled)
-    {
-        if (!depth_enabled)
-        {
-            float phi1 = distance_point_to_line(pix, triangle[1], triangle[2]) /
-                         distance_point_to_line(triangle[0], triangle[1], triangle[2]);
-            float phi2 = distance_point_to_line(pix, triangle[0], triangle[2]) /
-                         distance_point_to_line(triangle[1], triangle[0], triangle[2]);
-            float phi3 = distance_point_to_line(pix, triangle[0], triangle[1]) /
-                         distance_point_to_line(triangle[2], triangle[0], triangle[1]);
-            return (phi1 * attribute[0] + phi2 * attribute[1] + phi3 * attribute[2]);
-        }
-        else
-        {
-            std::cout << triangle[0].z << " " << triangle[1].z << " " << triangle[2].z << std::endl;
-            float phi1 = distance_point_to_line(pix, triangle[1], triangle[2]) /
-                         distance_point_to_line(triangle[0], triangle[1], triangle[2]);
-            float phi2 = distance_point_to_line(pix, triangle[0], triangle[2]) /
-                         distance_point_to_line(triangle[1], triangle[0], triangle[2]);
-            float phi3 = distance_point_to_line(pix, triangle[0], triangle[1]) /
-                         distance_point_to_line(triangle[2], triangle[0], triangle[1]);
-            // std::cout << ((phi1 * attribute[0] / triangle[0].z + phi2 * attribute[1] / triangle[1].z +
-            //                phi3 * attribute[2] / triangle[2].z) /
-            //               (phi1 / triangle[0].z + phi2 / triangle[1].z + phi3 / triangle[2].z))[0]
-            //           << std::endl;
-            return (phi1 * attribute[0] / triangle[0].z + phi2 * attribute[1] / triangle[1].z +
-                    phi3 * attribute[2] / triangle[2].z) /
-                   (phi1 / triangle[0].z + phi2 / triangle[1].z + phi3 / triangle[2].z);
-        }
+    glm::vec3 flatten(glm::vec4 hom) {
+        return hom.xyz()/hom.w;
     }
 
-    void render_naive(glm::ivec3 idx, std::vector<Attribs> &vertex_attribs, std::vector<glm::vec4> &vertex_pos,
-                      const Uniforms &uniforms, int attribute_cnt, FragmentShader fs, SDL_Surface *framebuffer, int spp,
-                      bool depth_enabled)
-    {
-        // std::cout << vertex_pos[idx.x].x << " " << vertex_pos[idx.x].y << " " << vertex_pos[idx.x].z << " "
-        //           << vertex_pos[idx.x].w << "\n";
-        glm::vec3 triangle[3] = {glm::vec3(vertex_pos[idx.x].x, vertex_pos[idx.x].y, vertex_pos[idx.x].z),
-                                 glm::vec3(vertex_pos[idx.y].x, vertex_pos[idx.y].y, vertex_pos[idx.x].z),
-                                 glm::vec3(vertex_pos[idx.z].x, vertex_pos[idx.z].y, vertex_pos[idx.x].z)};
-        Uint32 *pixels = (Uint32 *)framebuffer->pixels;
-        SDL_PixelFormat *format = framebuffer->format;
-        int h = framebuffer->h;
-        int w = framebuffer->w;
-        float pw = 2.f / w;
-        for (int i = 0; i < w; i++)
-        {
-            for (int j = 0; j < h; j++)
-            {
-                Uint32 background = pixels[(h - j - 1) * w + i];
-                Uint32 foreground;
-                // glm::vec4 fragment_coords = interpolate(triangle, pix_tl, vertex_pos);
-                glm::vec2 pix_tl = pix_to_pt(i, j, w, h);
-                // float v = value_supersample(triangle, pix_tl, pw, spp);
-                if (ptInTriangle(triangle, pix_tl))
-                {
-                    Attribs fragment_attributes;
-                    for (int attribute = 0; attribute < attribute_cnt; attribute++)
-                    {
-                        fragment_attributes.set(attribute,
-                                                interpolate(triangle, pix_tl,
-                                                            {vertex_attribs[idx.x].get<glm::vec4>(attribute),
-                                                             vertex_attribs[idx.y].get<glm::vec4>(attribute),
-                                                             vertex_attribs[idx.z].get<glm::vec4>(attribute)},
-                                                            depth_enabled));
-                    }
-                    foreground = vec4_to_color(format, fs(uniforms, fragment_attributes));
-                    // if (depth_enabled && z_buffer[(h-j-1)*w + i] > z ) {
-
-                    pixels[(h - j - 1) * w + i] = foreground;
-                    // }
-                }
-            }
-        }
+    glm::vec3 phi(glm::vec2 (&tri)[3], glm::vec2 pt) {
+        float norm = dperp(tri[0], tri[1], tri[2]);
+        return glm::vec3(
+                dperp(pt, tri[1], tri[2]) / norm,
+                dperp(pt, tri[2], tri[0]) / norm,
+                dperp(pt, tri[0], tri[1]) / norm 
+            );
     }
 
-    glm::vec4 GetAttribs(const std::vector<std::vector<float>> &attributeValues, int attrib_idx, int vertex_idx)
-    {
-        return glm::vec4(attributeValues[attrib_idx][4 * vertex_idx], attributeValues[attrib_idx][4 * vertex_idx + 1],
-                         attributeValues[attrib_idx][4 * vertex_idx + 2],
-                         attributeValues[attrib_idx][4 * vertex_idx + 3]);
+    glm::vec3 phi_pc(glm::vec4 (&hom_tri)[3], glm::vec3 p, glm::vec2 pt) {
+        float norm = (p[0]/hom_tri[0].w + p[1]/hom_tri[1].w + p[2]/hom_tri[2].w);
+        return glm::vec3(
+                p[0] / hom_tri[0].w,
+                p[1] / hom_tri[1].w,
+                p[2] / hom_tri[2].w
+            );
+    }
+
+    glm::vec4 interpolate(glm::vec4 (&vert_attribs)[3], glm::vec3 wts) {
+        return wts[0]*vert_attribs[0] + wts[1]*vert_attribs[1] + wts[2]*vert_attribs[2];
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -444,27 +380,82 @@ namespace Software
     // Draws the triangles of the given object.
     void Rasterizer::drawObject(const Object &object)
     {
-        // Implement the rendering pipeline here
+        Uint32 *pixels = (Uint32 *)framebuffer->pixels;
+        SDL_PixelFormat *format = framebuffer->format;
+        int h = framebuffer->h;
+        int w = framebuffer->w;
+
         int vertex_count = object.attributeValues[0].size() / object.attributeDims[0];
-        std::vector<Attribs> vertex_attribs(vertex_count);
+        std::vector<Attribs> vertex_in_attrs(vertex_count);
+        std::vector<Attribs> vertex_out_attrs(vertex_count);
         std::vector<glm::vec4> vertex_pos(vertex_count);
-        for (int vertex = 0; vertex < vertex_count; vertex++)
+
+        // vertex shaders
+        for (int v = 0; v < vertex_count; v++)
         {
-            for (int attribute = 0; attribute < object.attributeValues.size(); attribute++)
+            for (int i = 0; i < object.attributeValues.size(); i++)
             {
-                vertex_attribs[vertex].set(attribute, GetAttribs(object.attributeValues, attribute, vertex));
+                int dim = object.attributeDims[i];
+                vertex_in_attrs[v].set<glm::vec4>(i, getAttribs(object, i, v, dim));
             }
-            vertex_pos[vertex] =
-                shader_program->vs(shader_program->uniforms, vertex_attribs[vertex], vertex_attribs[vertex]);
+            vertex_pos[v] = shader_program->vs(
+                    shader_program->uniforms, vertex_in_attrs[v], vertex_out_attrs[v]
+                );
         }
-        for (glm::ivec3 idx : object.indices)
+
+        auto render_triangle = [&](glm::ivec3 idxs) {
+            glm::vec4 hom_tri[3] = { 
+                vertex_pos[idxs[0]], 
+                vertex_pos[idxs[1]], 
+                vertex_pos[idxs[2]] 
+            };
+            glm::vec2 tri[3] = {
+                flatten(hom_tri[0]).xy(), 
+                flatten(hom_tri[1]).xy(), 
+                flatten(hom_tri[2]).xy()
+            };
+
+            std::vector<std::tuple<int,int,glm::vec2>> fragments;
+
+            // TODO make this scanline
+            for (int x = 0; x < w; x++)
+            {
+                for (int y = 0; y < h; y++)
+                {
+                    glm::vec2 pt = sampleToPt(x, y, w, h);
+                    if (inTriangle(pt, tri)) fragments.push_back({x, y, pt});
+                }
+            }
+
+            for (auto [x, y, pt] : fragments) {
+                glm::vec3 p = phi(tri, pt);
+                glm::vec3 p_pc = phi_pc(hom_tri, p, pt);
+                // load and interpolate attributes
+                Attribs interp_attrs;
+                // HACK: find a way to iterate over the attributes present in 
+                // out_attrs, instead of just guessing.
+                for (int i=0; i<object.attributeValues.size()-1; i++) {
+                    glm::vec4 vert_attribs[3] = {
+                        vertex_out_attrs[idxs[0]].get<glm::vec4>(i),
+                        vertex_out_attrs[idxs[1]].get<glm::vec4>(i),
+                        vertex_out_attrs[idxs[2]].get<glm::vec4>(i),
+                    };
+                    interp_attrs.set<glm::vec4>(i, interpolate(vert_attribs, p_pc));
+                }
+
+                glm::vec4 color = shader_program->fs(shader_program->uniforms, interp_attrs);
+                pixels[(h-y-1)*w + x] = vec4_to_color(format, color);
+            }
+        };
+
+        for (glm::ivec3 idxs : object.indices)
         {
-            render_naive(idx, vertex_attribs, vertex_pos, shader_program->uniforms, object.attributeValues.size() - 1,
-                         shader_program->fs, framebuffer, spp, depth_enabled);
+            render_triangle(idxs);
         }
     }
 
     // Displays the framebuffer on the screen.
+    // This can probably be optimized/parallelized but eh, it works for now
     void Rasterizer::show()
     {
         auto windowSurface = SDL_GetWindowSurface(window);
