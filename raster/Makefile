@@ -11,3 +11,9 @@ endif
 
 raster: src/raster.cpp
 	$(CC) $(CFLAGS) src/raster.cpp $(INCLUDES) $(LDFLAGS) -o bin/raster
+
+display: src/display.cpp
+	$(CC) $(CFLAGS) src/display.cpp $(INCLUDES) $(LDFLAGS) -o bin/display
+
+rasterizer: src/rasterizer.cpp
+	$(CC) $(CFLAGS) src/rasterizer.cpp $(INCLUDES) $(LDFLAGS) -o bin/rasterizer

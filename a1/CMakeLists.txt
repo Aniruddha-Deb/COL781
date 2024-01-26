@@ -8,6 +8,7 @@ find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
 
 add_library(a1 src/hw.cpp src/sw.cpp deps/src/gl.c)
+add_compile_options(-O3 -funroll-loops)
 target_include_directories(a1 PUBLIC /opt/homebrew/include)
 target_include_directories(a1 PUBLIC deps/include)
 target_link_libraries(a1 glm::glm OpenGL::GL SDL2::SDL2)
