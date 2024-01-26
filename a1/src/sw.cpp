@@ -372,7 +372,7 @@ namespace Software
         z_buffer = new float[framebuffer->w * framebuffer->h];
         for (int i=0; i<framebuffer->w; i++) {
             for (int j=0; j<framebuffer->h; j++) {
-                z_buffer[framebuffer->h*i + j] = 0;
+                z_buffer[framebuffer->h*i + j] = 1;
             }
         }
     }
@@ -383,7 +383,7 @@ namespace Software
         if (depth_enabled) {
             for (int i=0; i<framebuffer->w; i++) {
                 for (int j=0; j<framebuffer->h; j++) {
-                    z_buffer[framebuffer->h*i + j] = 0;
+                    z_buffer[framebuffer->h*i + j] = 1;
                 }
             }
         }
@@ -416,9 +416,6 @@ namespace Software
         auto render_triangle = [&](glm::ivec3 idxs) {
             glm::vec4 hom_tri[3] = {vertex_pos[idxs[0]], vertex_pos[idxs[1]], vertex_pos[idxs[2]]};
             glm::vec2 tri[3] = {flatten(hom_tri[0]).xy(), flatten(hom_tri[1]).xy(), flatten(hom_tri[2]).xy()};
-            // std::cout << tri[1].x << " " << tri[1].y << "\n";
-            // std::cout << tri[2].x << " " << tri[2].y << "\n";
-            // std::cout << tri[0].x << " " << tri[0].y << "\n";
 
             std::vector<std::tuple<int, int, glm::vec2>> fragments;
 
@@ -428,11 +425,8 @@ namespace Software
                 for (int y = 0; y < h; y++)
                 {
                     glm::vec2 pt = sampleToPt(x, y, w, h);
-                    // glm::vec3 p = phi(tri, pt);
-                    // if (0 <= p[0] && p[0] <= 1 && 0 <= p[1] && p[1] <= 1 && 0 <= p[2] && p[2] <= 1)
                     if (inTriangle(pt, tri))
                     {
-                        // std::cout << "yes\n";
                         fragments.push_back({x, y, pt});
                     }
                 }
@@ -442,8 +436,8 @@ namespace Software
             {
                 glm::vec3 p = phi(tri, pt);
                 glm::vec3 p_pc = phi_pc(hom_tri, p, pt);
-                float z = hom_tri[0].w*p_pc[0]/hom_tri[0].z + hom_tri[1].w*p_pc[1]/hom_tri[1].z + hom_tri[2].w*p_pc[2]/hom_tri[2].z;
-                if (z < z_buffer[(h-y-1)*w + x]) {
+                float z = hom_tri[0].z*p_pc[0]/hom_tri[0].w + hom_tri[1].z*p_pc[1]/hom_tri[1].w + hom_tri[2].z*p_pc[2]/hom_tri[2].w;
+                if (z > z_buffer[(h-y-1)*w + x]) {
                     continue; // discard fragment
                 }
                 z_buffer[(h-y-1)*w + x] = z;
@@ -466,7 +460,6 @@ namespace Software
                 pixels[(h - y - 1) * w + x] = vec4_to_color(format, color);
             }
         };
-        // render_triangle(object.indices[1]);
         for (glm::ivec3 idxs : object.indices)
         {
             render_triangle(idxs);
