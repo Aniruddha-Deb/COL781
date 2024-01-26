@@ -308,11 +308,13 @@ namespace Software
         {
             glm::vec2 v1 = triangle[k % 3];
             glm::vec2 v2 = triangle[(k + 1) % 3];
+            glm::vec2 v3 = triangle[(k + 2) % 3];
             glm::vec2 s = v2 - v1;
             glm::vec2 t(-s.y, s.x);
 
             float dot = glm::dot(t, sample - v1);
-            if (dot < 0)
+            float vdot = glm::dot(t, v3 - v1);
+            if (dot * vdot < 0)
             {
                 return false;
             }
@@ -352,9 +354,9 @@ namespace Software
     glm::vec3 phi_pc(glm::vec4 (&hom_tri)[3], glm::vec3 p, glm::vec2 pt) {
         float norm = (p[0]/hom_tri[0].w + p[1]/hom_tri[1].w + p[2]/hom_tri[2].w);
         return glm::vec3(
-                p[0] / hom_tri[0].w,
-                p[1] / hom_tri[1].w,
-                p[2] / hom_tri[2].w
+                (p[0] / hom_tri[0].w) / norm,
+                (p[1] / hom_tri[1].w) / norm,
+                (p[2] / hom_tri[2].w) / norm
             );
     }
 
@@ -372,7 +374,7 @@ namespace Software
         z_buffer = new float[framebuffer->w * framebuffer->h];
         for (int i=0; i<framebuffer->w; i++) {
             for (int j=0; j<framebuffer->h; j++) {
-                z_buffer[framebuffer->h*i + j] = 1000000;
+                z_buffer[framebuffer->h*i + j] = 0;
             }
         }
     }
@@ -383,7 +385,7 @@ namespace Software
         if (depth_enabled) {
             for (int i=0; i<framebuffer->w; i++) {
                 for (int j=0; j<framebuffer->h; j++) {
-                    z_buffer[framebuffer->h*i + j] = 1000000;
+                    z_buffer[framebuffer->h*i + j] = 0;
                 }
             }
         }
@@ -427,6 +429,12 @@ namespace Software
                 flatten(hom_tri[2]).xy()
             };
 
+            /*
+            std::cout << tri[0].x << "," << tri[0].y << " " 
+                      << tri[1].x << "," << tri[1].y << " " 
+                      << tri[2].x << "," << tri[2].y << std::endl;
+            */
+
             std::vector<std::tuple<int,int,glm::vec2>> fragments;
 
             // TODO make this scanline
@@ -442,17 +450,11 @@ namespace Software
             for (auto [x, y, pt] : fragments) {
                 glm::vec3 p = phi(tri, pt);
                 glm::vec3 p_pc = phi_pc(hom_tri, p, pt);
-                // nope.
-                // @salil have a look pls thx
                 float z = hom_tri[0].w*p_pc[0]/hom_tri[0].z + hom_tri[1].w*p_pc[1]/hom_tri[1].z + hom_tri[2].w*p_pc[2]/hom_tri[2].z;
-                // std::cout << z << std::endl;
-
-                // glm::vec3 pos_ws = interpolate(hom_tri, p_pc);
-                // p_pc[2] = 1/z
-                if (z > z_buffer[(h-y-1)*w + x]) {
+                if (z < z_buffer[(h-y-1)*w + x]) {
                     continue; // discard fragment
                 }
-                z_buffer[(h-y-1)*w + x] = p_pc[2];
+                z_buffer[(h-y-1)*w + x] = z;
                 // load and interpolate attributes
                 Attribs interp_attrs;
                 // HACK: find a way to iterate over the attributes present in 

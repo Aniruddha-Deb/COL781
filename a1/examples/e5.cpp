@@ -16,10 +16,10 @@ int main() {
         r.fsIdentity()
     );
     vec4 vertices[] = {
-        vec4( -0.8,  -0.8, 0.1, 1.0),
-        vec4(  0.8,  -0.8, 0.1, 1.0),
-	vec4( -0.8,   0.8, 0.1, 1.0),
-        vec4(  0.8,   0.8, 0.1, 1.0)
+        vec4( -0.8,  -0.8, 0.0, 1.0),
+        vec4(  0.8,  -0.8, 0.0, 1.0),
+	vec4( -0.8,   0.8, 0.0, 1.0),
+        vec4(  0.8,   0.8, 0.0, 1.0)
     };
     vec4 colors[] = {
 	vec4(0.0, 0.4, 0.6, 1.0),
@@ -38,7 +38,7 @@ int main() {
     r.enableDepthTest();
     // The transformation matrix.
     mat4 model = mat4(1.0f);
-	mat4 view = translate(mat4(1.0f), vec3(0.0f, 0.0f, -2.0f)); 
+    mat4 view = translate(mat4(1.0f), vec3(0.0f, 0.0f, -2.0f)); 
     mat4 projection = perspective(radians(60.0f), (float)width/(float)height, 0.1f, 100.0f);
     float speed = 90.0f; // degrees per second
     while (!r.shouldQuit()) {
@@ -47,7 +47,7 @@ int main() {
         r.useShaderProgram(program);
         model = rotate(mat4(1.0f), radians(speed * time), vec3(1.0f,0.0f,0.0f));
         r.setUniform(program, "transform", projection * view * model);
-		r.drawObject(shape);
+        r.drawObject(shape);
         r.show();
     }
     r.deleteShaderProgram(program);
