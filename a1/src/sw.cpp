@@ -301,35 +301,44 @@ namespace Software
     /// Rendering
     ////////////////////////////////////////////////////////////////////////////
 
-    bool inTriangle(glm::vec2 &sample, glm::vec2 (&triangle)[3])
-    {
-        // idk why other methods didn't work. But this one works and seems to be faster
-        // we can stick with this one... it is indeed faster.
-        // the other method only checked for CCW vertex order
-        float denominator =
-            (triangle[0].x * (triangle[1].y - triangle[2].y) + triangle[0].y * (triangle[2].x - triangle[1].x) +
-             triangle[1].x * triangle[2].y - triangle[1].y * triangle[2].x);
-        float t1 = (sample.x * (triangle[2].y - triangle[0].y) + sample.y * (triangle[0].x - triangle[2].x) -
-                    triangle[0].x * triangle[2].y + triangle[0].y * triangle[2].x) /
-                   denominator;
-        float t2 = -(sample.x * (triangle[1].y - triangle[0].y) + sample.y * (triangle[0].x - triangle[1].x) -
-                     triangle[0].x * triangle[1].y + triangle[0].y * triangle[1].x) /
-                   denominator;
-        float s = t1 + t2;
-        return 0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1 && s <= 1;
-    }
+    // glm::vec3 inTriangle(glm::vec2 &sample, glm::vec2 (&triangle)[3])
+    // {
+    //     // idk why other methods didn't work. But this one works and seems to be faster
+    //     // we can stick with this one... it is indeed faster.
+    //     // the other method only checked for CCW vertex order
+    //     float denominator =
+    //         (triangle[0].x * (triangle[1].y - triangle[2].y) + triangle[0].y * (triangle[2].x - triangle[1].x) +
+    //          triangle[1].x * triangle[2].y - triangle[1].y * triangle[2].x);
+    //     float t1 = (sample.x * (triangle[2].y - triangle[0].y) + sample.y * (triangle[0].x - triangle[2].x) -
+    //                 triangle[0].x * triangle[2].y + triangle[0].y * triangle[2].x) /
+    //                denominator;
+    //     float t2 = -(sample.x * (triangle[1].y - triangle[0].y) + sample.y * (triangle[0].x - triangle[1].x) -
+    //                  triangle[0].x * triangle[1].y + triangle[0].y * triangle[1].x) /
+    //                denominator;
+    //     float s = 1 - t1 - t2;
+    //     if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1 && t1 + t2 <= 1)
+    //     {
+    //         std::cout << t1 << " " << t2 << " " << 1 - t1 - t2 << "ok\n";
+    //         return glm::vec3(s, t1, t2);
+    //     }
+    //     return glm::vec3(-1, -1, -1);
+    // }
 
-    float dperp(glm::vec2 p, glm::vec2 p1, glm::vec2 p2)
-    {
-        return abs((p2.x - p1.x) * (p1.y - p.y) - (p1.x - p.x) * (p2.y - p1.y)) / glm::distance(p1, p2);
-    }
+    // float dperp(glm::vec2 p, glm::vec2 p1, glm::vec2 p2)
+    // {
+    //     return abs((p2.x - p1.x) * (p1.y - p.y) - (p1.x - p.x) * (p2.y - p1.y)) / glm::distance(p1, p2);
+    // }
 
     glm::vec2 sampleToPt(int x, int y, int w, int h)
     {
-        return glm::vec2(-1 + 2 * float(x) / w, -1 + 2 * float(y) / h);
+        return glm::vec2(-1 + 2 * (float(x) + 0.5) / w, -1 + 2 * (float(y) + 0.5) / h);
+    }
+    glm::ivec2 PtTosample(glm::vec2 pt, int w, int h)
+    {
+        return glm::ivec2(((pt.x + 1) * w) / 2 - 0.5, ((pt.y + 1) * h) / 2 - 0.5);
     }
 
-    Uint32 vec4_to_color(SDL_PixelFormat *fmt, glm::vec4 color)
+    Uint32 vec4_to_color(SDL_PixelFormat *fmt, glm::vec4 &color)
     {
         return SDL_MapRGBA(fmt, (Uint8)(color[0] * 255), (Uint8)(color[1] * 255), (Uint8)(color[2] * 255),
                            (Uint8)(color[3] * 255));
@@ -342,19 +351,22 @@ namespace Software
 
     glm::vec3 phi(glm::vec2 (&tri)[3], glm::vec2 pt)
     {
-        float norm = dperp(tri[0], tri[1], tri[2]);
-        return glm::vec3(dperp(pt, tri[1], tri[2]) / dperp(tri[0], tri[1], tri[2]),
-                         dperp(pt, tri[2], tri[0]) / dperp(tri[1], tri[2], tri[0]),
-                         dperp(pt, tri[0], tri[1]) / dperp(tri[2], tri[0], tri[1]));
+        float denominator = (tri[0].x * (tri[1].y - tri[2].y) + tri[0].y * (tri[2].x - tri[1].x) + tri[1].x * tri[2].y -
+                             tri[1].y * tri[2].x);
+        float t1 =
+            (pt.x * (tri[2].y - tri[0].y) + pt.y * (tri[0].x - tri[2].x) - tri[0].x * tri[2].y + tri[0].y * tri[2].x) /
+            denominator;
+        float t2 =
+            -(pt.x * (tri[1].y - tri[0].y) + pt.y * (tri[0].x - tri[1].x) - tri[0].x * tri[1].y + tri[0].y * tri[1].x) /
+            denominator;
+        float s = 1 - t1 - t2;
+        return glm::vec3(s, t1, t2);
     }
 
-    glm::vec3 phi_pc(glm::vec4 (&hom_tri)[3], glm::vec3 p, glm::vec2 pt) {
-        float norm = (p[0]/hom_tri[0].w + p[1]/hom_tri[1].w + p[2]/hom_tri[2].w);
-        return glm::vec3(
-                (p[0] / hom_tri[0].w) / norm,
-                (p[1] / hom_tri[1].w) / norm,
-                (p[2] / hom_tri[2].w) / norm
-            );
+    glm::vec3 phi_pc(glm::vec4 (&hom_tri)[3], glm::vec3 p, glm::vec2 pt)
+    {
+        float norm = (p[0] / hom_tri[0].w + p[1] / hom_tri[1].w + p[2] / hom_tri[2].w);
+        return glm::vec3((p[0] / hom_tri[0].w) / norm, (p[1] / hom_tri[1].w) / norm, (p[2] / hom_tri[2].w) / norm);
     }
 
     glm::vec4 interpolate(glm::vec4 (&vert_attribs)[3], glm::vec3 wts)
@@ -370,9 +382,11 @@ namespace Software
     {
         depth_enabled = true;
         z_buffer = new float[framebuffer->w * framebuffer->h];
-        for (int i=0; i<framebuffer->w; i++) {
-            for (int j=0; j<framebuffer->h; j++) {
-                z_buffer[framebuffer->h*i + j] = 1;
+        for (int i = 0; i < framebuffer->w; i++)
+        {
+            for (int j = 0; j < framebuffer->h; j++)
+            {
+                z_buffer[framebuffer->h * i + j] = 1;
             }
         }
     }
@@ -380,10 +394,13 @@ namespace Software
     void Rasterizer::clear(glm::vec4 color)
     {
         SDL_FillRect(framebuffer, NULL, vec4_to_color(framebuffer->format, color));
-        if (depth_enabled) {
-            for (int i=0; i<framebuffer->w; i++) {
-                for (int j=0; j<framebuffer->h; j++) {
-                    z_buffer[framebuffer->h*i + j] = 1;
+        if (depth_enabled)
+        {
+            for (int i = 0; i < framebuffer->w; i++)
+            {
+                for (int j = 0; j < framebuffer->h; j++)
+                {
+                    z_buffer[framebuffer->h * i + j] = 1;
                 }
             }
         }
@@ -413,35 +430,50 @@ namespace Software
             vertex_pos[v] = shader_program->vs(shader_program->uniforms, vertex_in_attrs[v], vertex_out_attrs[v]);
         }
 
-        auto render_triangle = [&](glm::ivec3 idxs) {
+        auto render_triangle = [&](glm::ivec3 &idxs) {
             glm::vec4 hom_tri[3] = {vertex_pos[idxs[0]], vertex_pos[idxs[1]], vertex_pos[idxs[2]]};
             glm::vec2 tri[3] = {flatten(hom_tri[0]).xy(), flatten(hom_tri[1]).xy(), flatten(hom_tri[2]).xy()};
 
-            std::vector<std::tuple<int, int, glm::vec2>> fragments;
+            std::vector<std::tuple<int, int, glm::vec3>> fragments;
 
             // TODO make this scanline
-            for (int x = 0; x < w; x++)
+            // Added bounding box. Makes it considerably faster
+            float min_x_pt = std::min(tri[0].x, std::min(tri[1].x, tri[2].x));
+            float max_x_pt = std::max(tri[0].x, std::max(tri[1].x, tri[2].x));
+            float min_y_pt = std::min(tri[0].y, std::min(tri[1].y, tri[2].y));
+            float max_y_pt = std::max(tri[0].y, std::max(tri[1].y, tri[2].y));
+            glm::ivec2 min_bound =
+                PtTosample(glm::vec2(min_x_pt, min_y_pt), w, h) - glm::ivec2(2, 2); // padding of 2 for safety
+            glm::ivec2 max_bound = PtTosample(glm::vec2(max_x_pt, max_y_pt), w, h) + glm::ivec2(2, 2);
+            // std::cout << min_x << " " << max_x << "" << w << "\n";
+            for (int x = std::max(0, min_bound.x); x < std::min(w, max_bound.x); x++)
             {
-                for (int y = 0; y < h; y++)
+                for (int y = std::max(0, min_bound.y); y < std::min(h, max_bound.y); y++)
                 {
+                    // Using barycentric coords for membership check and then passing them along to avoid recomputation
                     glm::vec2 pt = sampleToPt(x, y, w, h);
-                    if (inTriangle(pt, tri))
+                    glm::vec3 p = phi(tri, pt);
+                    if (0 <= p[0] && p[0] <= 1 && 0 <= p[1] && p[1] <= 1 && 0 <= p[2] && p[2] <= 1)
                     {
-                        fragments.push_back({x, y, pt});
+                        fragments.push_back({x, y, phi_pc(hom_tri, p, pt)});
                     }
                 }
             }
 
-            for (auto [x, y, pt] : fragments)
+            for (auto [x, y, p_pc] : fragments)
             {
-                glm::vec3 p = phi(tri, pt);
-                glm::vec3 p_pc = phi_pc(hom_tri, p, pt);
-                if (depth_enabled) {
-                    float z = hom_tri[0].z*p_pc[0]/hom_tri[0].w + hom_tri[1].z*p_pc[1]/hom_tri[1].w + hom_tri[2].z*p_pc[2]/hom_tri[2].w;
-                    if (z > z_buffer[(h-y-1)*w + x]) {
+                // glm::vec2 pt = sampleToPt(x, y, w, h);
+                // glm::vec3 p = phi(tri, pt);
+                // glm::vec3 p_pc = phi_pc(hom_tri, p, pt);
+                if (depth_enabled)
+                {
+                    float z = hom_tri[0].z * p_pc[0] / hom_tri[0].w + hom_tri[1].z * p_pc[1] / hom_tri[1].w +
+                              hom_tri[2].z * p_pc[2] / hom_tri[2].w;
+                    if (z > z_buffer[(h - y - 1) * w + x])
+                    {
                         continue; // discard fragment
                     }
-                    z_buffer[(h-y-1)*w + x] = z;
+                    z_buffer[(h - y - 1) * w + x] = z;
                 }
 
                 // load and interpolate attributes
@@ -462,6 +494,7 @@ namespace Software
                 pixels[(h - y - 1) * w + x] = vec4_to_color(format, color);
             }
         };
+        // render_triangle(object.indices[0]);
         for (glm::ivec3 idxs : object.indices)
         {
             render_triangle(idxs);
