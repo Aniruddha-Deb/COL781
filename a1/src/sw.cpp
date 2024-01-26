@@ -96,7 +96,6 @@ namespace Software
         }
     }
 
-
     void expand(std::vector<int> &dims, std::vector<glm::vec4> &values, int index)
     {
         if (dims.size() < index + 1)
@@ -304,22 +303,20 @@ namespace Software
 
     bool inTriangle(glm::vec2 &sample, glm::vec2 (&triangle)[3])
     {
-        for (int k = 0; k < 3; k++)
-        {
-            glm::vec2 v1 = triangle[k % 3];
-            glm::vec2 v2 = triangle[(k + 1) % 3];
-            glm::vec2 v3 = triangle[(k + 2) % 3];
-            glm::vec2 s = v2 - v1;
-            glm::vec2 t(-s.y, s.x);
-
-            float dot = glm::dot(t, sample - v1);
-            float vdot = glm::dot(t, v3 - v1);
-            if (dot * vdot < 0)
-            {
-                return false;
-            }
-        }
-        return true;
+        // idk why other methods didn't work. But this one works and seems to be faster
+        // we can stick with this one... it is indeed faster.
+        // the other method only checked for CCW vertex order
+        float denominator =
+            (triangle[0].x * (triangle[1].y - triangle[2].y) + triangle[0].y * (triangle[2].x - triangle[1].x) +
+             triangle[1].x * triangle[2].y - triangle[1].y * triangle[2].x);
+        float t1 = (sample.x * (triangle[2].y - triangle[0].y) + sample.y * (triangle[0].x - triangle[2].x) -
+                    triangle[0].x * triangle[2].y + triangle[0].y * triangle[2].x) /
+                   denominator;
+        float t2 = -(sample.x * (triangle[1].y - triangle[0].y) + sample.y * (triangle[0].x - triangle[1].x) -
+                     triangle[0].x * triangle[1].y + triangle[0].y * triangle[1].x) /
+                   denominator;
+        float s = t1 + t2;
+        return 0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1 && s <= 1;
     }
 
     float dperp(glm::vec2 p, glm::vec2 p1, glm::vec2 p2)
@@ -338,17 +335,17 @@ namespace Software
                            (Uint8)(color[3] * 255));
     }
 
-    glm::vec3 flatten(glm::vec4 hom) {
-        return hom.xyz()/hom.w;
+    glm::vec3 flatten(glm::vec4 hom)
+    {
+        return hom.xyz() / hom.w;
     }
 
-    glm::vec3 phi(glm::vec2 (&tri)[3], glm::vec2 pt) {
+    glm::vec3 phi(glm::vec2 (&tri)[3], glm::vec2 pt)
+    {
         float norm = dperp(tri[0], tri[1], tri[2]);
-        return glm::vec3(
-                dperp(pt, tri[1], tri[2]) / dperp(tri[0], tri[1], tri[2]),
-                dperp(pt, tri[2], tri[0]) / dperp(tri[1], tri[2], tri[0]),
-                dperp(pt, tri[0], tri[1]) / dperp(tri[2], tri[0], tri[1]) 
-            );
+        return glm::vec3(dperp(pt, tri[1], tri[2]) / dperp(tri[0], tri[1], tri[2]),
+                         dperp(pt, tri[2], tri[0]) / dperp(tri[1], tri[2], tri[0]),
+                         dperp(pt, tri[0], tri[1]) / dperp(tri[2], tri[0], tri[1]));
     }
 
     glm::vec3 phi_pc(glm::vec4 (&hom_tri)[3], glm::vec3 p, glm::vec2 pt) {
@@ -360,8 +357,9 @@ namespace Software
             );
     }
 
-    glm::vec4 interpolate(glm::vec4 (&vert_attribs)[3], glm::vec3 wts) {
-        return wts[0]*vert_attribs[0] + wts[1]*vert_attribs[1] + wts[2]*vert_attribs[2];
+    glm::vec4 interpolate(glm::vec4 (&vert_attribs)[3], glm::vec3 wts)
+    {
+        return wts[0] * vert_attribs[0] + wts[1] * vert_attribs[1] + wts[2] * vert_attribs[2];
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -412,30 +410,17 @@ namespace Software
                 int dim = object.attributeDims[i];
                 vertex_in_attrs[v].set<glm::vec4>(i, getAttribs(object, i, v, dim));
             }
-            vertex_pos[v] = shader_program->vs(
-                    shader_program->uniforms, vertex_in_attrs[v], vertex_out_attrs[v]
-                );
+            vertex_pos[v] = shader_program->vs(shader_program->uniforms, vertex_in_attrs[v], vertex_out_attrs[v]);
         }
 
         auto render_triangle = [&](glm::ivec3 idxs) {
-            glm::vec4 hom_tri[3] = { 
-                vertex_pos[idxs[0]], 
-                vertex_pos[idxs[1]], 
-                vertex_pos[idxs[2]] 
-            };
-            glm::vec2 tri[3] = {
-                flatten(hom_tri[0]).xy(), 
-                flatten(hom_tri[1]).xy(), 
-                flatten(hom_tri[2]).xy()
-            };
+            glm::vec4 hom_tri[3] = {vertex_pos[idxs[0]], vertex_pos[idxs[1]], vertex_pos[idxs[2]]};
+            glm::vec2 tri[3] = {flatten(hom_tri[0]).xy(), flatten(hom_tri[1]).xy(), flatten(hom_tri[2]).xy()};
+            // std::cout << tri[1].x << " " << tri[1].y << "\n";
+            // std::cout << tri[2].x << " " << tri[2].y << "\n";
+            // std::cout << tri[0].x << " " << tri[0].y << "\n";
 
-            /*
-            std::cout << tri[0].x << "," << tri[0].y << " " 
-                      << tri[1].x << "," << tri[1].y << " " 
-                      << tri[2].x << "," << tri[2].y << std::endl;
-            */
-
-            std::vector<std::tuple<int,int,glm::vec2>> fragments;
+            std::vector<std::tuple<int, int, glm::vec2>> fragments;
 
             // TODO make this scanline
             for (int x = 0; x < w; x++)
@@ -443,11 +428,18 @@ namespace Software
                 for (int y = 0; y < h; y++)
                 {
                     glm::vec2 pt = sampleToPt(x, y, w, h);
-                    if (inTriangle(pt, tri)) fragments.push_back({x, y, pt});
+                    // glm::vec3 p = phi(tri, pt);
+                    // if (0 <= p[0] && p[0] <= 1 && 0 <= p[1] && p[1] <= 1 && 0 <= p[2] && p[2] <= 1)
+                    if (inTriangle(pt, tri))
+                    {
+                        // std::cout << "yes\n";
+                        fragments.push_back({x, y, pt});
+                    }
                 }
             }
 
-            for (auto [x, y, pt] : fragments) {
+            for (auto [x, y, pt] : fragments)
+            {
                 glm::vec3 p = phi(tri, pt);
                 glm::vec3 p_pc = phi_pc(hom_tri, p, pt);
                 float z = hom_tri[0].w*p_pc[0]/hom_tri[0].z + hom_tri[1].w*p_pc[1]/hom_tri[1].z + hom_tri[2].w*p_pc[2]/hom_tri[2].z;
@@ -455,11 +447,13 @@ namespace Software
                     continue; // discard fragment
                 }
                 z_buffer[(h-y-1)*w + x] = z;
+
                 // load and interpolate attributes
                 Attribs interp_attrs;
-                // HACK: find a way to iterate over the attributes present in 
+                // HACK: find a way to iterate over the attributes present in
                 // out_attrs, instead of just guessing.
-                for (int i=0; i<object.attributeValues.size()-1; i++) {
+                for (int i = 0; i < object.attributeValues.size() - 1; i++)
+                {
                     glm::vec4 vert_attribs[3] = {
                         vertex_out_attrs[idxs[0]].get<glm::vec4>(i),
                         vertex_out_attrs[idxs[1]].get<glm::vec4>(i),
@@ -469,10 +463,10 @@ namespace Software
                 }
 
                 glm::vec4 color = shader_program->fs(shader_program->uniforms, interp_attrs);
-                pixels[(h-y-1)*w + x] = vec4_to_color(format, color);
+                pixels[(h - y - 1) * w + x] = vec4_to_color(format, color);
             }
         };
-
+        // render_triangle(object.indices[1]);
         for (glm::ivec3 idxs : object.indices)
         {
             render_triangle(idxs);
@@ -485,25 +479,30 @@ namespace Software
     {
         auto windowSurface = SDL_GetWindowSurface(window);
         int w = framebuffer->w;
-        int b = w/windowSurface->w;
+        int b = w / windowSurface->w;
         int buf, avg[3];
         Uint8 px[3];
-        for (int i=0; i<windowSurface->h; i++) {
-            for (int j=0; j<windowSurface->w; j++) {
+        for (int i = 0; i < windowSurface->h; i++)
+        {
+            for (int j = 0; j < windowSurface->w; j++)
+            {
                 avg[0] = avg[1] = avg[2] = 0;
-                for (int k=0; k<b; k++) {
-                    for (int l=0; l<b; l++) {
-                        buf = ((Uint32*)framebuffer->pixels)[w*(i*b + k) + j*b + l];
-                        SDL_GetRGB(buf, framebuffer->format, px, (px+1), (px+2));
+                for (int k = 0; k < b; k++)
+                {
+                    for (int l = 0; l < b; l++)
+                    {
+                        buf = ((Uint32 *)framebuffer->pixels)[w * (i * b + k) + j * b + l];
+                        SDL_GetRGB(buf, framebuffer->format, px, (px + 1), (px + 2));
                         avg[0] += px[0];
                         avg[1] += px[1];
                         avg[2] += px[2];
                     }
                 }
-                avg[0] /= b*b;
-                avg[1] /= b*b;
-                avg[2] /= b*b;
-                ((Uint32*)windowSurface->pixels)[windowSurface->w*i + j] = SDL_MapRGB(windowSurface->format, avg[0], avg[1], avg[2]);
+                avg[0] /= b * b;
+                avg[1] /= b * b;
+                avg[2] /= b * b;
+                ((Uint32 *)windowSurface->pixels)[windowSurface->w * i + j] =
+                    SDL_MapRGB(windowSurface->format, avg[0], avg[1], avg[2]);
             }
         }
         // SDL_BlitScaled(framebuffer, NULL, windowSurface, NULL);
