@@ -436,11 +436,13 @@ namespace Software
             {
                 glm::vec3 p = phi(tri, pt);
                 glm::vec3 p_pc = phi_pc(hom_tri, p, pt);
-                float z = hom_tri[0].z*p_pc[0]/hom_tri[0].w + hom_tri[1].z*p_pc[1]/hom_tri[1].w + hom_tri[2].z*p_pc[2]/hom_tri[2].w;
-                if (z > z_buffer[(h-y-1)*w + x]) {
-                    continue; // discard fragment
+                if (depth_enabled) {
+                    float z = hom_tri[0].z*p_pc[0]/hom_tri[0].w + hom_tri[1].z*p_pc[1]/hom_tri[1].w + hom_tri[2].z*p_pc[2]/hom_tri[2].w;
+                    if (z > z_buffer[(h-y-1)*w + x]) {
+                        continue; // discard fragment
+                    }
+                    z_buffer[(h-y-1)*w + x] = z;
                 }
-                z_buffer[(h-y-1)*w + x] = z;
 
                 // load and interpolate attributes
                 Attribs interp_attrs;
