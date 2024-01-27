@@ -19,6 +19,8 @@ namespace COL781 {
 			int nTris;
 		};
 
+        class RasterizerThreadPool; // HACK
+
 #include "api.inc"
 
 	}

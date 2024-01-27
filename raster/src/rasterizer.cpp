@@ -40,10 +40,13 @@ void RasterizerThreadPool::_thread_fn(int index) {
 }
 
 void RasterizerThreadPool::start() {
-    for (int i=0; i<_n_threads; i++) {
-        // TODO CPU affinity - not so easy to set in a cross-platform manner.
-        // Especially hard (impossible?) to do on MacOS w/ arm processors
-        _threads[i] = std::thread([this, i] { this->_thread_fn(i); } );
+    if (!_alive) {
+        _alive = true;
+        for (int i=0; i<_n_threads; i++) {
+            // TODO CPU affinity - not so easy to set in a cross-platform manner.
+            // Especially hard (impossible?) to do on MacOS w/ arm processors
+            _threads[i] = std::thread([this, i] { this->_thread_fn(i); } );
+        }
     }
 }
 

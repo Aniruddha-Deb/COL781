@@ -85,6 +85,8 @@ private:
         SDL_Surface *framebuffer;
         const ShaderProgram* shader_program;
 
+        RasterizerThreadPool *rtp;
+
         bool depth_enabled = false;
         float *z_buffer;
 

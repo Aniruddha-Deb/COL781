@@ -3,3 +3,8 @@
    for thread creation
 3. Integrate rasterizer into sw.cpp
   - run vs and fs
+
+
+pass all transformed vertices to the renderthreadpool.
+? Can I make the threadpool function-oriented? Won't need to maintain a class 
+and pass all this stuff around then.
