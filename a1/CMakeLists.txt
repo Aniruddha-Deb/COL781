@@ -34,6 +34,9 @@ target_link_libraries(e6 a1)
 add_executable(e7 examples/e7.cpp)
 target_link_libraries(e7 a1)
 
+add_executable(e8 examples/e8.cpp)
+target_link_libraries(e8 a1)
+
 add_executable(uniforms examples/uniforms.cpp)
 target_link_libraries(uniforms a1)
 
