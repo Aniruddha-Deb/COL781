@@ -305,7 +305,7 @@ std::mutex mtx;
             object.indices[i] = indices[i];
         }
 
-        printObject(object);
+        // printObject(object);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -599,10 +599,9 @@ std::mutex mtx;
 
                 // load and interpolate attributes
                 Attribs interp_attrs;
-                // HACK: find a way to iterate over the attributes present in
-                // out_attrs, instead of just guessing.
                 for (int i = 0; i < attrs[0].size(); i++)
                 {
+                    // assuming vec4 here.
                     glm::vec4 vert_attribs[3] = {
                         attrs[0].get<glm::vec4>(i),
                         attrs[1].get<glm::vec4>(i),
