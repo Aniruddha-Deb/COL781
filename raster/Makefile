@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++17
+CFLAGS = -std=c++17 -O3
 
 INCLUDES =
 LDFLAGS = -lSDL2 -lSDL2_image

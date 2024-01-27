@@ -10,9 +10,10 @@ class Rasterizer;
 class RasterizerThreadPool {
     public:
         RasterizerThreadPool(Rasterizer* r, size_t n_threads);
+        ~RasterizerThreadPool();
         void run();
-        void enqueue(glm::ivec2& tl, glm::ivec2& br);
-        void set_render_function(std::function<void(Rasterizer*,glm::vec2(&)[3],glm::ivec2&,glm::ivec2&)>& fn);
+        void enqueue(glm::ivec2 tl, glm::ivec2 br);
+        void set_render_function(std::function<void(int,Rasterizer*,glm::vec2(&)[3],glm::ivec2&,glm::ivec2&)> fn);
         void set_triangle(glm::vec2 (&tri)[3]);
 
     private:
@@ -23,12 +24,13 @@ class RasterizerThreadPool {
         std::vector<std::thread> _threads;
         std::vector<std::vector<std::pair<glm::ivec2,glm::ivec2>>> _workqueues;
         int _next_workq;
+        volatile bool _alive;
         std::vector<bool> _work;
         std::vector<bool> _relax;
         std::vector<std::mutex> _work_lock;
         std::vector<std::mutex> _work_write_lock;
         glm::vec2 _tri[3];
-        std::function<void(Rasterizer*, glm::vec2(&)[3], glm::ivec2&, glm::ivec2&)> _fn;
+        std::function<void(int, Rasterizer*, glm::vec2(&)[3], glm::ivec2&, glm::ivec2&)> _fn;
 };
 
 class Rasterizer {

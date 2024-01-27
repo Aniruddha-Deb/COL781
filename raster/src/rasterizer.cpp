@@ -12,22 +12,39 @@ RasterizerThreadPool::RasterizerThreadPool(Rasterizer *r, size_t n_threads) :
     _threads(n_threads),
     _workqueues(n_threads, std::vector<std::pair<glm::ivec2, glm::ivec2>>()),
     _next_workq{0},
+    _alive{true},
     _work(n_threads, false),
+    _work_lock(n_threads),
+    _work_write_lock(n_threads),
     _tri{},
     _fn{}
 {
+    /*
     for (int i=0; i<n_threads; i++) {
         _work_lock[i].lock();
     }
+    */
     for (int i=0; i<n_threads; i++) {
-        _threads[i] = std::thread(&RasterizerThreadPool::_thread_fn, this, i);
+        _threads[i] = std::thread([this, i] { this->_thread_fn(i); } );
     }
 
 }
 
+RasterizerThreadPool::~RasterizerThreadPool() {
+    _alive = false;
+    /*
+    for (int i=0; i<_n_threads; i++) {
+        _work_lock[i].unlock();
+    }
+    */
+    for (int i=0; i<_n_threads; i++) {
+        _threads[i].join();
+    }
+}
+
 void RasterizerThreadPool::_thread_fn(int index) {
-    while (true) {
-        std::lock_guard l(_work_lock[index]);
+    while (_alive) {
+        // std::lock_guard l(_work_lock[index]);
         if (!_work[index]) continue; // offer a chance to the other thread to 
                                      // reacquire the lock
                                      // ideally a fifo semaphore here would've 
@@ -35,12 +52,12 @@ void RasterizerThreadPool::_thread_fn(int index) {
         // do work
         while (!_workqueues[index].empty()) {
             auto [tl, br] = _workqueues[index].back();
-            _fn(_r, _tri, tl, br);
+            _fn(index, _r, _tri, tl, br);
             _workqueues[index].pop_back();
         }
         // turn self off
         {
-            std::lock_guard l(_work_write_lock[index]);
+            // std::lock_guard l(_work_write_lock[index]);
             _work[index] = false;
         }
     }
@@ -49,34 +66,39 @@ void RasterizerThreadPool::_thread_fn(int index) {
 void RasterizerThreadPool::run() {
     // all of _work[i] guaranteed to be false here
     for (int i=0; i<_n_threads; i++) {
-        std::lock_guard l(_work_write_lock[i]);
+        // std::lock_guard l(_work_write_lock[i]);
         _work[i] = true;
     }
+    /*
     for (int i=0; i<_n_threads; i++) {
         _work_lock[i].unlock();
     }
+    */
 
     // see the work status
-    bool all_free = true;
+    bool all_free = false;
     while (!all_free) {
+        all_free = true;
         for (int i=0; i<_n_threads; i++) {
-            all_free = (all_free && _work[i]);
+            all_free = (all_free && (!_work[i]));
         }
     }
 
     // reacquire the work locks
+    /*
     for (int i=0; i<_n_threads; i++) {
         _work_lock[i].lock();
     }
+    */
 }
 
 // obviously don't call this after run has been called!
-void RasterizerThreadPool::enqueue(glm::ivec2& tl, glm::ivec2& br) {
+void RasterizerThreadPool::enqueue(glm::ivec2 tl, glm::ivec2 br) {
     _workqueues[_next_workq].push_back({tl, br});
     _next_workq = (_next_workq+1)%_n_threads;
 }
 
-void RasterizerThreadPool::set_render_function(std::function<void(Rasterizer*,glm::vec2(&)[3],glm::ivec2&,glm::ivec2&)>& fn) {
+void RasterizerThreadPool::set_render_function(std::function<void(int,Rasterizer*,glm::vec2(&)[3],glm::ivec2&,glm::ivec2&)> fn) {
     _fn = fn;
 }
 
@@ -130,34 +152,42 @@ glm::vec3 phi(glm::vec2 (&tri)[3], glm::vec2 pt) {
     return glm::vec3(s, t1, t2);
 }
 
-void Rasterizer::rasterize(glm::vec2 (&tri)[3], Uint32 color) {
-
-    glm::vec2 p(1.0f/_w, 1.0f/_h);
-
-    float xmin = fminf(tri[0].x, fminf(tri[1].x, tri[2].x)), ymin = fminf(tri[0].y, fminf(tri[1].y, tri[2].y));
-    float xmax = fmaxf(tri[0].x, fmaxf(tri[1].x, tri[2].x)), ymax = fmaxf(tri[0].y, fmaxf(tri[1].y, tri[2].y));
-
-    glm::ivec2 tl = pt2pix(xmin-p.x, ymin-p.y, p);
-    glm::ivec2 br = pt2pix(xmax+p.x, ymax+p.y, p);
-
-    for (int y = std::max(0, tl.y); y <= std::min(_h-1, br.y); y++) {
-        for (int x = std::max(0, tl.x); x <= std::min(_w-1, br.x); x++) {
-            glm::vec2 pc = pix2pt(x, y, p);
-            glm::vec3 p = phi(tri, pc);
-
-            if (p[0] >= 0 && p[1] >= 0 && p[2] >= 0) {
-                _fb[_w*(_h-1-y) + x] = color;
-            }
-        }
-    }
-}
-
 // need a sort of uniforms implementation (&tri, color go there)
-void rasterize_block(Rasterizer *r, glm::vec2 (&tri)[3], glm::ivec2& tl, glm::ivec2& br) {
+void rasterize_block(int tid, Rasterizer *r, glm::vec2 (&tri)[3], glm::ivec2& tl, glm::ivec2& br) {
 
     int _w = r->width();
     int _h = r->height();
     glm::vec2 p(1.0f/_w, 1.0f/_h);
+
+    // square ignore test: 
+    //    for all edges of the triangle 
+    //        check if the other point of the triangle is on the opposite side 
+    //        compared to all four points of the square
+
+    glm::vec2 p1 = pix2pt(tl.x, tl.y, p);
+    glm::vec2 p2 = pix2pt(tl.x, br.y, p);
+    glm::vec2 p3 = pix2pt(br.x, br.y, p);
+    glm::vec2 p4 = pix2pt(br.x, tl.y, p);
+
+    for (int k=0; k<3; k++) {
+        auto v1 = tri[k%3];
+        auto v2 = tri[(k+1)%3];
+        auto v3 = tri[(k+2)%3];
+
+        auto s = v2-v1;
+        glm::vec2 n(-s.y, s.x);
+        float t = glm::dot(n, v3-v1);
+
+        float d1 = glm::dot((p1-v1),n);
+        float d2 = glm::dot((p2-v1),n);
+        float d3 = glm::dot((p3-v1),n);
+        float d4 = glm::dot((p4-v1),n);
+
+        if (d1*t < 0 && d2*t < 0 && d3*t < 0 && d4*t < 0) {
+            // tri outside sq
+            return;
+        }
+    }
 
     for (int y = std::max(0, tl.y); y <= std::min(_h-1, br.y); y++) {
         for (int x = std::max(0, tl.x); x <= std::min(_w-1, br.x); x++) {
@@ -169,6 +199,44 @@ void rasterize_block(Rasterizer *r, glm::vec2 (&tri)[3], glm::ivec2& tl, glm::iv
             }
         }
     }
+}
+
+void Rasterizer::rasterize(glm::vec2 (&tri)[3], Uint32 color) {
+
+    glm::vec2 p(1.0f/_w, 1.0f/_h);
+
+    float xmin = fminf(tri[0].x, fminf(tri[1].x, tri[2].x)), ymin = fminf(tri[0].y, fminf(tri[1].y, tri[2].y));
+    float xmax = fmaxf(tri[0].x, fmaxf(tri[1].x, tri[2].x)), ymax = fmaxf(tri[0].y, fmaxf(tri[1].y, tri[2].y));
+
+    glm::ivec2 tl = pt2pix(xmin-p.x, ymin-p.y, p);
+    glm::ivec2 br = pt2pix(xmax+p.x, ymax+p.y, p);
+
+    int cw=16, ch=16; // divisible by total dim
+
+    _rtp->set_triangle(tri);
+    _rtp->set_render_function(rasterize_block);
+
+    // chunk this up and enqueue
+    for (int i=(tl.y/ch)*ch; i<=(br.y/ch)*ch; i+=ch) {
+        for (int j=(tl.x/cw)*cw; j<=(br.x/cw)*cw; j+=cw) {
+            _rtp->enqueue(glm::ivec2(j,i), glm::ivec2(j+cw-1,i+cw-1));
+        }
+    }
+
+    _rtp->run();
+
+    /*
+    for (int y = std::max(0, tl.y); y <= std::min(_h-1, br.y); y++) {
+        for (int x = std::max(0, tl.x); x <= std::min(_w-1, br.x); x++) {
+            glm::vec2 pc = pix2pt(x, y, p);
+            glm::vec3 p = phi(tri, pc);
+
+            if (p[0] >= 0 && p[1] >= 0 && p[2] >= 0) {
+                _fb[_w*(_h-1-y) + x] = color;
+            }
+        }
+    }
+    */
 }
 
 int Rasterizer::display() {
@@ -260,19 +328,48 @@ void benchmark(Rasterizer& r, int n_tris) {
               << (1000000.f*n_tris/duration) << " tris/sec)" << std::endl;
 }
 
+void rasterize_test_fn(int tid, Rasterizer *r, glm::vec2 (&tri)[3], glm::ivec2& tl, glm::ivec2& br) {
+    std::cout << tid << "\n";
+}
+
 void thread_pool_test() {
     RasterizerThreadPool r(nullptr, 4);
+    glm::vec2 tri[3] = {
+        glm::vec2(-0.3, 0.6),
+        glm::vec2(-0.8, 0.4),
+        glm::vec2(0.5, -0.4)
+    };
 
-    // TODO see if the processing is happening.
+    r.set_triangle(tri);
+    r.set_render_function(rasterize_test_fn);
+    r.enqueue(glm::ivec2(0,0), glm::ivec2(15,15));
+    r.enqueue(glm::ivec2(0,16), glm::ivec2(15,31));
+    r.enqueue(glm::ivec2(0,32), glm::ivec2(15,47));
+    r.enqueue(glm::ivec2(0,48), glm::ivec2(15,63));
+    r.enqueue(glm::ivec2(0,0), glm::ivec2(15,15));
+    r.enqueue(glm::ivec2(0,16), glm::ivec2(15,31));
+    r.enqueue(glm::ivec2(0,32), glm::ivec2(15,47));
+    r.enqueue(glm::ivec2(0,48), glm::ivec2(15,63));
+    r.run();
 }
 
 int main(int argc, char** argv) {
 
     Rasterizer r(640, 480);
     r.clear(0x22222200);
+    /*
+    glm::vec2 tri[3] = {
+        glm::vec2(-0.3, 0.6),
+        glm::vec2(-0.8, 0.4),
+        glm::vec2(0.5, -0.4)
+    };
+    r.rasterize(tri, 0xFF000000);
+    */
     benchmark(r, 1000);
 
     r.display();
+    
+    // thread_pool_test();
 
     return 0;
 }
