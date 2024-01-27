@@ -30,3 +30,6 @@ target_link_libraries(e5 a1)
 
 add_executable(uniforms examples/uniforms.cpp)
 target_link_libraries(uniforms a1)
+
+add_executable(clock examples/clock.cpp)
+target_link_libraries(clock a1)
