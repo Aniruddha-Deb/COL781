@@ -85,7 +85,10 @@ glm::vec4 blinn_phong_sw_fs(const R::Uniforms &uniforms, const R::Attribs &in) {
                      specColor * specular * lightColor * lightPower / distance;
   // apply gamma correction (assume ambientColor, diffuseColor and specColor
   // have been linearized, i.e. have no gamma correction in them)
-  vec3 colorGammaCorrected = pow(colorLinear, vec3(1.0 / screenGamma));
+  vec3 colorGammaCorrected = vec3(0.8*(-2/vertPos.z), 0.3*(-2/vertPos.z), 0.2*(-2/vertPos.z));// pow(colorLinear, vec3(1.0 / screenGamma));
+  colorGammaCorrected.x = fmin(1, fmax(0, colorGammaCorrected.x));
+  colorGammaCorrected.y = fmin(1, fmax(0, colorGammaCorrected.y));
+  colorGammaCorrected.z = fmin(1, fmax(0, colorGammaCorrected.z));
   // use the gamma corrected color in the fragment
   return vec4(colorGammaCorrected, 1.0);
 }
@@ -140,7 +143,7 @@ glm::vec3 to_vec3(glm::vec4& v) {
 int main(int argc, char** argv)
 {
     R::Rasterizer r;
-    int width = 640, height = 480;
+    int width = 1280, height = 800;
     if (!r.initialize("Example 5", width, height))
         return EXIT_FAILURE;
 
@@ -148,7 +151,7 @@ int main(int argc, char** argv)
 
     r.setUniform(program, "lightPos",     vec3(1.0, 1.0, 1.0));
     r.setUniform(program, "lightColor",   vec3(1.0, 1.0, 1.0));
-    r.setUniform(program, "lightPower",   12.0f);
+    r.setUniform(program, "lightPower",   40.0f);
     r.setUniform(program, "ambientColor", vec3(0.1, 0.0, 0.0));
     r.setUniform(program, "diffuseColor", vec3(0.5, 0.0, 0.0));
     r.setUniform(program, "specColor",    vec3(1.0, 1.0, 1.0));
@@ -177,22 +180,20 @@ int main(int argc, char** argv)
     std::cout << "Loaded into buffers" << std::endl;
 
     // The transformation matrix.
-    mat4 model = mat4(1.f);
-    mat4 view = scale(translate(mat4(1.0f), vec3(3.f, -1.f, -10.0f)), vec3(1.2f, 1.2f, 1.4f));
+    mat4 model = translate(mat4(1.f), vec3(1.f, -1.2f, 0.f));
+    mat4 view = translate(mat4(1.0f), vec3(1.f, 0.f, -8.0f));
     mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 100.0f);
 
     r.clear(vec4(0.1, 0.1, 0.1, 1.0));
     r.useShaderProgram(program);
-
-    float speed = 90.0f; // degrees per second
+    float speed = 10.0f; // degrees per second
     float n_frames = 0;
     float max_duration_us = 2e6;
     auto tic = high_resolution_clock::now();
     while (!r.shouldQuit())
     {
         r.clear(vec4(0.1, 0.1, 0.1, 1.0));
-        float time = SDL_GetTicks64() * 1e-3;
-        view = rotate(mat4(1.0f), radians(speed * time), vec3(1.0f, 0.0f, 0.0f));
+        // view = rotate(view, radians(speed), vec3(1.0f, 0.0f, 0.0f));
         mat4 modelview = view * model;
         mat4 normalMat = transpose(inverse(modelview));
 
@@ -200,16 +201,16 @@ int main(int argc, char** argv)
         r.setUniform(program, "modelview", modelview);
         r.setUniform(program, "normalMat", normalMat);
 
-        std::cout << "Drawing Object" << std::endl;
-
         r.drawObject(shape);
         r.show();
+
         n_frames += 1;
 
         auto toc = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(toc - tic).count();
         if (duration > max_duration_us) {
             std::cout << "fps: " << 1e6*n_frames/max_duration_us << std::endl;
+            tic = high_resolution_clock::now();
             // r.deleteShaderProgram(program);
             n_frames = 0;
             // return EXIT_SUCCESS;
