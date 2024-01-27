@@ -13,7 +13,7 @@ using namespace glm;
 int main()
 {
     R::Rasterizer r;
-    int width = 600, height = 600;
+    int width = 640, height = 480;
     if (!r.initialize("Clock", width, height, 9))
         return EXIT_FAILURE;
 
@@ -28,7 +28,9 @@ int main()
     r.setTriangleIndices(shape, 2, triangles);
     r.enableDepthTest();
     // The transformation matrix.
-    mat4 model = mat4(1.0f);
+
+    mat4 screen_scaling =
+        scale(mat4(1.0f), vec3(min(height, width) / float(width), min(height, width) / float(height), 1.0f));
     float tick_width = 0.02f;
     float tick_height = 3 * tick_width;
     float radius = tick_width * 40;
@@ -61,13 +63,14 @@ int main()
         for (int i = 0; i < 12; i++)
         {
             mat4 tick_rotation = rotate(mat4(1.0f), radians(i * 30.0f), vec3(0.0f, 0.0f, 1.0f));
-            r.setUniform(program, "transform", tick_rotation * tick_translation * tick_scaling);
+            r.setUniform(program, "transform", screen_scaling * tick_rotation * tick_translation * tick_scaling);
             r.drawObject(shape);
         }
         for (int i = 0; i < 60; i++)
         {
             mat4 small_tick_rotation = rotate(mat4(1.0f), radians(i * 6.0f), vec3(0.0f, 0.0f, 1.0f));
-            r.setUniform(program, "transform", small_tick_rotation * small_tick_translation * small_tick_scaling);
+            r.setUniform(program, "transform",
+                         screen_scaling * small_tick_rotation * small_tick_translation * small_tick_scaling);
             r.drawObject(shape);
         }
         std::time_t time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -78,15 +81,15 @@ int main()
         float hours = (local_time.tm_hour % 12) + minutes / 60 + seconds / 3600;
 
         mat4 hour_rotation = rotate(mat4(1.0f), radians(hours * 30.0f), vec3(0.0f, 0.0f, -1.0f));
-        r.setUniform(program, "transform", hour_rotation * hour_translation * hour_scaling);
+        r.setUniform(program, "transform", screen_scaling * hour_rotation * hour_translation * hour_scaling);
         r.drawObject(shape);
 
         mat4 minute_rotation = rotate(mat4(1.0f), radians(minutes * 6.0f), vec3(0.0f, 0.0f, -1.0f));
-        r.setUniform(program, "transform", minute_rotation * minute_translation * minute_scaling);
+        r.setUniform(program, "transform", screen_scaling * minute_rotation * minute_translation * minute_scaling);
         r.drawObject(shape);
 
         mat4 second_rotation = rotate(mat4(1.0f), radians(seconds * 6.0f), vec3(0.0f, 0.0f, -1.0f));
-        r.setUniform(program, "transform", second_rotation * second_translation * second_scaling);
+        r.setUniform(program, "transform", screen_scaling * second_rotation * second_translation * second_scaling);
         r.setUniform(program, "color", vec4(1.0, 0.0, 0.0, 1.0));
         r.drawObject(shape);
         r.show();
