@@ -686,12 +686,18 @@ std::mutex mtx;
     }
 
     // Displays the framebuffer on the screen.
-    // This can probably be optimized/parallelized but eh, it works for now
+    // This can probably be optimized/parallelized but it works for now
+    // Use a dirty bit buffer to mark bits that have been updated?
     void Rasterizer::show()
     {
         auto windowSurface = SDL_GetWindowSurface(window);
         int w = framebuffer->w;
         int b = w / windowSurface->w;
+        if (b == 1) {
+            SDL_BlitSurface(framebuffer, NULL, windowSurface, NULL);
+            SDL_UpdateWindowSurface(window);
+            return;
+        }
         int buf, avg[3];
         Uint8 px[3];
         for (int i = 0; i < windowSurface->h; i++)
