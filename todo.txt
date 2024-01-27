@@ -1,0 +1,5 @@
+1. Set CPU thread affinity - can't do, tricky on MacOS.
+2. Sleep and wake threads before cpu rendering - done. start/stop methods 
+   for thread creation
+3. Integrate rasterizer into sw.cpp
+  - run vs and fs

@@ -17,38 +17,17 @@ RasterizerThreadPool::RasterizerThreadPool(Rasterizer *r, size_t n_threads) :
     _work_lock(n_threads),
     _work_write_lock(n_threads),
     _tri{},
-    _fn{}
-{
-    /*
-    for (int i=0; i<n_threads; i++) {
-        _work_lock[i].lock();
-    }
-    */
-    for (int i=0; i<n_threads; i++) {
-        _threads[i] = std::thread([this, i] { this->_thread_fn(i); } );
-    }
-
-}
+    _fn{} {}
 
 RasterizerThreadPool::~RasterizerThreadPool() {
-    _alive = false;
-    /*
-    for (int i=0; i<_n_threads; i++) {
-        _work_lock[i].unlock();
-    }
-    */
-    for (int i=0; i<_n_threads; i++) {
-        _threads[i].join();
+    if (_alive) {
+        this->stop();
     }
 }
 
 void RasterizerThreadPool::_thread_fn(int index) {
     while (_alive) {
-        // std::lock_guard l(_work_lock[index]);
-        if (!_work[index]) continue; // offer a chance to the other thread to 
-                                     // reacquire the lock
-                                     // ideally a fifo semaphore here would've 
-                                     // been best.
+        if (!_work[index]) continue; 
         // do work
         while (!_workqueues[index].empty()) {
             auto [tl, br] = _workqueues[index].back();
@@ -56,24 +35,23 @@ void RasterizerThreadPool::_thread_fn(int index) {
             _workqueues[index].pop_back();
         }
         // turn self off
-        {
-            // std::lock_guard l(_work_write_lock[index]);
-            _work[index] = false;
-        }
+        _work[index] = false;
+    }
+}
+
+void RasterizerThreadPool::start() {
+    for (int i=0; i<_n_threads; i++) {
+        // TODO CPU affinity - not so easy to set in a cross-platform manner.
+        // Especially hard (impossible?) to do on MacOS w/ arm processors
+        _threads[i] = std::thread([this, i] { this->_thread_fn(i); } );
     }
 }
 
 void RasterizerThreadPool::run() {
     // all of _work[i] guaranteed to be false here
     for (int i=0; i<_n_threads; i++) {
-        // std::lock_guard l(_work_write_lock[i]);
         _work[i] = true;
     }
-    /*
-    for (int i=0; i<_n_threads; i++) {
-        _work_lock[i].unlock();
-    }
-    */
 
     // see the work status
     bool all_free = false;
@@ -83,13 +61,13 @@ void RasterizerThreadPool::run() {
             all_free = (all_free && (!_work[i]));
         }
     }
+}
 
-    // reacquire the work locks
-    /*
+void RasterizerThreadPool::stop() {
+    _alive = false;
     for (int i=0; i<_n_threads; i++) {
-        _work_lock[i].lock();
+        _threads[i].join();
     }
-    */
 }
 
 // obviously don't call this after run has been called!
@@ -111,13 +89,13 @@ void RasterizerThreadPool::set_triangle(glm::vec2 (&tri)[3]) {
 Rasterizer::Rasterizer(int w, int h) {
     _w = w;
     _h = h;
-    _fb = new Uint32[w*h];
-    _rtp = new RasterizerThreadPool(this, 4);
+    fb = new Uint32[w*h];
+    rtp = new RasterizerThreadPool(this, 4);
 }
 
 Rasterizer::~Rasterizer() {
-    delete _rtp;
-    delete _fb;
+    delete rtp;
+    delete fb;
 }
 
 int Rasterizer::width() {
@@ -129,11 +107,11 @@ int Rasterizer::height() {
 }
 
 void Rasterizer::clear(Uint32 color) {
-    for (int i=0; i<_w*_h; i++) _fb[i] = color;
+    for (int i=0; i<_w*_h; i++) fb[i] = color;
 }
 
 void* Rasterizer::get_framebuffer() {
-    return _fb;
+    return fb;
 }
 
 #define pix2pt(x, y, p) glm::vec2((2*(x) + 1)*p[0] - 1, (2*(y) + 1)*p[1] - 1)
@@ -195,7 +173,7 @@ void rasterize_block(int tid, Rasterizer *r, glm::vec2 (&tri)[3], glm::ivec2& tl
             glm::vec3 p = phi(tri, pc);
 
             if (p[0] >= 0 && p[1] >= 0 && p[2] >= 0) {
-                r->_fb[_w*(_h-1-y) + x] = 0x00FF0000;
+                r->fb[_w*(_h-1-y) + x] = 0x00FF0000;
             }
         }
     }
@@ -213,17 +191,17 @@ void Rasterizer::rasterize(glm::vec2 (&tri)[3], Uint32 color) {
 
     int cw=16, ch=16; // divisible by total dim
 
-    _rtp->set_triangle(tri);
-    _rtp->set_render_function(rasterize_block);
+    rtp->set_triangle(tri);
+    rtp->set_render_function(rasterize_block);
 
     // chunk this up and enqueue
     for (int i=(tl.y/ch)*ch; i<=(br.y/ch)*ch; i+=ch) {
         for (int j=(tl.x/cw)*cw; j<=(br.x/cw)*cw; j+=cw) {
-            _rtp->enqueue(glm::ivec2(j,i), glm::ivec2(j+cw-1,i+cw-1));
+            rtp->enqueue(glm::ivec2(j,i), glm::ivec2(j+cw-1,i+cw-1));
         }
     }
 
-    _rtp->run();
+    rtp->run();
 
     /*
     for (int y = std::max(0, tl.y); y <= std::min(_h-1, br.y); y++) {
@@ -273,7 +251,7 @@ int Rasterizer::display() {
         return 1;
     }
 
-    SDL_UpdateTexture(texture, NULL, _fb, 4*_w);
+    SDL_UpdateTexture(texture, NULL, fb, 4*_w);
 
     // Render the texture to the screen
     while (true) {
@@ -303,13 +281,13 @@ int Rasterizer::display() {
 static std::random_device rd;
 static std::mt19937 rng{rd()}; 
 
-
 void benchmark(Rasterizer& r, int n_tris) {
 
     using namespace std::chrono;
 
     static std::uniform_real_distribution<double> dist(-1,1);
     static std::uniform_int_distribution<uint32_t> cdist(0x0100, 0xFFFFFF00);
+    r.rtp->start();
 
     auto tic = high_resolution_clock::now();
     for (int i=0; i<n_tris; i++) {
@@ -326,6 +304,7 @@ void benchmark(Rasterizer& r, int n_tris) {
     auto duration = duration_cast<microseconds>(toc - tic).count();
     std::cout << "Render " << n_tris << " tris in " << duration << " us (" 
               << (1000000.f*n_tris/duration) << " tris/sec)" << std::endl;
+    r.rtp->stop();
 }
 
 void rasterize_test_fn(int tid, Rasterizer *r, glm::vec2 (&tri)[3], glm::ivec2& tl, glm::ivec2& br) {
@@ -340,6 +319,7 @@ void thread_pool_test() {
         glm::vec2(0.5, -0.4)
     };
 
+    r.start();
     r.set_triangle(tri);
     r.set_render_function(rasterize_test_fn);
     r.enqueue(glm::ivec2(0,0), glm::ivec2(15,15));
@@ -351,6 +331,7 @@ void thread_pool_test() {
     r.enqueue(glm::ivec2(0,32), glm::ivec2(15,47));
     r.enqueue(glm::ivec2(0,48), glm::ivec2(15,63));
     r.run();
+    r.stop();
 }
 
 int main(int argc, char** argv) {

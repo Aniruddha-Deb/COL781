@@ -12,6 +12,8 @@ class RasterizerThreadPool {
         RasterizerThreadPool(Rasterizer* r, size_t n_threads);
         ~RasterizerThreadPool();
         void run();
+        void start();
+        void stop();
         void enqueue(glm::ivec2 tl, glm::ivec2 br);
         void set_render_function(std::function<void(int,Rasterizer*,glm::vec2(&)[3],glm::ivec2&,glm::ivec2&)> fn);
         void set_triangle(glm::vec2 (&tri)[3]);
@@ -45,10 +47,10 @@ class Rasterizer {
     int height();
 
     int display();
-    Uint32* _fb;
+    Uint32* fb;
+    RasterizerThreadPool *rtp;
 
     private:
     int _w, _h;
-    RasterizerThreadPool *_rtp;
 };
 
