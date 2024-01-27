@@ -6,6 +6,8 @@
 #include <SDL2/SDL.h>
 #include <string>
 #include <vector>
+#include <thread>
+#include <functional>
 
 namespace COL781
 {
@@ -80,44 +82,43 @@ namespace Software
 
 #include "api.inc"
 
-    class RasterizerThreadPool {
-        public:
-            RasterizerThreadPool(size_t n_threads);
-            ~RasterizerThreadPool();
-            void run();
-            void start();
-            void stop();
-            void enqueue(glm::ivec2 tl, glm::ivec2 br);
-            void set_render_function(std::function<void(
-                        int,                                   // thread index
-                        SDL_Surface*, const ShaderProgram*, float*,  // common buffers to write to
-                        glm::vec4(&)[3], Attribs(&)[3],        // triangle-specific attributes
-                        glm::ivec2&, glm::ivec2&               // top-left and bottom-right pixel bounds
-                        )> fn);
-            void set_triangle_data(glm::vec4 (&tri)[3], Attribs (&attrs)[3]);
+    class RasterizerThreadPool
+    {
+      public:
+        RasterizerThreadPool(size_t n_threads);
+        ~RasterizerThreadPool();
+        void run();
+        void start();
+        void stop();
+        void enqueue(glm::ivec2 tl, glm::ivec2 br);
+        void set_render_function(
+            std::function<void(int,                                           // thread index
+                               SDL_Surface *, const ShaderProgram *, float *, // common buffers to write to
+                               glm::vec4 (&)[3], Attribs (&)[3],              // triangle-specific attributes
+                               glm::ivec2 &, glm::ivec2 &                     // top-left and bottom-right pixel bounds
+                               )>
+                fn);
+        void set_triangle_data(glm::vec4 (&tri)[3], Attribs (&attrs)[3]);
 
-            SDL_Surface** framebuffer;
-            const ShaderProgram** program;
-            float** z_buffer;
+        SDL_Surface **framebuffer;
+        const ShaderProgram **program;
+        float **z_buffer;
 
-        private:
-            void _thread_fn(int thread_idx);
+      private:
+        void _thread_fn(int thread_idx);
 
-            size_t _n_threads;
-            std::vector<std::thread> _threads;
-            std::vector<std::vector<std::pair<glm::ivec2,glm::ivec2>>> _workqueues;
-            int _next_workq;
-            volatile bool _alive;
-            volatile bool _work[12]; // capping _work size but should be ok
-            std::function<void(
-                    int, 
-                    SDL_Surface*, const ShaderProgram*, float*,
-                    glm::vec4(&)[3], Attribs(&)[3], 
-                    glm::ivec2&, glm::ivec2&
-                    )> _fn;
-            
-            glm::vec4 _tri[3];
-            Attribs _attrs[3];
+        size_t _n_threads;
+        std::vector<std::thread> _threads;
+        std::vector<std::vector<std::pair<glm::ivec2, glm::ivec2>>> _workqueues;
+        int _next_workq;
+        volatile bool _alive;
+        volatile bool _work[12]; // capping _work size but should be ok
+        std::function<void(int, SDL_Surface *, const ShaderProgram *, float *, glm::vec4 (&)[3], Attribs (&)[3],
+                           glm::ivec2 &, glm::ivec2 &)>
+            _fn;
+
+        glm::vec4 _tri[3];
+        Attribs _attrs[3];
     };
 
 } // namespace Software
