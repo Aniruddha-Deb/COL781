@@ -27,13 +27,13 @@ glm::vec4 blinn_phong_sw_vs(const R::Uniforms &uniforms, const R::Attribs &in, R
     vec4 position = projection * modelview * inputPosition;
     vec4 vertPos4 = modelview * inputPosition;
     vec3 vertPos = vec3(vertPos4) / vertPos4.w;
-    vec3 normalInterp = normalize(vec3(normalMat * inputNormal));
+    vec4 normalInterp = normalMat * inputNormal;
     // std::cout << vertPos.x << " " << vertPos.y << " " << vertPos.z << std::endl;
 
     out.set<vec4>(0, vec4(vertPos, 0));
-    out.set<vec4>(1, inputNormal); // this is an approximation we don't need because
-                                   // we're doing phong shading and not gouraud
-                                   // can normalize the normals just like any other
+    out.set<vec4>(1, normalInterp); // this is an approximation we don't need because
+                                    // we're doing phong shading and not gouraud
+                                    // can normalize the normals just like any other
 
     return position;
 }
@@ -51,7 +51,7 @@ glm::vec4 blinn_phong_sw_fs(const R::Uniforms &uniforms, const R::Attribs &in)
     const float screenGamma = uniforms.get<float>("screenGamma"); // 2.2;
 
     vec3 vertPos = vec3(in.get<vec4>(0));
-    vec3 normal = vec3(in.get<vec4>(1));
+    vec3 normal = normalize(vec3(in.get<vec4>(1)));
 
     // std::cout << vertPos.x << "," << vertPos.y << "," << vertPos.z << std::endl;
 
@@ -160,13 +160,12 @@ int main(int argc, char **argv)
 
     R::ShaderProgram program = r.createShaderProgram(blinn_phong_sw_vs, blinn_phong_sw_fs);
 
-    r.setUniform(program, "lightPos", vec3(1.0, 1.0, 1.0));
     r.setUniform(program, "lightColor", vec3(1.0, 1.0, 1.0));
-    r.setUniform(program, "lightPower", 40.0f);
-    r.setUniform(program, "ambientColor", vec3(0.3, 0.0, 0.0));
-    r.setUniform(program, "diffuseColor", vec3(0.72, 0.1, 0.1));
-    r.setUniform(program, "specColor", vec3(0.3, 0.3, 0.3));
-    r.setUniform(program, "shininess", 3.3f);
+    r.setUniform(program, "lightPower", 10.0f);
+    r.setUniform(program, "ambientColor", vec3(0.1, 0.0, 0.0));
+    r.setUniform(program, "diffuseColor", vec3(0.5, 0.1, 0.1));
+    r.setUniform(program, "specColor", vec3(1.0, 1.0, 1.0));
+    r.setUniform(program, "shininess", 16.0f);
     r.setUniform(program, "screenGamma", 2.2f);
 
     // load vertices and triangles from an object file
@@ -192,6 +191,7 @@ int main(int argc, char **argv)
     std::cout << "Loaded into buffers" << std::endl;
 
     // The transformation matrix.
+    vec4 lightpos = vec4(4, 4, 4, 1.0);
     mat4 model = translate(mat4(1.f), vec3(0.f, 0.f, 0.f));
     mat4 view = translate(mat4(1.0f), vec3(0.f, 0.f, -10.0f));
     mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 100.0f);
@@ -205,10 +205,11 @@ int main(int argc, char **argv)
     while (!r.shouldQuit())
     {
         r.clear(vec4(0.1, 0.1, 0.1, 1.0));
-        view = rotate(view, radians(30.0f), vec3(1.0f, 0.0f, 0.0f));
+        model = rotate(model, radians(30.0f), vec3(0.0f, 1.0f, 0.0f));
+        // view = rotate(view, radians(10.0f), vec3(0.0f, 1.0f, 0.0f));
         mat4 modelview = view * model;
         mat4 normalMat = transpose(inverse(modelview));
-
+        r.setUniform(program, "lightPos", vec3(view * lightpos));
         r.setUniform(program, "projection", projection);
         r.setUniform(program, "modelview", modelview);
         r.setUniform(program, "normalMat", normalMat);
