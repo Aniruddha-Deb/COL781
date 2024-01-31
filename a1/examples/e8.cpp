@@ -154,7 +154,7 @@ glm::vec3 to_vec3(glm::vec4 &v)
 int main(int argc, char **argv)
 {
     R::Rasterizer r;
-    int width = 1280, height = 800;
+    int width = 800, height = 600;
     if (!r.initialize("Example 5", width, height))
         return EXIT_FAILURE;
 
@@ -162,10 +162,10 @@ int main(int argc, char **argv)
 
     r.setUniform(program, "lightColor", vec3(1.0, 1.0, 1.0));
     r.setUniform(program, "lightPower", 10.0f);
-    r.setUniform(program, "ambientColor", vec3(0.1, 0.0, 0.0));
-    r.setUniform(program, "diffuseColor", vec3(0.5, 0.1, 0.1));
+    r.setUniform(program, "ambientColor", vec3(0.070f, 0.072, 0.085));
+    r.setUniform(program, "diffuseColor", vec3(0.64f, 0.662f, 0.705f));
     r.setUniform(program, "specColor", vec3(1.0, 1.0, 1.0));
-    r.setUniform(program, "shininess", 16.0f);
+    r.setUniform(program, "shininess", 32.0f);
     r.setUniform(program, "screenGamma", 2.2f);
 
     // load vertices and triangles from an object file
@@ -192,8 +192,8 @@ int main(int argc, char **argv)
 
     // The transformation matrix.
     vec4 lightpos = vec4(4, 4, 4, 1.0);
-    mat4 model = translate(mat4(1.f), vec3(0.f, 0.f, 0.f));
-    mat4 view = translate(mat4(1.0f), vec3(0.f, 0.f, -10.0f));
+    mat4 model = rotate(translate(mat4(1.f), vec3(0.f, 0.f, 0.f)), radians(5.0f), vec3(0.f, 0.f, 1.f));
+    mat4 view = rotate(translate(mat4(1.0f), vec3(0.f, 0.f, -80.0f)), radians(15.f), vec3(1.f, 0.f, 0.f));
     mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 100.0f);
 
     r.clear(vec4(0.1, 0.1, 0.1, 1.0));
@@ -206,7 +206,8 @@ int main(int argc, char **argv)
     {
         r.clear(vec4(0.1, 0.1, 0.1, 1.0));
         model = rotate(model, radians(30.0f), vec3(0.0f, 1.0f, 0.0f));
-        // view = rotate(view, radians(10.0f), vec3(0.0f, 1.0f, 0.0f));
+        model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
+        // view = rotate(view, radians(10.0f), vec3(1.0f, 0.0f, 0.0f));
         mat4 modelview = view * model;
         mat4 normalMat = transpose(inverse(modelview));
         r.setUniform(program, "lightPos", vec3(view * lightpos));
