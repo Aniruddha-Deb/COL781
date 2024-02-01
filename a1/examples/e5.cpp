@@ -48,10 +48,13 @@ int main()
 
         auto toc = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(toc - tic).count();
-        if (duration > max_duration_us) {
-            std::cout << "fps: " << 1e6*n_frames/max_duration_us << std::endl;
-            r.deleteShaderProgram(program);
-            return EXIT_SUCCESS;
+        if (duration > max_duration_us)
+        {
+            std::cout << "fps: " << 1e6 * n_frames / max_duration_us << std::endl;
+            tic = high_resolution_clock::now();
+            n_frames = 0;
+            // r.deleteShaderProgram(program);
+            // return EXIT_SUCCESS;
         }
     }
     r.deleteShaderProgram(program);
