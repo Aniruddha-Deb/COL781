@@ -161,7 +161,7 @@ int main(int argc, char **argv)
     R::ShaderProgram program = r.createShaderProgram(blinn_phong_sw_vs, blinn_phong_sw_fs);
 
     r.setUniform(program, "lightColor", vec3(1.0, 1.0, 1.0));
-    r.setUniform(program, "lightPower", 10.0f);
+    r.setUniform(program, "lightPower", 100.0f);
     r.setUniform(program, "ambientColor", vec3(0.070f, 0.072, 0.085));
     r.setUniform(program, "diffuseColor", vec3(0.64f, 0.662f, 0.705f));
     r.setUniform(program, "specColor", vec3(1.0, 1.0, 1.0));
@@ -191,23 +191,47 @@ int main(int argc, char **argv)
     std::cout << "Loaded into buffers" << std::endl;
 
     // The transformation matrix.
-    vec4 lightpos = vec4(4, 4, 4, 1.0);
-    mat4 model = rotate(translate(mat4(1.f), vec3(0.f, 0.f, 0.f)), radians(5.0f), vec3(0.f, 0.f, 1.f));
-    mat4 view = rotate(translate(mat4(1.0f), vec3(0.f, 0.f, -80.0f)), radians(15.f), vec3(1.f, 0.f, 0.f));
-    mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 100.0f);
+    vec4 lightpos = vec4(4, -50.f, 4, 1.0);
+    mat4 model = translate(mat4(1.0f), vec3(0.0, 0.0, 0.0));
+    vec3 pos(0.0, 0.0, 0.0);
+    float floor = -60.f;
+    mat4 view = rotate(translate(mat4(1.0f), vec3(0.f, 50.f, -100.0f)), radians(20.f), vec3(1.f, 0.f, 0.f));
+    mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 200.0f);
 
     r.clear(vec4(0.1, 0.1, 0.1, 1.0));
     r.useShaderProgram(program);
-    float speed = 10.0f; // degrees per second
+    float speed = 0.0f; // degrees per second
+    float gravity = -10.0f;
     float n_frames = 0;
     float max_duration_us = 2e6;
     auto tic = high_resolution_clock::now();
+    auto last = high_resolution_clock::now();
     while (!r.shouldQuit())
     {
         r.clear(vec4(0.1, 0.1, 0.1, 1.0));
-        model = rotate(model, radians(30.0f), vec3(0.0f, 1.0f, 0.0f));
-        model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
+        if (abs(speed) < 0.1 && abs(pos.y - floor) < 1)
+        {
+            model = rotate(model, radians(30.0f), vec3(0.0f, 1.0f, 0.0f));
+            model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
+        }
+        else if (pos.y > floor)
+        {
+            float time = duration_cast<seconds>(high_resolution_clock::now() - last).count() + 0.1;
+            model = translate(model, vec3(0.0, speed * time, 0.0));
+            pos.y += speed * time;
+            speed = speed + gravity * time;
+        }
+        else
+        {
+            float time = duration_cast<seconds>(high_resolution_clock::now() - last).count() + 0.1;
+            speed = abs(speed) * 0.7;
+            model = translate(model, vec3(0.0, speed * time, 0.0));
+            pos.y += speed * time;
+            speed = speed + gravity * time;
+        }
+
         // view = rotate(view, radians(10.0f), vec3(1.0f, 0.0f, 0.0f));
+        last = high_resolution_clock::now();
         mat4 modelview = view * model;
         mat4 normalMat = transpose(inverse(modelview));
         r.setUniform(program, "lightPos", vec3(view * lightpos));
