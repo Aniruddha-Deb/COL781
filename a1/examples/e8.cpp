@@ -159,14 +159,27 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
 
     R::ShaderProgram program = r.createShaderProgram(blinn_phong_sw_vs, blinn_phong_sw_fs);
+    R::ShaderProgram plane_program = r.createShaderProgram(r.vsColorTransform(), r.fsIdentity());
+    // r.setUniform(plane_program, "color", vec4(0.0, 0.0, 1.0, 1.0));
 
     r.setUniform(program, "lightColor", vec3(1.0, 1.0, 1.0));
-    r.setUniform(program, "lightPower", 100.0f);
+    r.setUniform(program, "lightPower", 60.0f);
     r.setUniform(program, "ambientColor", vec3(0.070f, 0.072, 0.085));
     r.setUniform(program, "diffuseColor", vec3(0.64f, 0.662f, 0.705f));
     r.setUniform(program, "specColor", vec3(1.0, 1.0, 1.0));
     r.setUniform(program, "shininess", 32.0f);
     r.setUniform(program, "screenGamma", 2.2f);
+
+    vec4 vertices[] = {vec4(-70, -80, 70, 1.0), vec4(70, -80, 70, 1.0), vec4(70, -80, -70, 1.0),
+                       vec4(-70, -80, -70, 1.0), vec4(0, -80, 0, 1.0)};
+    ivec3 triangles[] = {ivec3(0, 1, 4), ivec3(1, 2, 4), ivec3(2, 3, 4), ivec3(3, 0, 4)};
+    vec4 colors[] = {vec4(0.0, 0.3, 0.7, 1.0), vec4(0.0, 0.3, 0.7, 1.0), vec4(0.0, 0.3, 0.7, 1.0),
+                     vec4(0.0, 0.3, 0.7, 1.0), vec4(0.0, 0.3 / 3, 0.7 / 3, 1.0)};
+
+    R::Object tickmark = r.createObject();
+    r.setVertexAttribs(tickmark, 0, 5, vertices);
+    r.setVertexAttribs(tickmark, 1, 5, colors);
+    r.setTriangleIndices(tickmark, 4, triangles);
 
     // load vertices and triangles from an object file
     R::Object shape = r.createObject();
@@ -195,9 +208,8 @@ int main(int argc, char **argv)
     mat4 model = translate(mat4(1.0f), vec3(0.0, 0.0, 0.0));
     vec3 pos(0.0, 0.0, 0.0);
     float floor = -60.f;
-    mat4 view = rotate(translate(mat4(1.0f), vec3(0.f, 50.f, -100.0f)), radians(20.f), vec3(1.f, 0.f, 0.f));
-    mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 200.0f);
-
+    mat4 view = rotate(translate(mat4(1.0f), vec3(0.f, 50.f, -100.0f)), radians(25.f), vec3(1.f, 0.f, 0.f));
+    mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 300.0f);
     r.clear(vec4(0.1, 0.1, 0.1, 1.0));
     r.useShaderProgram(program);
     float speed = 0.0f; // degrees per second
@@ -209,10 +221,14 @@ int main(int argc, char **argv)
     while (!r.shouldQuit())
     {
         r.clear(vec4(0.1, 0.1, 0.1, 1.0));
-        if (abs(speed) < 0.1 && abs(pos.y - floor) < 1)
+        r.useShaderProgram(plane_program);
+        r.setUniform(plane_program, "transform", projection * view);
+        r.drawObject(tickmark);
+        r.useShaderProgram(program);
+        if (abs(speed) < 0.5 && abs(pos.y - floor) < 1)
         {
             model = rotate(model, radians(30.0f), vec3(0.0f, 1.0f, 0.0f));
-            model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
+            model = rotate(model, radians(2.0f), vec3(0.0f, 0.0f, 1.0f));
         }
         else if (pos.y > floor)
         {
@@ -220,17 +236,21 @@ int main(int argc, char **argv)
             model = translate(model, vec3(0.0, speed * time, 0.0));
             pos.y += speed * time;
             speed = speed + gravity * time;
+            model = rotate(model, radians(30.0f), vec3(0.0f, 1.0f, 0.0f));
+            // model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
         }
         else
         {
             float time = duration_cast<seconds>(high_resolution_clock::now() - last).count() + 0.1;
-            speed = abs(speed) * 0.7;
+            speed = abs(speed) * 0.6;
             model = translate(model, vec3(0.0, speed * time, 0.0));
             pos.y += speed * time;
             speed = speed + gravity * time;
+            model = rotate(model, radians(30.0f), vec3(0.0f, 1.0f, 0.0f));
+            // model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
         }
 
-        // view = rotate(view, radians(10.0f), vec3(1.0f, 0.0f, 0.0f));
+        view = rotate(view, radians(-1.0f), vec3(0.0f, 1.0f, 0.0f));
         last = high_resolution_clock::now();
         mat4 modelview = view * model;
         mat4 normalMat = transpose(inverse(modelview));
@@ -240,6 +260,7 @@ int main(int argc, char **argv)
         r.setUniform(program, "normalMat", normalMat);
 
         r.drawObject(shape);
+
         r.show();
 
         n_frames += 1;
