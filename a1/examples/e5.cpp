@@ -1,13 +1,9 @@
 #include "../src/a1.hpp"
 #include <glm/gtc/matrix_transform.hpp>
-#include <iostream>
-#include <chrono>
 // Program with perspective correct interpolation of vertex attributes.
 
 namespace R = COL781::Software;
 // namespace R = COL781::Hardware;
-
-using namespace std::chrono;
 using namespace glm;
 int main()
 {
@@ -32,9 +28,6 @@ int main()
     mat4 view = translate(mat4(1.0f), vec3(0.0f, 0.0f, -2.0f));
     mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.1f, 100.0f);
     float speed = 90.0f; // degrees per second
-    float n_frames = 0;
-    float max_duration_us = 2e6;
-    auto tic = high_resolution_clock::now();
     while (!r.shouldQuit())
     {
         float time = SDL_GetTicks64() * 1e-3;
@@ -44,18 +37,6 @@ int main()
         r.setUniform(program, "transform", projection * view * model);
         r.drawObject(shape);
         r.show();
-        n_frames += 1;
-
-        auto toc = high_resolution_clock::now();
-        auto duration = duration_cast<microseconds>(toc - tic).count();
-        if (duration > max_duration_us)
-        {
-            std::cout << "fps: " << 1e6 * n_frames / max_duration_us << std::endl;
-            tic = high_resolution_clock::now();
-            n_frames = 0;
-            // r.deleteShaderProgram(program);
-            // return EXIT_SUCCESS;
-        }
     }
     r.deleteShaderProgram(program);
     return EXIT_SUCCESS;

@@ -166,7 +166,7 @@ namespace Software
                     SDL_CreateRGBSurface(0, width*mult, height*mult, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0);
                     // SDL_CreateRGBSurface(0, width*mult, height*mult, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
             }
-            rtp = new RasterizerThreadPool(4);
+            rtp = new RasterizerThreadPool(6);
             rtp->framebuffer = &framebuffer;
             rtp->program = &shader_program;
             rtp->z_buffer = &z_buffer;

@@ -155,7 +155,7 @@ int main(int argc, char **argv)
 {
     R::Rasterizer r;
     int width = 800, height = 600;
-    if (!r.initialize("Example 5", width, height))
+    if (!r.initialize("Top", width, height))
         return EXIT_FAILURE;
 
     R::ShaderProgram program = r.createShaderProgram(blinn_phong_sw_vs, blinn_phong_sw_fs);
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
     r.setUniform(program, "ambientColor", vec3(0.070f, 0.072, 0.085));
     r.setUniform(program, "diffuseColor", vec3(0.64f, 0.662f, 0.705f));
     r.setUniform(program, "specColor", vec3(1.0, 1.0, 1.0));
-    r.setUniform(program, "shininess", 32.0f);
+    r.setUniform(program, "shininess", 60.0f);
     r.setUniform(program, "screenGamma", 2.2f);
 
     vec4 vertices[] = {vec4(-70, -80, 70, 1.0), vec4(70, -80, 70, 1.0), vec4(70, -80, -70, 1.0),
@@ -212,7 +212,9 @@ int main(int argc, char **argv)
     mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 300.0f);
     r.clear(vec4(0.1, 0.1, 0.1, 1.0));
     r.useShaderProgram(program);
+    float rotation_speed = 400.0f;
     float speed = 0.0f; // degrees per second
+    float camera_speed = 10.0f;
     float gravity = -10.0f;
     float n_frames = 0;
     float max_duration_us = 2e6;
@@ -225,32 +227,32 @@ int main(int argc, char **argv)
         r.setUniform(plane_program, "transform", projection * view);
         r.drawObject(tickmark);
         r.useShaderProgram(program);
+        float time = duration_cast<microseconds>(high_resolution_clock::now() - last).count() / float(400000);
         if (abs(speed) < 0.5 && abs(pos.y - floor) < 1)
         {
-            model = rotate(model, radians(30.0f), vec3(0.0f, 1.0f, 0.0f));
-            model = rotate(model, radians(2.0f), vec3(0.0f, 0.0f, 1.0f));
+
+            model = rotate(model, radians(rotation_speed * time), vec3(0.0f, 1.0f, 0.0f));
+            model = rotate(model, radians(rotation_speed * time / 10), vec3(0.0f, 0.0f, 1.0f));
         }
-        else if (pos.y > floor)
+        else if (pos.y > floor || speed > 0)
         {
-            float time = duration_cast<seconds>(high_resolution_clock::now() - last).count() + 0.1;
             model = translate(model, vec3(0.0, speed * time, 0.0));
             pos.y += speed * time;
             speed = speed + gravity * time;
-            model = rotate(model, radians(30.0f), vec3(0.0f, 1.0f, 0.0f));
-            // model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
+            model = rotate(model, radians(rotation_speed * time), vec3(0.0f, 1.0f, 0.0f));
+            // model = rotate(model, radians(rotation_speed * time / 10), vec3(0.0f, 0.0f, 1.0f));
         }
         else
         {
-            float time = duration_cast<seconds>(high_resolution_clock::now() - last).count() + 0.1;
-            speed = abs(speed) * 0.6;
+            speed = abs(speed) * 0.43;
             model = translate(model, vec3(0.0, speed * time, 0.0));
             pos.y += speed * time;
             speed = speed + gravity * time;
-            model = rotate(model, radians(30.0f), vec3(0.0f, 1.0f, 0.0f));
-            // model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
+            model = rotate(model, radians(rotation_speed * time), vec3(0.0f, 1.0f, 0.0f));
+            // model = rotate(model, radians(-rotation_speed * time / 10), vec3(0.0f, 0.0f, 1.0f));
         }
 
-        view = rotate(view, radians(-1.0f), vec3(0.0f, 1.0f, 0.0f));
+        view = rotate(view, radians(-time * camera_speed), vec3(0.0f, 1.0f, 0.0f));
         last = high_resolution_clock::now();
         mat4 modelview = view * model;
         mat4 normalMat = transpose(inverse(modelview));

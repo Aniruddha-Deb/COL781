@@ -155,14 +155,14 @@ int main(int argc, char **argv)
 {
     R::Rasterizer r;
     int width = 1280, height = 800;
-    if (!r.initialize("Example 5", width, height))
+    if (!r.initialize("Teapot", width, height, 4))
         return EXIT_FAILURE;
 
     R::ShaderProgram program = r.createShaderProgram(blinn_phong_sw_vs, blinn_phong_sw_fs);
 
-    r.setUniform(program, "lightPos", vec3(1.0, 1.0, 1.0));
+    r.setUniform(program, "lightPos", vec3(0, 10.0, 0));
     r.setUniform(program, "lightColor", vec3(1.0, 1.0, 1.0));
-    r.setUniform(program, "lightPower", 40.0f);
+    r.setUniform(program, "lightPower", 70.0f);
     r.setUniform(program, "ambientColor", vec3(0.1, 0.0, 0.0));
     r.setUniform(program, "diffuseColor", vec3(0.5, 0.0, 0.0));
     r.setUniform(program, "specColor", vec3(1.0, 1.0, 1.0));
@@ -192,8 +192,9 @@ int main(int argc, char **argv)
     std::cout << "Loaded into buffers" << std::endl;
 
     // The transformation matrix.
-    mat4 model = translate(mat4(1.f), vec3(1.f, -1.2f, 0.f));
-    mat4 view = translate(mat4(1.0f), vec3(1.f, 0.f, -8.0f));
+    mat4 model = translate(mat4(1.f), vec3(0.f, 0.f, 0.f));
+    mat4 view = rotate(translate(mat4(1.0f), vec3(0.f, 0.f, -8.0f)), radians(40.0f), vec3(1.0, 0.0, 0.0));
+    view = rotate(view, radians(-30.0f), vec3(0.0, 1.0, 0.0));
     mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 100.0f);
 
     r.clear(vec4(0.1, 0.1, 0.1, 1.0));
