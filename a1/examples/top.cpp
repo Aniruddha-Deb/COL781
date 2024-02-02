@@ -214,9 +214,9 @@ int main(int argc, char **argv)
     mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 300.0f);
     r.clear(vec4(0.1, 0.1, 0.1, 1.0));
     r.useShaderProgram(program);
-    float rotation_speed = 100.0f;
+    float rotation_speed = 200.0f;
     float speed = 0.0f; // degrees per second
-    float camera_speed = 1.0f;
+    float camera_speed = 5.0f;
     float gravity = -10.0f;
     float n_frames = 0;
     float max_duration_us = 2e6;
