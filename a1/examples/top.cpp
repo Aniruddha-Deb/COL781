@@ -176,10 +176,10 @@ int main(int argc, char **argv)
     vec4 colors[] = {vec4(0.0, 0.3, 0.7, 1.0), vec4(0.0, 0.3, 0.7, 1.0), vec4(0.0, 0.3, 0.7, 1.0),
                      vec4(0.0, 0.3, 0.7, 1.0), vec4(0.0, 0.3 / 3, 0.7 / 3, 1.0)};
 
-    R::Object tickmark = r.createObject();
-    r.setVertexAttribs(tickmark, 0, 5, vertices);
-    r.setVertexAttribs(tickmark, 1, 5, colors);
-    r.setTriangleIndices(tickmark, 4, triangles);
+    R::Object plane = r.createObject();
+    r.setVertexAttribs(plane, 0, 5, vertices);
+    r.setVertexAttribs(plane, 1, 5, colors);
+    r.setTriangleIndices(plane, 4, triangles);
 
     // load vertices and triangles from an object file
     R::Object shape = r.createObject();
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
         r.clear(vec4(0.1, 0.1, 0.1, 1.0));
         r.useShaderProgram(plane_program);
         r.setUniform(plane_program, "transform", projection * view);
-        r.drawObject(tickmark);
+        r.drawObject(plane);
         r.useShaderProgram(program);
         float time = duration_cast<microseconds>(high_resolution_clock::now() - last).count() / float(400000);
         if (abs(speed) < 0.5 && abs(pos.y - floor) < 1)
