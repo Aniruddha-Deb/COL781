@@ -207,8 +207,8 @@ int main(int argc, char **argv)
     vec4 lightpos = vec4(4, -50.f, 4, 1.0);
     mat4 model = translate(mat4(1.0f), vec3(0.0, 0.0, 0.0));
     vec3 pos(0.0, 0.0, 0.0);
-    float floor = -60.f;
-    mat4 view = rotate(translate(mat4(1.0f), vec3(0.f, 50.f, -100.0f)), radians(25.f), vec3(1.f, 0.f, 0.f));
+    float floor = -61.f;
+    mat4 view = rotate(translate(mat4(1.0f), vec3(0.f, 50.f, -100.0f)), radians(15.f), vec3(1.f, 0.f, 0.f));
     mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 300.0f);
     r.clear(vec4(0.1, 0.1, 0.1, 1.0));
     r.useShaderProgram(program);

@@ -655,8 +655,7 @@ namespace Software
         {
             for (int i = 0; i < object.attributeValues.size(); i++)
             {
-                int dim = object.attributeDims[i];
-                vertex_in_attrs[v].set<glm::vec4>(i, getAttribs(object, i, v, dim));
+                vertex_in_attrs[v].set<glm::vec4>(i, getAttribs(object, i, v, object.attributeDims[i]));
             }
             vertex_pos[v] = shader_program->vs(shader_program->uniforms, vertex_in_attrs[v], vertex_out_attrs[v]);
         }
