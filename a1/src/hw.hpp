@@ -19,9 +19,13 @@ namespace COL781 {
 			int nTris;
 		};
 
-        class RasterizerThreadPool; // HACK
-
+		class Rasterizer {
+		public:
 #include "api.inc"
+		private:
+			SDL_Window *window;
+			bool quit;
+		};
 
 	}
 }

@@ -173,8 +173,10 @@ int main(int argc, char **argv)
     vec4 vertices[] = {vec4(-70, -80, 70, 1.0), vec4(70, -80, 70, 1.0), vec4(70, -80, -70, 1.0),
                        vec4(-70, -80, -70, 1.0), vec4(0, -80, 0, 1.0)};
     ivec3 triangles[] = {ivec3(0, 1, 4), ivec3(1, 2, 4), ivec3(2, 3, 4), ivec3(3, 0, 4)};
-    vec4 colors[] = {vec4(0.0, 0.3, 0.7, 1.0), vec4(0.0, 0.3, 0.7, 1.0), vec4(0.0, 0.3, 0.7, 1.0),
-                     vec4(0.0, 0.3, 0.7, 1.0), vec4(0.0, 0.3 / 3, 0.7 / 3, 1.0)};
+    // vec4 corner_color = vec4(0.137, 0.753, 0.753, 1.0);
+    vec4 corner_color = vec4(0, 0.3, 0.7, 1.0);
+    vec4 colors[] = {corner_color, corner_color, corner_color,
+                     corner_color, vec4(0, 0.3/3, 0.7/3, 1.0) };
 
     R::Object plane = r.createObject();
     r.setVertexAttribs(plane, 0, 5, vertices);
