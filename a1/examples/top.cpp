@@ -175,8 +175,7 @@ int main(int argc, char **argv)
     ivec3 triangles[] = {ivec3(0, 1, 4), ivec3(1, 2, 4), ivec3(2, 3, 4), ivec3(3, 0, 4)};
     // vec4 corner_color = vec4(0.137, 0.753, 0.753, 1.0);
     vec4 corner_color = vec4(0, 0.3, 0.7, 1.0);
-    vec4 colors[] = {corner_color, corner_color, corner_color,
-                     corner_color, vec4(0, 0.3/3, 0.7/3, 1.0) };
+    vec4 colors[] = {corner_color, corner_color, corner_color, corner_color, vec4(0, 0.3 / 3, 0.7 / 3, 1.0)};
 
     R::Object plane = r.createObject();
     r.setVertexAttribs(plane, 0, 5, vertices);
@@ -188,7 +187,7 @@ int main(int argc, char **argv)
     std::vector<vec4> verts;
     std::vector<vec4> normals;
     std::vector<ivec3> tris;
-    if (!load_object(argv[1], verts, normals, tris))
+    if (!load_object("../../models/top_500.obj", verts, normals, tris))
     {
         std::cout << "Could not load object!" << std::endl;
         return EXIT_SUCCESS;
@@ -209,7 +208,7 @@ int main(int argc, char **argv)
     vec4 lightpos = vec4(4, -50.f, 4, 1.0);
     mat4 model = translate(mat4(1.0f), vec3(0.0, 0.0, 0.0));
     vec3 pos(0.0, 0.0, 0.0);
-    float floor = -61.f;
+    float floor = -60.f;
     mat4 view = rotate(translate(mat4(1.0f), vec3(0.f, 50.f, -100.0f)), radians(15.f), vec3(1.f, 0.f, 0.f));
     mat4 projection = perspective(radians(60.0f), (float)width / (float)height, 0.5f, 300.0f);
     r.clear(vec4(0.1, 0.1, 0.1, 1.0));
