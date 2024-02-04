@@ -13,8 +13,8 @@ using namespace glm;
 int main()
 {
     R::Rasterizer r;
-    int width = 640, height = 480;
-    if (!r.initialize("Clock", width, height, 9))
+    int width = 800, height = 800;
+    if (!r.initialize("Clock", width, height, 4))
         return EXIT_FAILURE;
 
     R::ShaderProgram program = r.createShaderProgram(r.vsTransform(), r.fsConstant());
