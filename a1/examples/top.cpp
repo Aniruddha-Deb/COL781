@@ -187,7 +187,7 @@ int main(int argc, char **argv)
     std::vector<vec4> verts;
     std::vector<vec4> normals;
     std::vector<ivec3> tris;
-    if (!load_object("../../models/top_500.obj", verts, normals, tris))
+    if (!load_object("../models/top_500.obj", verts, normals, tris))
     {
         std::cout << "Could not load object!" << std::endl;
         return EXIT_SUCCESS;
