@@ -1,4 +1,5 @@
 #include "viewer.hpp"
+#include "mesh.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -58,39 +59,26 @@ bool load_object(std::string filename, std::vector<vec3> &verts, std::vector<vec
 }
 
 int main(int argc, char** argv) {
-    std::vector<vec3> vertices;
-    std::vector<vec3> normals;
-    std::vector<ivec3> triangles;
-    /*
-    vec3 vertices[] = {
-        vec3(-0.5, -0.5, 0.0),
-        vec3( 0.5, -0.5, 0.0),
-        vec3(-0.5,  0.5, 0.0),
-        vec3( 0.5,  0.5, 0.0)
-    };
-    vec3 normals[] = {
-        vec3(0.0, 0.0, 1.0),
-        vec3(0.0, 0.0, 1.0),
-        vec3(0.0, 0.0, 1.0),
-        vec3(0.0, 0.0, 1.0)
-    };
-    ivec3 triangles[] = {
-        ivec3(0, 1, 2),
-        ivec3(1, 2, 3)
-    };
-    */
-
     V::Viewer v;
     if (!v.initialize("Mesh viewer", 640, 480)) {
         return EXIT_FAILURE;
     }
 
+    std::string path(argv[1]);
+
+    Mesh m;
+    m.load_objfile(path);
+
+    std::cout << "Loaded " << m.n_verts << " verts, " << m.n_tris << " triangles and " << m.n_edges << " edges\n";
+
+    /*
     load_object(argv[1], vertices, normals, triangles);
     int n_verts = vertices.size();
     int n_tris = triangles.size();
-    v.setVertices(n_verts, vertices.data());
-    v.setNormals(n_verts, normals.data());
-    v.setTriangles(n_tris, triangles.data());
+    */
+    v.setVertices(m.n_verts, m.vert_pos.data());
+    v.setNormals(m.n_verts, m.vert_normal.data());
+    v.setTriangles(m.n_tris, m.tri_verts.data());
 
     v.view();
 }

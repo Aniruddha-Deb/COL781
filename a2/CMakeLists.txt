@@ -7,7 +7,7 @@ find_package(glm REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
 
-add_library(viewer src/hw.cpp src/viewer.cpp deps/src/gl.c)
+add_library(viewer src/mesh.cpp src/hw.cpp src/viewer.cpp deps/src/gl.c)
 target_include_directories(viewer PUBLIC /opt/homebrew/include)
 target_include_directories(viewer PUBLIC deps/include)
 target_link_libraries(viewer glm::glm OpenGL::GL SDL2::SDL2)

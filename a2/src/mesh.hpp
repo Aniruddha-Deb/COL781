@@ -21,6 +21,7 @@
 
 class Mesh {
 
+    public:
     int n_verts, n_edges, n_tris;
     std::vector<int> vert_edges; // [0, n_verts-1] -> [0, n_edges-1]
     std::vector<glm::ivec2> edge_verts; // [0, n_edges-1] -> [0, n_verts-1]
@@ -36,8 +37,8 @@ class Mesh {
     std::vector<glm::vec3> vert_pos;     // n_verts
     std::vector<glm::vec3> vert_normal;  // n_verts
 
-    Mesh();
-    Mesh(int n_verts, int n_edges, int n_tris);
+    // Mesh();
+    // Mesh(int n_verts, int n_edges, int n_tris);
     void load_objfile(std::string& filename);
-    void display_mesh(COL781::Viewer::Viewer& viewer);
+    // void display_mesh(COL781::Viewer::Viewer& viewer);
 };
