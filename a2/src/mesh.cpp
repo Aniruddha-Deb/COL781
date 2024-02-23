@@ -6,7 +6,8 @@
 
 #include "mesh.hpp"
 
-void HalfEdgeMesh::load_objfile(std::string &filename) {
+void HalfEdgeMesh::load_objfile(std::string &filename)
+{
 
     std::ifstream objFile(filename);
     if (!objFile.is_open())
@@ -56,24 +57,27 @@ void HalfEdgeMesh::load_objfile(std::string &filename) {
             int he_start_idx = he_next.size();
             tri_he.push_back(he_start_idx);
             tri_verts.push_back(v);
-            he_vert.resize(he_vert.size()+3);
-            he_next.resize(he_next.size()+3);
-            he_pair.resize(he_pair.size()+3);
-            
+            he_vert.resize(he_vert.size() + 3);
+            he_next.resize(he_next.size() + 3);
+            he_pair.resize(he_pair.size() + 3);
+            he_tri.resize(he_tri.size() + 3, tri_idx);
+
             // connect half-edges
-            for (int i=0, j=1; i<3; i++,j=(j+1)%3) {
+            for (int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
+            {
                 int v1 = v[i], v2 = v[j];
                 int he_idx = he_start_idx + i;
-                he_next[he_idx] = he_start_idx+j;
+                he_next[he_idx] = he_start_idx + j;
                 he_vert[he_idx] = v2;
                 vert_he[v2] = he_idx;
-                uint64_t key = (uint64_t(v2)<<32)|v1;
-                if (he_map.find(key) != he_map.end()) {
+                uint64_t key = (uint64_t(v2) << 32) | v1;
+                if (he_map.find(key) != he_map.end())
+                {
                     int hep = he_map[key];
                     he_pair[he_idx] = hep;
                     he_pair[hep] = he_idx;
                 }
-                he_map[(uint64_t(v1)<<32)|v2] = he_idx;
+                he_map[(uint64_t(v1) << 32) | v2] = he_idx;
             }
         }
     }
@@ -83,6 +87,50 @@ void HalfEdgeMesh::load_objfile(std::string &filename) {
     n_he = he_vert.size();
 
     objFile.close();
+}
+
+void HalfEdgeMesh::set_vert_attribs(std::vector<glm::vec3> &vert_pos, std::vector<glm::vec3> &vert_normal)
+{
+    assert(vert_pos.size() == vert_normal.size());
+    this->vert_pos = vert_pos;
+    this->vert_normal = vert_normal;
+    this->n_verts = vert_pos.size();
+    this->vert_he.resize(n_verts, -1);
+}
+
+void HalfEdgeMesh::set_faces(std::vector<glm::ivec3> &faces)
+{
+    for (auto &face : faces)
+    {
+        int tri_idx = tri_he.size();
+        int he_start_idx = he_next.size();
+        tri_he.push_back(he_start_idx);
+        tri_verts.push_back(face);
+        he_vert.resize(he_vert.size() + 3);
+        he_next.resize(he_next.size() + 3);
+        he_pair.resize(he_pair.size() + 3);
+        he_tri.resize(he_tri.size() + 3, tri_idx);
+
+        // connect half-edges
+        for (int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
+        {
+            int v1 = face[i], v2 = face[j];
+            int he_idx = he_start_idx + i;
+            he_next[he_idx] = he_start_idx + j;
+            he_vert[he_idx] = v2;
+            vert_he[v2] = he_idx;
+            uint64_t key = (uint64_t(v2) << 32) | v1;
+            if (he_map.find(key) != he_map.end())
+            {
+                int hep = he_map[key];
+                he_pair[he_idx] = hep;
+                he_pair[hep] = he_idx;
+            }
+            he_map[(uint64_t(v1) << 32) | v2] = he_idx;
+        }
+    }
+    n_tris = tri_he.size();
+    n_he = he_vert.size();
 }
 
 void Mesh::load_objfile(std::string &filename)

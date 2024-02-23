@@ -47,10 +47,10 @@ class Mesh
     // void display_mesh(COL781::Viewer::Viewer& viewer);
 };
 
-class HalfEdgeMesh {
+class HalfEdgeMesh
+{
 
-    public:
-
+  public:
     int n_verts, n_he, n_tris;
 
     std::vector<int> vert_he;
@@ -59,10 +59,13 @@ class HalfEdgeMesh {
     std::vector<int> he_vert;
     std::vector<int> he_next;
     std::vector<int> he_pair;
-    std::unordered_map<uint64_t,int> he_map;
+    std::vector<int> he_tri;
+    std::unordered_map<uint64_t, int> he_map;
 
     std::vector<glm::vec3> vert_pos;
     std::vector<glm::vec3> vert_normal;
 
-    void load_objfile(std::string& filename);
+    void load_objfile(std::string &filename);
+    void set_vert_attribs(std::vector<glm::vec3> &vert_pos, std::vector<glm::vec3> &vert_normal);
+    void set_faces(std::vector<glm::ivec3> &faces);
 };

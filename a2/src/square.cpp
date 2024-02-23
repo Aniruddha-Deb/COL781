@@ -15,7 +15,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    Mesh mesh;
+    HalfEdgeMesh mesh;
     int m = 10, n = 10;
     std::vector<glm::vec3> vert_pos;
     std::vector<glm::vec3> vert_normals;
@@ -41,8 +41,8 @@ int main(int argc, char** argv)
 
     mesh.set_faces(faces);
 
-    std::cout << "Loaded " << mesh.n_verts << " verts, " << mesh.n_tris << " triangles and " << mesh.n_edges
-              << " edges\n";
+    std::cout << "Loaded " << mesh.n_verts << " verts, " << mesh.n_tris << " triangles and " << mesh.n_he
+              << " half edges\n";
 
     /*
     load_object(argv[1], vertices, normals, triangles);
