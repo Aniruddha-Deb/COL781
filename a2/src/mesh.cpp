@@ -6,7 +6,8 @@
 
 #include "mesh.hpp"
 
-void Mesh::load_objfile(std::string& filename) {
+void Mesh::load_objfile(std::string &filename)
+{
 
     std::ifstream objFile(filename);
     if (!objFile.is_open())
@@ -50,9 +51,9 @@ void Mesh::load_objfile(std::string& filename) {
 
             // TODO what do we do if all the triangles are not counter clockwise?
             // The edge storage will get a bit messy here while loading.
-            
-            // e1->e2, e2->e3, e3->e1 
-            
+
+            // e1->e2, e2->e3, e3->e1
+
             v -= 1;
             n -= 1;
             vert_edges[v[0]] = edge_tris.size();
@@ -76,4 +77,35 @@ void Mesh::load_objfile(std::string& filename) {
     n_edges = edge_tris.size();
 
     objFile.close();
+}
+
+void Mesh::set_vert_attribs(std::vector<glm::vec3> &vert_pos, std::vector<glm::vec3> &vert_normal)
+{
+    assert(vert_pos.size() == vert_normal.size());
+    this->vert_pos = vert_pos;
+    this->vert_normal = vert_normal;
+    this->n_verts = vert_pos.size();
+    this->vert_edges.resize(this->n_verts, -1);
+}
+
+void Mesh::set_faces(std::vector<glm::ivec3> &faces)
+{
+    for (auto &face : faces)
+    {
+        vert_edges[face[0]] = edge_tris.size();
+        edge_tris.push_back(tri_verts.size());
+        edge_verts.push_back({face[0], face[1]});
+
+        vert_edges[face[1]] = edge_tris.size();
+        edge_tris.push_back(tri_verts.size());
+        edge_verts.push_back({face[1], face[2]});
+
+        vert_edges[face[2]] = edge_tris.size();
+        edge_tris.push_back(tri_verts.size());
+        edge_verts.push_back({face[2], face[0]});
+
+        tri_verts.push_back(face);
+    }
+    n_tris = tri_verts.size();
+    n_edges = edge_tris.size();
 }

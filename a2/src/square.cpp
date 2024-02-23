@@ -15,10 +15,14 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    std::string path(argv[1]);
-
     Mesh m;
-    m.load_objfile(path);
+    std::vector<glm::vec3> vert_pos = {glm::vec3(-1, 1, 0), glm::vec3(1, 1, 0), glm::vec3(1, -1, 0),
+                                       glm::vec3(-1, -1, 0)};
+    std::vector<glm::vec3> vert_normals = {glm::vec3(0, 0, 1), glm::vec3(0, 0, 1), glm::vec3(0, 0, 1),
+                                           glm::vec3(0, 0, 1)};
+    m.set_vert_attribs(vert_pos, vert_normals);
+    std::vector<glm::ivec3> faces = {glm::ivec3(0, 3, 2), glm::ivec3(0, 2, 1)};
+    m.set_faces(faces);
 
     std::cout << "Loaded " << m.n_verts << " verts, " << m.n_tris << " triangles and " << m.n_edges << " edges\n";
 
