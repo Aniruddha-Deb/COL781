@@ -1,4 +1,5 @@
 #include <vector>
+#include <unordered_map>
 #include "glm/glm.hpp"
 #include "viewer.hpp"
 
@@ -44,4 +45,24 @@ class Mesh
     void set_vert_attribs(std::vector<glm::vec3> &vert_pos, std::vector<glm::vec3> &vert_normal);
     void set_faces(std::vector<glm::ivec3> &faces);
     // void display_mesh(COL781::Viewer::Viewer& viewer);
+};
+
+class HalfEdgeMesh {
+
+    public:
+
+    int n_verts, n_he, n_tris;
+
+    std::vector<int> vert_he;
+    std::vector<int> tri_he;
+    std::vector<glm::ivec3> tri_verts; // fast rendering
+    std::vector<int> he_vert;
+    std::vector<int> he_next;
+    std::vector<int> he_pair;
+    std::unordered_map<uint64_t,int> he_map;
+
+    std::vector<glm::vec3> vert_pos;
+    std::vector<glm::vec3> vert_normal;
+
+    void load_objfile(std::string& filename);
 };

@@ -6,6 +6,85 @@
 
 #include "mesh.hpp"
 
+void HalfEdgeMesh::load_objfile(std::string &filename) {
+
+    std::ifstream objFile(filename);
+    if (!objFile.is_open())
+    {
+        std::cerr << "Unable to open file: " << filename << '\n';
+    }
+
+    std::string line;
+    while (getline(objFile, line))
+    {
+        if (line.size() == 0)
+            continue;
+        std::istringstream iss(line);
+        std::string token;
+        iss >> token;
+        if (token == "#")
+            continue;
+        if (token == "v")
+        {
+            glm::vec3 v;
+            iss >> v.x >> v.y >> v.z;
+            vert_pos.push_back(v);
+            vert_he.push_back(-1);
+        }
+        else if (token == "vn")
+        {
+            glm::vec3 n;
+            iss >> n.x >> n.y >> n.z;
+            vert_normal.push_back(n);
+        }
+        else if (token == "f")
+        {
+            // vertex_index/texture_index/normal_index. Parse.
+            glm::ivec3 v, n;
+            std::string e1, e2, e3;
+            iss >> e1 >> e2 >> e3;
+            sscanf(e1.data(), "%d//%d", &v[0], &n[0]);
+            sscanf(e2.data(), "%d//%d", &v[1], &n[1]);
+            sscanf(e3.data(), "%d//%d", &v[2], &n[2]);
+            v -= 1; // obj files are 1-indexed
+            n -= 1; // TODO what if normal verts are not the same.
+                    // Have a map for this as well
+            // assuming all the triangles are counter-clockwise
+
+            // add half-edges
+            int tri_idx = tri_he.size();
+            int he_start_idx = he_next.size();
+            tri_he.push_back(he_start_idx);
+            tri_verts.push_back(v);
+            he_vert.resize(he_vert.size()+3);
+            he_next.resize(he_next.size()+3);
+            he_pair.resize(he_pair.size()+3);
+            
+            // connect half-edges
+            for (int i=0, j=1; i<3; i++,j=(j+1)%3) {
+                int v1 = v[i], v2 = v[j];
+                int he_idx = he_start_idx + i;
+                he_next[he_idx] = he_start_idx+j;
+                he_vert[he_idx] = v2;
+                vert_he[v2] = he_idx;
+                uint64_t key = (uint64_t(v2)<<32)|v1;
+                if (he_map.find(key) != he_map.end()) {
+                    int hep = he_map[key];
+                    he_pair[he_idx] = hep;
+                    he_pair[hep] = he_idx;
+                }
+                he_map[(uint64_t(v1)<<32)|v2] = he_idx;
+            }
+        }
+    }
+
+    n_verts = vert_pos.size();
+    n_tris = tri_he.size();
+    n_he = he_vert.size();
+
+    objFile.close();
+}
+
 void Mesh::load_objfile(std::string &filename)
 {
 

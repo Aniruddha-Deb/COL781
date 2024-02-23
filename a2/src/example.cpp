@@ -17,10 +17,10 @@ int main(int argc, char** argv)
 
     std::string path(argv[1]);
 
-    Mesh m;
+    HalfEdgeMesh m;
     m.load_objfile(path);
 
-    std::cout << "Loaded " << m.n_verts << " verts, " << m.n_tris << " triangles and " << m.n_edges << " edges\n";
+    std::cout << "Loaded " << m.n_verts << " verts, " << m.n_tris << " triangles and " << m.n_he << " halfedges\n";
 
     /*
     load_object(argv[1], vertices, normals, triangles);
