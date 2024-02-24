@@ -14,7 +14,6 @@ void HalfEdgeMesh::load_objfile(std::string &filename)
     {
         std::cerr << "Unable to open file: " << filename << '\n';
     }
-
     std::string line;
     while (getline(objFile, line))
     {
@@ -31,6 +30,7 @@ void HalfEdgeMesh::load_objfile(std::string &filename)
             iss >> v.x >> v.y >> v.z;
             vert_pos.push_back(v);
             vert_he.push_back(-1);
+            n_verts++;
         }
         else if (token == "vn")
         {
@@ -53,60 +53,12 @@ void HalfEdgeMesh::load_objfile(std::string &filename)
             // assuming all the triangles are counter-clockwise
 
             // add half-edges
-            int tri_idx = tri_he.size();
-            int he_start_idx = he_next.size();
-            tri_he.push_back(he_start_idx);
-            tri_verts.push_back(v);
-            he_vert.resize(he_vert.size() + 3);
-            he_next.resize(he_next.size() + 3);
-            he_pair.resize(he_pair.size() + 3, -1);
-            he_tri.resize(he_tri.size() + 3, tri_idx);
-
-            // connect half-edges
-            for (int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-            {
-                int v1 = v[i], v2 = v[j];
-                int he_idx = he_start_idx + i;
-                he_next[he_idx] = he_start_idx + j;
-                he_vert[he_idx] = v1;
-                vert_he[v1] = he_idx;
-                uint64_t key = (uint64_t(v2) << 32) | v1;
-                if (he_map.find(key) != he_map.end())
-                {
-                    int hep = he_map[key];
-                    he_pair[he_idx] = hep;
-                    he_pair[hep] = he_idx;
-                }
-                he_map[(uint64_t(v1) << 32) | v2] = he_idx;
-            }
+            add_face(v);
         }
     }
     objFile.close();
     // giving dummy he pairs to boundary hes
-    n_verts = vert_pos.size();
-    n_tris = tri_he.size();
-    n_he = he_vert.size();
-    for (int i = 0; i < n_he; i++)
-    {
-        if (he_pair[i] == -1)
-        {
-            int v2 = he_vert[i], v1 = he_vert[he_next[i]];
-            he_vert.push_back(v1);
-            he_pair.push_back(i);
-            he_pair[i] = he_vert.size() - 1;
-            he_map[(uint64_t(v1) << 32) | v2] = he_vert.size() - 1;
-            he_tri.push_back(-1);
-            he_next.push_back(-1);
-            vert_he[v1] = he_vert.size() - 1;
-        }
-    }
-    for (int i = n_he; i < he_vert.size(); i++)
-    {
-        he_next[i] = vert_he[he_vert[he_pair[i]]];
-    }
-    n_verts = vert_pos.size();
-    n_tris = tri_he.size();
-    n_he = he_vert.size();
+    set_boundary();
 }
 
 std::vector<int> HalfEdgeMesh::get_adjacent_vertices(int vertex)
@@ -166,12 +118,12 @@ void HalfEdgeMesh::recompute_vertex_normals()
     for (int q = 0; q < n_verts; q++)
     {
         std::vector<int> vertices = get_adjacent_vertices(q);
-        std::cout << "neighbours of " << q << " ";
-        for (int i : vertices)
-        {
-            std::cout << i << " ";
-        }
-        std::cout << "\n";
+        // std::cout << "neighbours of " << q << " ";
+        // for (int i : vertices)
+        // {
+        //     std::cout << i << " ";
+        // }
+        // std::cout << "\n";
         glm::vec3 normal(.0f, .0f, .0f);
         for (int i = 0; i < vertices.size() - 1; i++)
         {
