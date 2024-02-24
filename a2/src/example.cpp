@@ -8,13 +8,14 @@
 namespace V = COL781::Viewer;
 using namespace glm;
 
-template<typename T> void print_buffer(std::vector<T>& a, std::string bufname);
+template <typename T> void print_buffer(std::vector<T>& a, std::string bufname);
 
-template <>
-void print_buffer(std::vector<int>& a, std::string bufname) {
+template <> void print_buffer(std::vector<int>& a, std::string bufname)
+{
 
     std::cout << bufname << ": " << std::endl;
-    for (int i : a) {
+    for (int i : a)
+    {
         std::cout << std::setfill(' ') << std::setw(2) << i << " ";
     }
     std::cout << std::endl;

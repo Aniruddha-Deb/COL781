@@ -72,4 +72,7 @@ class HalfEdgeMesh
     void taubin_smoothing(float lambda, float mu, int n_iter);
     void set_vert_attribs(std::vector<glm::vec3> &vert_pos, std::vector<glm::vec3> &vert_normal);
     void set_faces(std::vector<glm::ivec3> &faces);
+    void add_face(glm::ivec3 &face);
+    void set_boundary();
+    void edge_flip(int he);
 };
