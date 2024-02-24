@@ -66,6 +66,8 @@ class HalfEdgeMesh
     std::vector<glm::vec3> vert_normal;
 
     void load_objfile(std::string &filename);
+    void recompute_vertex_normals();
+    std::vector<int> get_adjacent_vertices(int vertex);
     void set_vert_attribs(std::vector<glm::vec3> &vert_pos, std::vector<glm::vec3> &vert_normal);
     void set_faces(std::vector<glm::ivec3> &faces);
 };

@@ -34,6 +34,7 @@ int main(int argc, char** argv)
     m.load_objfile(path);
 
     std::cout << "Loaded " << m.n_verts << " verts, " << m.n_tris << " triangles and " << m.n_he << " halfedges\n";
+    m.recompute_vertex_normals();
 
     /*
     load_object(argv[1], vertices, normals, triangles);

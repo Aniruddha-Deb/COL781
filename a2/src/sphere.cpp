@@ -7,6 +7,18 @@
 namespace V = COL781::Viewer;
 using namespace glm;
 
+template<typename T> void print_buffer(std::vector<T>& a, std::string bufname);
+
+template <>
+void print_buffer(std::vector<int>& a, std::string bufname) {
+
+    std::cout << bufname << ": " << std::endl;
+    for (int i : a) {
+        std::cout << std::setfill(' ') << std::setw(2) << i << " ";
+    }
+    std::cout << std::endl;
+}
+
 int main(int argc, char** argv)
 {
     V::Viewer v;
@@ -16,7 +28,7 @@ int main(int argc, char** argv)
     }
 
     HalfEdgeMesh mesh;
-    int m = 10, n = 3;
+    int m = 8, n = 2; // m=4, n=2 is flat?
     std::vector<glm::vec3> vert_pos;
     std::vector<glm::vec3> vert_normals;
     std::vector<glm::ivec3> faces;
@@ -66,6 +78,12 @@ int main(int argc, char** argv)
 
     std::cout << "Loaded " << mesh.n_verts << " verts, " << mesh.n_tris << " triangles and " << mesh.n_he
               << "half edges\n";
+    
+    print_buffer(mesh.he_next, "he_next");
+    print_buffer(mesh.he_pair, "he_pair");
+    print_buffer(mesh.he_vert, "he_vert");
+
+    // mesh.recompute_vertex_normals();
 
     /*
     load_object(argv[1], vertices, normals, triangles);
