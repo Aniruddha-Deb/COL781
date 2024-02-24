@@ -121,6 +121,10 @@ std::vector<int> HalfEdgeMesh::get_adjacent_vertices(int vertex)
         vertices.push_back(he_vert[he_pair[he]]);
         he = he_next[he_pair[he]];
     }
+    if (he_tri[vert_he[vertex]] != -1)
+    {
+        vertices.push_back(he_vert[he_pair[he_start]]);
+    }
     return vertices;
 }
 

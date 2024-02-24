@@ -52,8 +52,6 @@ int main(int argc, char** argv)
             vert_normals.push_back(glm::vec3(0, 0, 1));
         }
     }
-    vert_pos[4].z = 0.0;
-    vert_pos[5].y -= 0.4;
     std::vector<glm::ivec3> faces;
     for (int i = 0; i < n; i++)
     {
