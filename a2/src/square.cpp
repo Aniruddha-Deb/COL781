@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     }
 
     HalfEdgeMesh mesh;
-    int m = 10, n = 10;
+    int m = 20, n = 20;
     std::vector<glm::vec3> vert_pos;
     std::vector<glm::vec3> vert_normals;
     for (int i = 0; i <= n; i++)
