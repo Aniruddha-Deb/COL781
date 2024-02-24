@@ -57,7 +57,7 @@ int main(int argc, char** argv)
         {
             vert_pos.push_back(
                 glm::vec3(cosf(0.0) * cosf(curr_latitude), sinf(curr_latitude), sinf(0.0) * cosf(curr_latitude)));
-            // vert_normals.push_back(vert_pos.back());
+            vert_normals.push_back(vert_pos.back());
             continue;
         }
         for (int j = 0; j < m; j++)
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
             float curr_longitude = j * longitude_dist;
             vert_pos.push_back(glm::vec3(cosf(curr_longitude) * cosf(curr_latitude), sinf(curr_latitude),
                                          sinf(curr_longitude) * cosf(curr_latitude)));
-            // vert_normals.push_back(vert_pos.back());
+            vert_normals.push_back(vert_pos.back());
         }
     }
 
