@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     }
 
     HalfEdgeMesh mesh;
-    int m = 10, n = 10; // m is slices(longi) n is stacks(lati)
+    int m = 100, n = 100; // m is slices(longi) n is stacks(lati)
 
     float latitude_dist = M_PI / n;
     float longitude_dist = 2 * M_PI / m;
@@ -50,43 +50,40 @@ int main(int argc, char** argv)
     std::vector<glm::vec3> vert_normals;
     std::vector<glm::ivec3> faces;
 
-    for (int i = 0; i <= n; i++)
+    vert_pos.push_back(glm::vec3(0.0, 1.0, 0.0));
+    vert_normals.push_back(vert_pos.back());
+    for (int i = 1; i < n; i++)
     {
-        float curr_latitude = M_PI / 2 - i * latitude_dist;
-        if (i == 0 || i == n)
-        {
-            vert_pos.push_back(
-                glm::vec3(cosf(0.0) * cosf(curr_latitude), sinf(curr_latitude), sinf(0.0) * cosf(curr_latitude)));
-            vert_normals.push_back(vert_pos.back());
-            continue;
-        }
+        float curr_latitude = i * latitude_dist;
         for (int j = 0; j < m; j++)
         {
             float curr_longitude = j * longitude_dist;
-            vert_pos.push_back(glm::vec3(cosf(curr_longitude) * cosf(curr_latitude), sinf(curr_latitude),
-                                         sinf(curr_longitude) * cosf(curr_latitude)));
+            vert_pos.push_back(glm::vec3(cosf(curr_longitude) * sinf(curr_latitude), cosf(curr_latitude),
+                                         sinf(curr_longitude) * sinf(curr_latitude)));
             vert_normals.push_back(vert_pos.back());
         }
     }
+    vert_pos.push_back(glm::vec3(0, -1.0, 0.0));
+    vert_normals.push_back(vert_pos.back());
 
-    for (int i = 0; i < n; i++)
+    for (int j = 0; j < m; j++)
+    {
+        // north pole and first layer
+        faces.push_back(glm::ivec3(0, (j + 1) % m + 1, j + 1));
+    }
+    for (int i = 1; i < n - 1; i++)
     {
         for (int j = 0; j < m; j++)
         {
-            if (i == 0)
-            {
-                faces.push_back(glm::ivec3(0, (j + 1) % m + 1, j + 1));
-            }
-            else if (i == n - 1)
-            {
-                faces.push_back(glm::ivec3((i - 1) * m + j + 1, (i - 1) * m + (j + 1) % m + 1, n * m - m + 1));
-            }
-            else
-            {
-                faces.push_back(glm::ivec3((i - 1) * m + j + 1, (i - 1) * m + (j + 1) % m + 1, i * m + j + 1));
-                faces.push_back(glm::ivec3((i - 1) * m + (j + 1) % m + 1, i * m + (j + 1) % m + 1, i * m + j + 1));
-            }
+            // middle layers
+            faces.push_back(glm::ivec3((i - 1) * m + j + 1, (i - 1) * m + (j + 1) % m + 1, i * m + j + 1));
+            faces.push_back(glm::ivec3((i - 1) * m + (j + 1) % m + 1, i * m + (j + 1) % m + 1, i * m + j + 1));
         }
+    }
+    for (int j = 0; j < m; j++)
+    {
+        // south pole and last layer
+        faces.push_back(glm::ivec3((n - 2) * m + j + 1, (n - 2) * m + (j + 1) % m + 1, n * m - m + 1));
     }
 
     mesh.set_vert_attribs(vert_pos, vert_normals);
