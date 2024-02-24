@@ -35,8 +35,8 @@ int main(int argc, char** argv)
 
     std::cout << "Loaded " << m.n_verts << " verts, " << m.n_tris << " triangles and " << m.n_he << " halfedges\n";
 
-    m.taubin_smoothing(0.33, -0.34, 10);
-    m.recompute_vertex_normals();
+    // m.taubin_smoothing(0.33, -0.34, 10);
+    // m.recompute_vertex_normals();
 
     /*
     load_object(argv[1], vertices, normals, triangles);
