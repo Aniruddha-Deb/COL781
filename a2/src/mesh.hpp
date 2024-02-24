@@ -68,6 +68,8 @@ class HalfEdgeMesh
     void load_objfile(std::string &filename);
     void recompute_vertex_normals();
     std::vector<int> get_adjacent_vertices(int vertex);
+    void gaussian_smoothing(float lambda);
+    void taubin_smoothing(float lambda, float mu, int n_iter);
     void set_vert_attribs(std::vector<glm::vec3> &vert_pos, std::vector<glm::vec3> &vert_normal);
     void set_faces(std::vector<glm::ivec3> &faces);
 };

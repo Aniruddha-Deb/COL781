@@ -116,9 +116,33 @@ std::vector<int> HalfEdgeMesh::get_adjacent_vertices(int vertex)
     return vertices;
 }
 
-void HalfEdgeMesh::recompute_vertex_normals()
-{
+void HalfEdgeMesh::gaussian_smoothing(float lambda) {
 
+    std::vector<glm::vec3> vert_pos_new(vert_pos.size());
+    for (int v=0; v<n_verts; v++) {
+        std::vector<int> nbd = get_adjacent_vertices(v);
+        glm::vec3 delta(.0f, .0f, .0f);
+        int n_lim = (nbd.back() == nbd.front()) ? nbd.size()-1 : nbd.size();
+        for (int i=0; i<n_lim; i++) {
+            delta += (vert_pos[nbd[i]] - vert_pos[v]);
+        }
+        delta /= n_lim;
+        vert_pos_new[v] = vert_pos[v] + lambda * delta;
+    }
+    vert_pos = vert_pos_new;
+}
+
+void HalfEdgeMesh::taubin_smoothing(float lambda, float mu, int n_iter) {
+
+    while (n_iter--) {
+        gaussian_smoothing(lambda);
+        gaussian_smoothing(mu);
+    }
+
+}
+
+void HalfEdgeMesh::recompute_vertex_normals() {
+    
     // Liu (1999)
     // https://escholarship.org/content/qt7657d8h3/qt7657d8h3.pdf?t=ptt283
     vert_normal.resize(vert_pos.size());
