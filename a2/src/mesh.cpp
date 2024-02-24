@@ -69,11 +69,11 @@ void HalfEdgeMesh::load_objfile(std::string &filename)
                 int he_idx = he_start_idx + i;
                 he_next[he_idx] = he_start_idx + j;
                 he_vert[he_idx] = v2;
-                vert_he[v2] = he_idx; // this ensures that vertices always point to 
-                                      // the most recent halfedge that they're the 
-                                      // head of. This allows us to traverse in a 
-                                      // counterclockwise manner if the vertex is 
-                                      // on the exterior of the mesh rather than 
+                vert_he[v2] = he_idx; // this ensures that vertices always point to
+                                      // the most recent halfedge that they're the
+                                      // head of. This allows us to traverse in a
+                                      // counterclockwise manner if the vertex is
+                                      // on the exterior of the mesh rather than
                                       // the interior
                 uint64_t key = (uint64_t(v2) << 32) | v1;
                 if (he_map.find(key) != he_map.end())
@@ -94,19 +94,21 @@ void HalfEdgeMesh::load_objfile(std::string &filename)
     objFile.close();
 }
 
-std::vector<int> HalfEdgeMesh::get_adjacent_vertices(int vertex) {
-    // get all adjacent vertices 
+std::vector<int> HalfEdgeMesh::get_adjacent_vertices(int vertex)
+{
+    // get all adjacent vertices
     // This repeats the first vertex in case the vertex is an interior vertex!
-    // see note in mesh loading above: maintaining that invariant ensures 
+    // see note in mesh loading above: maintaining that invariant ensures
     // we only need to circulate in one direction
     std::vector<int> vertices;
     int he = vert_he[vertex];
     int he_start = he;
-    vertices.push_back(he_vert[he_next[he_next[he]]]); // not he_vert[he_pair[he]] 
-                                                       // as this edge might 
+    vertices.push_back(he_vert[he_next[he_next[he]]]); // not he_vert[he_pair[he]]
+                                                       // as this edge might
                                                        // not have a pair!
     he = he_next[he];
-    while (he_pair[he] != -1 && he_pair[he] != he_start) {
+    while (he_pair[he] != -1 && he_pair[he] != he_start)
+    {
         vertices.push_back(he_vert[he]);
         he = he_next[he_pair[he]];
     }
@@ -114,33 +116,36 @@ std::vector<int> HalfEdgeMesh::get_adjacent_vertices(int vertex) {
     return vertices;
 }
 
-void HalfEdgeMesh::recompute_vertex_normals() {
-    
+void HalfEdgeMesh::recompute_vertex_normals()
+{
+
     // Liu (1999)
     // https://escholarship.org/content/qt7657d8h3/qt7657d8h3.pdf?t=ptt283
     vert_normal.resize(vert_pos.size());
-    for (int q=0; q<n_verts; q++) {
+    for (int q = 0; q < n_verts; q++)
+    {
         std::vector<int> vertices = get_adjacent_vertices(q);
         glm::vec3 normal(.0f, .0f, .0f);
-        for (int i=0; i<vertices.size()-1; i++) {
+        for (int i = 0; i < vertices.size() - 1; i++)
+        {
             auto v1 = vert_pos[vertices[i]] - vert_pos[q];
             float mv1 = length(v1);
-            auto v2 = vert_pos[vertices[i+1]] - vert_pos[q];
+            auto v2 = vert_pos[vertices[i + 1]] - vert_pos[q];
             float mv2 = length(v2);
-            normal += glm::cross(v2, v1) / (mv1*mv1*mv2*mv2);
+            normal += glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2);
         }
         vert_normal[q] = glm::normalize(normal);
     }
-
 }
 
 void HalfEdgeMesh::set_vert_attribs(std::vector<glm::vec3> &vert_pos, std::vector<glm::vec3> &vert_normal)
 {
-    assert(vert_pos.size() == vert_normal.size());
+    assert(vert_pos.size() >= vert_normal.size());
     this->vert_pos = vert_pos;
     this->vert_normal = vert_normal;
     this->n_verts = vert_pos.size();
     this->vert_he.resize(n_verts, -1);
+    this->vert_normal.resize(this->n_verts, glm::vec3(0, 0, 0));
 }
 
 void HalfEdgeMesh::set_faces(std::vector<glm::ivec3> &faces)
@@ -160,6 +165,7 @@ void HalfEdgeMesh::set_faces(std::vector<glm::ivec3> &faces)
         for (int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
         {
             int v1 = face[i], v2 = face[j];
+            assert(v1 <= vert_he.size() && v2 <= vert_he.size());
             int he_idx = he_start_idx + i;
             he_next[he_idx] = he_start_idx + j;
             he_vert[he_idx] = v2;

@@ -57,15 +57,15 @@ int main(int argc, char** argv)
         {
             vert_pos.push_back(
                 glm::vec3(cosf(0.0) * cosf(curr_latitude), sinf(curr_latitude), sinf(0.0) * cosf(curr_latitude)));
-            vert_normals.push_back(vert_pos.back());
+            // vert_normals.push_back(vert_pos.back());
             continue;
         }
-        for (int j = 0; j <= m; j++)
+        for (int j = 0; j < m; j++)
         {
             float curr_longitude = j * longitude_dist;
             vert_pos.push_back(glm::vec3(cosf(curr_longitude) * cosf(curr_latitude), sinf(curr_latitude),
                                          sinf(curr_longitude) * cosf(curr_latitude)));
-            vert_normals.push_back(vert_pos.back());
+            // vert_normals.push_back(vert_pos.back());
         }
     }
 
@@ -75,17 +75,16 @@ int main(int argc, char** argv)
         {
             if (i == 0)
             {
-                faces.push_back(glm::ivec3(0, (i + 1) * (m + 1) + j - m, (i + 1) * (m + 1) + j + 1 - m));
+                faces.push_back(glm::ivec3(0, (j + 1) % m + 1, j + 1));
             }
             else if (i == n - 1)
             {
-                faces.push_back(glm::ivec3(i * (m + 1) + j - m, n * m + n - m, i * (m + 1) + j + 1 - m));
+                faces.push_back(glm::ivec3((i - 1) * m + j + 1, (i - 1) * m + (j + 1) % m + 1, n * m - m + 1));
             }
             else
             {
-                faces.push_back(glm::ivec3(i * (m + 1) + j - m, (i + 1) * (m + 1) + j - m, i * (m + 1) + j + 1 - m));
-                faces.push_back(
-                    glm::ivec3(i * (m + 1) + j + 1 - m, (i + 1) * (m + 1) + j - m, (i + 1) * (m + 1) + j + 1 - m));
+                faces.push_back(glm::ivec3((i - 1) * m + j + 1, (i - 1) * m + (j + 1) % m + 1, i * m + j + 1));
+                faces.push_back(glm::ivec3((i - 1) * m + (j + 1) % m + 1, i * m + (j + 1) % m + 1, i * m + j + 1));
             }
         }
     }
@@ -94,13 +93,16 @@ int main(int argc, char** argv)
 
     mesh.set_faces(faces);
 
+    mesh.recompute_vertex_normals();
+
     std::cout << "Loaded " << mesh.n_verts << " verts, " << mesh.n_tris << " triangles and " << mesh.n_he
               << "half edges\n";
 
     print_buffer(mesh.he_next, "he_next");
     print_buffer(mesh.he_pair, "he_pair");
     print_buffer(mesh.he_vert, "he_vert");
-    print_buffer(mesh.vert_pos, "vert_pos");
+    // print_buffer(mesh.vert_pos, "vert_pos");
+    // print_buffer(mesh.vert_normal, "vert_normal");
 
     // mesh.recompute_vertex_normals();
 
