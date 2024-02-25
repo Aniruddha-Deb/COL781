@@ -84,12 +84,11 @@ void HalfEdgeMesh::gaussian_smoothing(float lambda)
     {
         std::vector<int> nbd = get_adjacent_vertices(v);
         glm::vec3 delta(.0f, .0f, .0f);
-        int n_lim = (nbd.back() == nbd.front()) ? nbd.size() - 1 : nbd.size();
-        for (int i = 0; i < n_lim; i++)
+        for (int i = 0; i < nbd.size(); i++)
         {
             delta += (vert_pos[nbd[i]] - vert_pos[v]);
         }
-        delta /= n_lim;
+        delta /= nbd.size();
         vert_pos_new[v] = vert_pos[v] + lambda * delta;
     }
     vert_pos = vert_pos_new;
@@ -107,12 +106,7 @@ void HalfEdgeMesh::taubin_smoothing(float lambda, float mu, int n_iter)
 
 bool HalfEdgeMesh::v_in_tri(int tri, int vertex)
 {
-    std::cout << tri << "\n";
-    if (tri == -1)
-    {
-        return false;
-    }
-    return (tri_verts[tri][0] == vertex || tri_verts[tri][1] == vertex || tri_verts[tri][2] == vertex);
+    return (tri != -1) && (tri_verts[tri][0] == vertex || tri_verts[tri][1] == vertex || tri_verts[tri][2] == vertex);
 }
 
 void HalfEdgeMesh::recompute_vertex_normals()
@@ -124,12 +118,12 @@ void HalfEdgeMesh::recompute_vertex_normals()
     for (int q = 0; q < n_verts; q++)
     {
         std::vector<int> vertices = get_adjacent_vertices(q);
-        std::cout << "neighbours of " << q << " ";
-        for (int i : vertices)
-        {
-            std::cout << i << " ";
-        }
-        std::cout << "\n";
+        // std::cout << "neighbours of " << q << " ";
+        // for (int i : vertices)
+        // {
+        //     std::cout << i << " ";
+        // }
+        // std::cout << "\n";
         glm::vec3 normal(.0f, .0f, .0f);
         for (int i = 0; i < vertices.size(); i++)
         {
@@ -138,16 +132,24 @@ void HalfEdgeMesh::recompute_vertex_normals()
                 int he = he_map[(uint64_t(vertices[(i + 1) % vertices.size()]) << 32) | vertices[i]];
                 if (v_in_tri(he_tri[he], q))
                 {
+                    // std::cout << "\n"
+                    //           << q << " includes " << vertices[i] << " " << vertices[(i + 1) % vertices.size()] <<
+                    //           "\n";
                     auto v1 = vert_pos[vertices[i]] - vert_pos[q];
                     float mv1 = length(v1);
                     auto v2 = vert_pos[vertices[(i + 1) % vertices.size()]] - vert_pos[q];
                     float mv2 = length(v2);
                     normal += glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2);
+                    // std::cout << (glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2))[0] << " "
+                    //           << (glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2))[1] << " "
+                    //           << (glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2))[2] << "\n";
                 }
             }
         }
-        std::cout << "\n" << q << " done\n";
         vert_normal[q] = glm::normalize(normal);
+        // std::cout << "\n"
+        //           << q << " done " << vert_normal[q][0] << " " << vert_normal[q][1] << " " << vert_normal[q][2] <<
+        //           "\n";
     }
 }
 

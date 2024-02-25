@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     }
 
     HalfEdgeMesh mesh;
-    int m = 100, n = 100; // m is slices(longi) n is stacks(lati)
+    int m = 80, n = 80; // m is slices(longi) n is stacks(lati)
 
     float latitude_dist = M_PI / n;
     float longitude_dist = 2 * M_PI / m;
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 
     mesh.set_faces(faces);
 
-    mesh.recompute_vertex_normals();
+    // mesh.recompute_vertex_normals();
 
     std::cout << "Loaded " << mesh.n_verts << " verts, " << mesh.n_tris << " triangles and " << mesh.n_he
               << "half edges\n";
