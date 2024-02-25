@@ -35,7 +35,7 @@ template <> void print_buffer(std::vector<glm::vec3>& a, std::string bufname)
 int main(int argc, char** argv)
 {
     V::Viewer v;
-    if (!v.initialize("Mesh viewer", 640, 480))
+    if (!v.initialize("Mesh viewer", 1000, 1000))
     {
         return EXIT_FAILURE;
     }

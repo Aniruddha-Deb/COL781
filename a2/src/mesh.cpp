@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <unordered_set>
 #include "glm/glm.hpp"
 
 #include "mesh.hpp"
@@ -282,12 +283,40 @@ void HalfEdgeMesh::check_invariants()
         assert(n_he - 1 >= he);
         assert(0 <= he);
     }
-
+    // check if vert.he originates from vert
+    for (int i = 0; i < n_verts; i++)
+    {
+        assert(he_vert[vert_he[i]] == i);
+    }
+    // check if tri.he is contained in tri
+    for (int i = 0; i < n_tris; i++)
+    {
+        assert(he_tri[tri_he[i]] == i);
+    }
+    // check if tri.vs have edges in tri and tri.vs has unique vertices
+    for (int i = 0; i < n_tris; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            assert(tri_verts[i][j] != tri_verts[i][(j + 1) % 3]);
+            assert(he_tri[he_map[(uint64_t(tri_verts[i][j]) << 32) | tri_verts[i][(j + 1) % 3]]] == i);
+        }
+    }
+    // check if he.source is correct
+    for (const auto &[v1v2, he] : he_map)
+    {
+        assert(he_vert[he] == (v1v2 >> 32));
+    }
     // check if he and he.next have same face and he.next != he
     for (int i = 0; i < n_he; i++)
     {
         assert(he_tri[i] == he_tri[he_next[i]]);
         assert(he_next[i] != i);
+    }
+    // check if he.target is same as he.next.source
+    for (const auto &[v1v2, he] : he_map)
+    {
+        assert((v1v2 & ((1UL << 32) - 1)) == he_vert[he_next[he]]);
     }
     // check if he.pair.pair = he and he.pair != he
     for (int i = 0; i < n_he; i++)
@@ -295,4 +324,55 @@ void HalfEdgeMesh::check_invariants()
         assert(he_pair[he_pair[i]] == i);
         assert(he_pair[i] != i);
     }
+    // check if he.target = he.pair.source. Checks for correct winding order. Also check if he.tri != he.pair.tri
+    for (const auto &[v1v2, he] : he_map)
+    {
+        assert((v1v2 & ((1UL << 32) - 1)) == he_vert[he_pair[he]]);
+        assert(he_tri[he] != he_tri[he_pair[he]]);
+    }
+    // check if all entries in he_map are unique
+    std::unordered_set<int> he_map_set;
+    for (const auto &[v1v2, he] : he_map)
+    {
+        assert(he_map_set.insert(he).second);
+    }
+
+    // each half edge is part of closed loop
+    for (int i = 0; i < n_he; i++)
+    {
+        int he = he_next[i];
+        int cnt = 0;
+        while (he != i)
+        {
+            he = he_next[he];
+            cnt++;
+            assert(cnt <= n_he + 20);
+        }
+    }
+
+    // check if neighbours of triangle share at least 2 vertices with it
+    for (int i = 0; i < n_tris; i++)
+    {
+        int start_he = tri_he[i];
+        int he = start_he;
+        do
+        {
+            int neighbour = he_tri[he_pair[he]];
+            if (neighbour != -1)
+            {
+                int cnt = 0;
+                for (int v1 = 0; v1 < 3; v1++)
+                {
+                    for (int v2 = 0; v2 < 3; v2++)
+                    {
+                        cnt += (tri_verts[i][v1] == tri_verts[neighbour][v2]);
+                    }
+                }
+                assert(cnt == 2);
+            }
+            he = he_next[he];
+        } while (he != start_he);
+    }
+
+    // Manifold check
 }
