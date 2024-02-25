@@ -73,10 +73,6 @@ std::vector<int> HalfEdgeMesh::get_adjacent_vertices(int vertex)
         vertices.push_back(he_vert[he_pair[he]]);
         he = he_next[he_pair[he]];
     }
-    if (he_tri[vert_he[vertex]] != -1)
-    {
-        vertices.push_back(he_vert[he_pair[he_start]]);
-    }
     return vertices;
 }
 
@@ -109,6 +105,16 @@ void HalfEdgeMesh::taubin_smoothing(float lambda, float mu, int n_iter)
     }
 }
 
+bool HalfEdgeMesh::v_in_tri(int tri, int vertex)
+{
+    std::cout << tri << "\n";
+    if (tri == -1)
+    {
+        return false;
+    }
+    return (tri_verts[tri][0] == vertex || tri_verts[tri][1] == vertex || tri_verts[tri][2] == vertex);
+}
+
 void HalfEdgeMesh::recompute_vertex_normals()
 {
 
@@ -118,21 +124,29 @@ void HalfEdgeMesh::recompute_vertex_normals()
     for (int q = 0; q < n_verts; q++)
     {
         std::vector<int> vertices = get_adjacent_vertices(q);
-        // std::cout << "neighbours of " << q << " ";
-        // for (int i : vertices)
-        // {
-        //     std::cout << i << " ";
-        // }
-        // std::cout << "\n";
-        glm::vec3 normal(.0f, .0f, .0f);
-        for (int i = 0; i < vertices.size() - 1; i++)
+        std::cout << "neighbours of " << q << " ";
+        for (int i : vertices)
         {
-            auto v1 = vert_pos[vertices[i]] - vert_pos[q];
-            float mv1 = length(v1);
-            auto v2 = vert_pos[vertices[i + 1]] - vert_pos[q];
-            float mv2 = length(v2);
-            normal += glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2);
+            std::cout << i << " ";
         }
+        std::cout << "\n";
+        glm::vec3 normal(.0f, .0f, .0f);
+        for (int i = 0; i < vertices.size(); i++)
+        {
+            if (he_map.find((uint64_t(vertices[(i + 1) % vertices.size()]) << 32) | vertices[i]) != he_map.end())
+            {
+                int he = he_map[(uint64_t(vertices[(i + 1) % vertices.size()]) << 32) | vertices[i]];
+                if (v_in_tri(he_tri[he], q))
+                {
+                    auto v1 = vert_pos[vertices[i]] - vert_pos[q];
+                    float mv1 = length(v1);
+                    auto v2 = vert_pos[vertices[(i + 1) % vertices.size()]] - vert_pos[q];
+                    float mv2 = length(v2);
+                    normal += glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2);
+                }
+            }
+        }
+        std::cout << "\n" << q << " done\n";
         vert_normal[q] = glm::normalize(normal);
     }
 }

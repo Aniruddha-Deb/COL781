@@ -74,5 +74,6 @@ class HalfEdgeMesh
     void set_faces(std::vector<glm::ivec3> &faces);
     void add_face(glm::ivec3 &face);
     void set_boundary();
+    bool v_in_tri(int tri, int vertex);
     void edge_flip(int he);
 };

@@ -62,6 +62,8 @@ int main(int argc, char** argv)
         }
     }
 
+    vert_pos[4].z = 0.0;
+    faces.erase(faces.begin() + 2);
     mesh.set_vert_attribs(vert_pos, vert_normals);
 
     mesh.set_faces(faces);
