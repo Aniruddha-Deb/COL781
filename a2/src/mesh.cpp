@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 #include "glm/glm.hpp"
 
 #include "mesh.hpp"
@@ -233,3 +234,65 @@ void HalfEdgeMesh::set_faces(std::vector<glm::ivec3> &faces)
 // {
 //     int pair = he_pair[he];
 // }
+
+void HalfEdgeMesh::check_invariants()
+{
+
+    // check n_verts
+    assert(n_verts == vert_pos.size());
+    assert(n_verts == vert_normal.size());
+    assert(n_verts == vert_he.size());
+    // check n_he
+    assert(n_he == he_map.size());
+    assert(n_he == he_next.size());
+    assert(n_he == he_pair.size());
+    assert(n_he == he_tri.size());
+    assert(n_he == he_vert.size());
+    // check n_tris
+    assert(n_tris == tri_he.size());
+    assert(n_tris == tri_verts.size());
+
+    // check for out of bounds errors
+    assert(n_he - 1 >= *std::max_element(vert_he.begin(), vert_he.end()));
+    assert(0 <= *std::min_element(vert_he.begin(), vert_he.end()));
+    assert(n_he - 1 >= *std::max_element(tri_he.begin(), tri_he.end()));
+    assert(0 <= *std::max_element(tri_he.begin(), tri_he.end()));
+    for (int i = 0; i < n_tris; i++)
+    {
+        assert(n_verts - 1 >= std::max({tri_verts[i][0], tri_verts[i][1], tri_verts[i][2]}));
+        assert(0 <= std::min({tri_verts[i][0], tri_verts[i][1], tri_verts[i][2]}));
+    }
+    assert(n_verts - 1 >= *std::max_element(he_vert.begin(), he_vert.end()));
+    assert(0 <= *std::min_element(he_vert.begin(), he_vert.end()));
+    assert(n_he - 1 >= *std::max_element(he_next.begin(), he_next.end()));
+    assert(0 <= *std::min_element(he_next.begin(), he_next.end()));
+    assert(n_he - 1 >= *std::max_element(he_pair.begin(), he_pair.end()));
+    assert(0 <= *std::min_element(he_pair.begin(), he_pair.end()));
+    assert(n_tris - 1 >= *std::max_element(he_tri.begin(), he_tri.end()));
+    assert(-1 <= *std::min_element(he_tri.begin(), he_tri.end()));
+    for (const auto &[v1v2, he] : he_map)
+    {
+        assert(n_verts - 1 >= (v1v2 >> 32));
+        assert(0 <= (v1v2 >> 32));
+        assert(n_verts - 1 >= (v1v2 & ((1UL << 32) - 1)));
+        assert(0 <= (v1v2 & ((1UL << 32) - 1)));
+    }
+    for (const auto &[v1v2, he] : he_map)
+    {
+        assert(n_he - 1 >= he);
+        assert(0 <= he);
+    }
+
+    // check if he and he.next have same face and he.next != he
+    for (int i = 0; i < n_he; i++)
+    {
+        assert(he_tri[i] == he_tri[he_next[i]]);
+        assert(he_next[i] != i);
+    }
+    // check if he.pair.pair = he and he.pair != he
+    for (int i = 0; i < n_he; i++)
+    {
+        assert(he_pair[he_pair[i]] == i);
+        assert(he_pair[i] != i);
+    }
+}

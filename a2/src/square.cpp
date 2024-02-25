@@ -79,6 +79,7 @@ int main(int argc, char** argv)
     print_buffer(mesh.vert_he, "vert_he");
 
     mesh.recompute_vertex_normals();
+    mesh.check_invariants();
 
     /*
     load_object(argv[1], vertices, normals, triangles);

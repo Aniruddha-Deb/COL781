@@ -48,12 +48,13 @@ int main(int argc, char** argv)
     std::cout << "Loaded " << mesh.n_verts << " verts, " << mesh.n_tris << " triangles and " << mesh.n_he
               << " halfedges\n";
 
-    mesh.taubin_smoothing(0.33, -0.34, 10);
+    // mesh.taubin_smoothing(0.33, -0.34, 10);
     // for (int i = 0; i < 10; i++)
     // {
     //     mesh.gaussian_smoothing(0.33);
     // }
     mesh.recompute_vertex_normals();
+    mesh.check_invariants();
 
     /*
     load_object(argv[1], vertices, normals, triangles);
