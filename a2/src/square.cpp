@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     }
 
     HalfEdgeMesh mesh;
-    int m = 2, n = 2;
+    int m = 3, n = 3;
     std::vector<glm::vec3> vert_pos;
     std::vector<glm::vec3> vert_normals;
     for (int i = 0; i <= n; i++)
@@ -81,7 +81,8 @@ int main(int argc, char** argv)
     mesh.recompute_vertex_normals();
     mesh.check_invariants();
 
-    mesh.edge_flip(mesh.vert_he[4]);
+    // mesh.edge_flip(27);
+    mesh.edge_split(27);
 
     /*
     load_object(argv[1], vertices, normals, triangles);

@@ -235,6 +235,8 @@ void HalfEdgeMesh::edge_flip(int he)
 {
     // check if edge is not boundary
     assert(he_tri[he] != -1 && he_tri[he_pair[he]] != -1);
+
+    // get pointers
     int next = he_next[he];
     int prev = he_next[next];
     int pair = he_pair[he];
@@ -275,6 +277,102 @@ void HalfEdgeMesh::edge_flip(int he)
     he_map.erase((uint64_t(pair_origin) << 32) | origin);
     he_map[(uint64_t(new_origin) << 32) | new_pair_origin] = he;
     he_map[(uint64_t(new_pair_origin) << 32) | new_origin] = pair;
+    check_invariants();
+}
+
+void HalfEdgeMesh::edge_split(int he)
+{
+    // check if edge is not boundary
+    assert(he_tri[he] != -1 && he_tri[he_pair[he]] != -1);
+
+    // get pointers
+    int next = he_next[he];
+    int prev = he_next[next];
+    int pair = he_pair[he];
+    int pair_next = he_next[pair];
+    int pair_prev = he_next[pair_next];
+    int origin = he_vert[he];
+    int pair_origin = he_vert[pair];
+    int prev_origin = he_vert[prev];
+    int pair_prev_origin = he_vert[pair_prev];
+    int tri = he_tri[he];
+    int pair_tri = he_tri[pair];
+
+    // add new vertex and new edges while recycling old ones
+    vert_pos.push_back((vert_pos[origin] + vert_pos[pair_origin]) / 2.0f);
+    vert_normal.push_back(glm::vec3(0, 0, 0));
+    vert_he.push_back(he);
+    vert_he[origin] = n_he;
+    vert_he[pair_origin] = pair;
+    vert_he[prev_origin] = n_he + 4;
+    vert_he[pair_prev_origin] = n_he + 2;
+    tri_he[tri] = he;
+    tri_he[pair_tri] = pair;
+    tri_he.resize(n_tris + 2);
+    tri_he[n_tris] = prev;
+    tri_he[n_tris + 1] = pair_next;
+    tri_verts.resize(n_tris + 2);
+    tri_verts[tri] = glm::ivec3(n_verts, pair_origin, prev_origin);
+    tri_verts[pair_tri] = glm::ivec3(n_verts, pair_prev_origin, pair_origin);
+    tri_verts[n_tris] = glm::ivec3(n_verts, prev_origin, origin);
+    tri_verts[n_tris + 1] = glm::ivec3(n_verts, origin, pair_prev_origin);
+    he_vert.resize(n_he + 6);
+    he_vert[he] = n_verts;
+    he_vert[pair] = pair_origin;
+    he_vert[n_he] = origin;
+    he_vert[n_he + 1] = n_verts;
+    he_vert[n_he + 2] = pair_prev_origin;
+    he_vert[n_he + 3] = n_verts;
+    he_vert[n_he + 4] = prev_origin;
+    he_vert[n_he + 5] = n_verts;
+    he_next.resize(n_he + 6);
+    he_next[he] = next;
+    he_next[next] = n_he + 4;
+    he_next[n_he + 4] = he;
+    he_next[pair] = n_he + 3;
+    he_next[n_he + 3] = pair_prev;
+    he_next[pair_prev] = pair;
+    he_next[pair_next] = n_he + 2;
+    he_next[n_he + 2] = n_he + 1;
+    he_next[n_he + 1] = pair_next;
+    he_next[prev] = n_he;
+    he_next[n_he] = n_he + 5;
+    he_next[n_he + 5] = prev;
+    he_pair.resize(n_he + 6);
+    he_pair[he] = pair;
+    he_pair[pair] = he;
+    he_pair[n_he] = n_he + 1;
+    he_pair[n_he + 2] = n_he + 3;
+    he_pair[n_he + 4] = n_he + 5;
+    he_pair[n_he + 1] = n_he;
+    he_pair[n_he + 3] = n_he + 2;
+    he_pair[n_he + 5] = n_he + 4;
+    he_tri.resize(n_he + 6);
+    he_tri[he] = tri;
+    he_tri[next] = tri;
+    he_tri[n_he + 4] = tri;
+    he_tri[pair] = pair_tri;
+    he_tri[n_he + 3] = pair_tri;
+    he_tri[pair_prev] = pair_tri;
+    he_tri[prev] = n_tris;
+    he_tri[n_he] = n_tris;
+    he_tri[n_he + 5] = n_tris;
+    he_tri[pair_next] = n_tris + 1;
+    he_tri[n_he + 2] = n_tris + 1;
+    he_tri[n_he + 1] = n_tris + 1;
+    he_map.erase((uint64_t(origin) << 32) | pair_origin);
+    he_map.erase((uint64_t(pair_origin) << 32) | origin);
+    he_map[(uint64_t(n_verts) << 32) | origin] = n_he + 1;
+    he_map[(uint64_t(n_verts) << 32) | prev_origin] = n_he + 5;
+    he_map[(uint64_t(n_verts) << 32) | pair_origin] = he;
+    he_map[(uint64_t(n_verts) << 32) | pair_prev_origin] = n_he + 3;
+    he_map[(uint64_t(origin) << 32) | n_verts] = n_he;
+    he_map[(uint64_t(prev_origin) << 32) | n_verts] = n_he + 4;
+    he_map[(uint64_t(pair_origin) << 32) | n_verts] = pair;
+    he_map[(uint64_t(pair_prev_origin) << 32) | n_verts] = n_he + 2;
+    n_verts++;
+    n_he += 6;
+    n_tris += 2;
     check_invariants();
 }
 
