@@ -231,10 +231,52 @@ void HalfEdgeMesh::set_faces(std::vector<glm::ivec3> &faces)
     set_boundary();
 }
 
-// void HalfEdgeMesh::edge_flip(int he)
-// {
-//     int pair = he_pair[he];
-// }
+void HalfEdgeMesh::edge_flip(int he)
+{
+    // check if edge is not boundary
+    assert(he_tri[he] != -1 && he_tri[he_pair[he]] != -1);
+    int next = he_next[he];
+    int prev = he_next[next];
+    int pair = he_pair[he];
+    int pair_next = he_next[pair];
+    int pair_prev = he_next[pair_next];
+    int origin = he_vert[he];
+    int pair_origin = he_vert[pair];
+    int new_origin = he_vert[pair_prev];
+    int new_pair_origin = he_vert[prev];
+    int tri = he_tri[he];
+    int pair_tri = he_tri[pair];
+
+    // convert he as new_origin->new_pair_orign
+    // convert pair as new_pair_origin->origin
+    vert_he[origin] = pair_next;
+    vert_he[pair_origin] = next;
+    vert_he[new_origin] = he;
+    vert_he[new_pair_origin] = pair;
+    tri_he[tri] = he;
+    tri_he[pair_tri] = pair;
+    tri_verts[tri] = glm::ivec3(origin, new_origin, new_pair_origin);
+    tri_verts[pair_tri] = glm::ivec3(pair_origin, new_pair_origin, new_origin);
+    he_vert[he] = new_origin;
+    he_vert[pair] = new_pair_origin;
+    he_next[he] = prev;
+    he_next[prev] = pair_next;
+    he_next[pair_next] = he;
+    he_next[pair] = pair_prev;
+    he_next[pair_prev] = next;
+    he_next[next] = pair;
+    he_pair[he] = pair;
+    he_pair[pair] = he;
+    he_tri[prev] = tri;
+    he_tri[pair_next] = tri;
+    he_tri[pair_prev] = pair_tri;
+    he_tri[next] = pair_tri;
+    he_map.erase((uint64_t(origin) << 32) | pair_origin);
+    he_map.erase((uint64_t(pair_origin) << 32) | origin);
+    he_map[(uint64_t(new_origin) << 32) | new_pair_origin] = he;
+    he_map[(uint64_t(new_pair_origin) << 32) | new_origin] = pair;
+    check_invariants();
+}
 
 void HalfEdgeMesh::check_invariants()
 {
@@ -348,6 +390,22 @@ void HalfEdgeMesh::check_invariants()
             cnt++;
             assert(cnt <= n_he + 20);
         }
+    }
+    // each interior edge is part of loop of size 3
+    for (int i = 0; i < n_he; i++)
+    {
+        if (he_tri[i] == -1)
+        {
+            continue;
+        }
+        int cnt = 1;
+        int he = he_next[i];
+        while (he != i)
+        {
+            he = he_next[he];
+            cnt++;
+        }
+        assert(cnt == 3);
     }
 
     // check if neighbours of triangle share at least 2 vertices with it

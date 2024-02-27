@@ -76,5 +76,6 @@ class HalfEdgeMesh
     void set_boundary();
     bool v_in_tri(int tri, int vertex);
     void check_invariants();
-    // void edge_flip(int he);
+    void edge_flip(int he);
+    void edge_split(int he);
 };

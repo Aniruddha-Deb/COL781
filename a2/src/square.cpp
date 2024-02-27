@@ -81,6 +81,8 @@ int main(int argc, char** argv)
     mesh.recompute_vertex_normals();
     mesh.check_invariants();
 
+    mesh.edge_flip(mesh.vert_he[4]);
+
     /*
     load_object(argv[1], vertices, normals, triangles);
     int n_verts = vertices.size();
