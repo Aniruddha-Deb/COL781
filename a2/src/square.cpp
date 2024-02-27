@@ -81,7 +81,7 @@ int main(int argc, char** argv)
     mesh.recompute_vertex_normals();
     mesh.check_invariants();
 
-    // mesh.edge_flip(27);
+    mesh.edge_flip(27);
     mesh.edge_split(27);
 
     /*

@@ -249,8 +249,8 @@ void HalfEdgeMesh::edge_flip(int he)
     int tri = he_tri[he];
     int pair_tri = he_tri[pair];
 
-    // convert he as new_origin->new_pair_orign
-    // convert pair as new_pair_origin->origin
+    // convert he to new_origin->new_pair_orign
+    // convert pair to new_pair_origin->origin
     vert_he[origin] = pair_next;
     vert_he[pair_origin] = next;
     vert_he[new_origin] = he;
