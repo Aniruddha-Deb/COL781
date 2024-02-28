@@ -8,7 +8,7 @@
 
 #include "mesh.hpp"
 
-#define edge(from, to) ((uint64_t((from))<<32)|(to))
+#define edge(from, to) ((uint64_t((from)) << 32) | (to))
 
 void HalfEdgeMesh::load_objfile(std::string &filename)
 {
@@ -378,9 +378,10 @@ void HalfEdgeMesh::edge_split(int he)
     check_invariants();
 }
 
-void HalfEdgeMesh::edge_collapse(int he) {
+void HalfEdgeMesh::edge_collapse(int he)
+{
 
-    // collapse one edge, eliminating two faces and adding one vertex in the 
+    // collapse one edge, eliminating two faces and adding one vertex in the
     // process
     // vertex's position is the midpoint of the collapsed edge.
 
@@ -395,10 +396,10 @@ void HalfEdgeMesh::edge_collapse(int he) {
     // top neighbour
     int n1 = he_vert[he_pair[he_next[he]]];
     int n2 = he_vert[he_pair[he_next[he_pair[he]]]];
-    
+
     // v1->n2 edge reconnect
-    int he_v1_n2 = he_map[edge(v1,n2)];
-    int he_n1_v1 = he_map[edge(n1,v1)];
+    int he_v1_n2 = he_map[edge(v1, n2)];
+    int he_n1_v1 = he_map[edge(n1, v1)];
 
     int he_v2_n3 = he_next[he_pair[he_next[he]]];
     int he_n4_v2 = he_next[he_next[he_pair[he_next[he_next[he_pair[he]]]]]];
