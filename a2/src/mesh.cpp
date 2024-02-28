@@ -8,6 +8,8 @@
 
 #include "mesh.hpp"
 
+#define edge(from, to) ((uint64_t((from))<<32)|(to))
+
 void HalfEdgeMesh::load_objfile(std::string &filename)
 {
 
@@ -374,6 +376,33 @@ void HalfEdgeMesh::edge_split(int he)
     n_he += 6;
     n_tris += 2;
     check_invariants();
+}
+
+void HalfEdgeMesh::edge_collapse(int he) {
+
+    // collapse one edge, eliminating two faces and adding one vertex in the 
+    // process
+    // vertex's position is the midpoint of the collapsed edge.
+
+    // TODO implement this for edge edges too (one neighbour)
+    assert(he_tri[he] != -1 && he_tri[he_pair[he]] != -1);
+
+    // get pointers
+    int v1 = he_vert[he];
+    int v2 = he_vert[he_pair[he]];
+    // WLOG we collapse v2 and keep v1
+    // mutual neighbours of both, as well as the halfedges to delete
+    // top neighbour
+    int n1 = he_vert[he_pair[he_next[he]]];
+    int n2 = he_vert[he_pair[he_next[he_pair[he]]]];
+    
+    // v1->n2 edge reconnect
+    int he_v1_n2 = he_map[edge(v1,n2)];
+    int he_n1_v1 = he_map[edge(n1,v1)];
+
+    int he_v2_n3 = he_next[he_pair[he_next[he]]];
+    int he_n4_v2 = he_next[he_next[he_pair[he_next[he_next[he_pair[he]]]]]];
+    // give up
 }
 
 void HalfEdgeMesh::check_invariants()
