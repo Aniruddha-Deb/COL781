@@ -388,13 +388,15 @@ void HalfEdgeMesh::edge_collapse(int he)
     std::vector<int> vertices2 = get_adjacent_vertices(v2);
     sort(vertices1.begin(), vertices1.end());
     sort(vertices2.begin(), vertices2.end());
-    std::vector<int> common(2);
-    std::set_intersection(vertices1.begin(), vertices1.end(), vertices2.begin(), vertices2.end(), common.begin());
+    std::vector<int> common;
+    std::set_intersection(vertices1.begin(), vertices1.end(), vertices2.begin(), vertices2.end(),
+                          std::back_inserter(common));
     // for (int i : vertices1)
     // {
     //     std::cout << i << " ";
     // }
     // std::cout << "\n";
+    assert(common.size() == 2);
     vertices1.erase(std::find(vertices1.begin(), vertices1.end(), v2));
     vertices1.erase(std::find(vertices1.begin(), vertices1.end(), common[0]));
     vertices1.erase(std::find(vertices1.begin(), vertices1.end(), common[1]));
@@ -443,14 +445,14 @@ void HalfEdgeMesh::edge_collapse(int he)
         }
         if (he_vert[he_next[he_next[v2_i_pair]]] == common[0])
         {
-            he_next[v2_i_pair] = he_map[(uint64_t(v1) << 32) | common[0]];
             he_next[he_map[(uint64_t(v1) << 32) | common[0]]] = he_next[he_next[v2_i_pair]];
+            he_next[v2_i_pair] = he_map[(uint64_t(v1) << 32) | common[0]];
             he_tri[he_map[(uint64_t(v1) << 32) | common[0]]] = he_tri[v2_i_pair];
         }
         if (he_vert[he_next[he_next[v2_i_pair]]] == common[1])
         {
-            he_next[v2_i_pair] = he_map[(uint64_t(v1) << 32) | common[1]];
             he_next[he_map[(uint64_t(v1) << 32) | common[1]]] = he_next[he_next[v2_i_pair]];
+            he_next[v2_i_pair] = he_map[(uint64_t(v1) << 32) | common[1]];
             he_tri[he_map[(uint64_t(v1) << 32) | common[1]]] = he_tri[v2_i_pair];
         }
         he_vert[v2_i] = v1;
@@ -486,6 +488,13 @@ void HalfEdgeMesh::edge_collapse(int he)
 
 void HalfEdgeMesh::delete_tri(int tri)
 {
+    if (tri == n_tris - 1)
+    {
+        tri_he.pop_back();
+        tri_verts.pop_back();
+        n_tris--;
+        return;
+    }
     int he = tri_he.back();
     for (int i = 0; i < 3; i++)
     {
@@ -501,7 +510,15 @@ void HalfEdgeMesh::delete_tri(int tri)
 
 void HalfEdgeMesh::delete_he(int he)
 {
-    // std::cout << he << " " << n_he << "\n";
+    if (he == n_he - 1)
+    {
+        he_pair.pop_back();
+        he_next.pop_back();
+        he_tri.pop_back();
+        he_vert.pop_back();
+        n_he--;
+        return;
+    }
     int pair = he_pair.back();
     int v1 = he_vert.back();
     int v2 = he_vert[pair];
@@ -528,7 +545,13 @@ void HalfEdgeMesh::delete_he(int he)
 
 void HalfEdgeMesh::delete_vert(int vert)
 {
-    // std::cout << vert << "\n";
+    if (vert == n_verts - 1)
+    {
+        vert_he.pop_back();
+        vert_normal.pop_back();
+        vert_pos.pop_back();
+        n_verts--;
+    }
     vert_pos[vert] = vert_pos.back();
     vert_normal[vert] = vert_normal.back();
     vert_he[vert] = vert_he.back();

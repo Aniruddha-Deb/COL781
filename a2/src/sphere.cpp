@@ -100,7 +100,6 @@ int main(int argc, char** argv)
     // print_buffer(mesh.he_vert, "he_vert");
     // print_buffer(mesh.vert_pos, "vert_pos");
     // print_buffer(mesh.vert_normal, "vert_normal");
-
     mesh.check_invariants();
     // mesh.taubin_smoothing(0.33, -0.33, 10);
     mesh.recompute_vertex_normals();
