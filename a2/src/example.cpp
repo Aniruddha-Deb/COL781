@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     //     mesh.gaussian_smoothing(0.33);
     // }
     mesh.recompute_vertex_normals();
-    mesh.check_invariants();
+    // mesh.check_invariants();
 
     /*
     load_object(argv[1], vertices, normals, triangles);

@@ -380,30 +380,191 @@ void HalfEdgeMesh::edge_split(int he)
 
 void HalfEdgeMesh::edge_collapse(int he)
 {
-
-    // collapse one edge, eliminating two faces and adding one vertex in the
-    // process
-    // vertex's position is the midpoint of the collapsed edge.
-
-    // TODO implement this for edge edges too (one neighbour)
-    assert(he_tri[he] != -1 && he_tri[he_pair[he]] != -1);
-
-    // get pointers
-    int v1 = he_vert[he];
-    int v2 = he_vert[he_pair[he]];
-    // WLOG we collapse v2 and keep v1
-    // mutual neighbours of both, as well as the halfedges to delete
-    // top neighbour
-    int n1 = he_vert[he_pair[he_next[he]]];
-    int n2 = he_vert[he_pair[he_next[he_pair[he]]]];
-
-    // v1->n2 edge reconnect
-    int he_v1_n2 = he_map[edge(v1, n2)];
-    int he_n1_v1 = he_map[edge(n1, v1)];
-
-    int he_v2_n3 = he_next[he_pair[he_next[he]]];
-    int he_n4_v2 = he_next[he_next[he_pair[he_next[he_next[he_pair[he]]]]]];
     // give up
+    int pair = he_pair[he];
+    int v1 = he_vert[he];
+    int v2 = he_vert[pair];
+    std::vector<int> vertices1 = get_adjacent_vertices(v1);
+    std::vector<int> vertices2 = get_adjacent_vertices(v2);
+    sort(vertices1.begin(), vertices1.end());
+    sort(vertices2.begin(), vertices2.end());
+    std::vector<int> common(2);
+    std::set_intersection(vertices1.begin(), vertices1.end(), vertices2.begin(), vertices2.end(), common.begin());
+    // for (int i : vertices1)
+    // {
+    //     std::cout << i << " ";
+    // }
+    // std::cout << "\n";
+    vertices1.erase(std::find(vertices1.begin(), vertices1.end(), v2));
+    vertices1.erase(std::find(vertices1.begin(), vertices1.end(), common[0]));
+    vertices1.erase(std::find(vertices1.begin(), vertices1.end(), common[1]));
+    vertices2.erase(std::find(vertices2.begin(), vertices2.end(), v1));
+    vertices2.erase(std::find(vertices2.begin(), vertices2.end(), common[0]));
+    vertices2.erase(std::find(vertices2.begin(), vertices2.end(), common[1]));
+    int tri0 = he_tri[he];
+    int tri1 = he_tri[pair];
+    int v2_common0 = he_map[(uint64_t(v2) << 32) | common[0]];
+    int v2_common1 = he_map[(uint64_t(v2) << 32) | common[1]];
+    int v2_common0_pair = he_pair[v2_common0];
+    int v2_common1_pair = he_pair[v2_common1];
+    vert_he[v1] = he_map[(uint64_t(v1) << 32) | common[0]];
+    vert_he[common[0]] = he_map[(uint64_t(common[0]) << 32) | v1];
+    vert_he[common[1]] = he_map[(uint64_t(common[1]) << 32) | v1];
+    for (int i = 0; i < vertices2.size(); i++)
+    {
+        int v2_i = he_map[(uint64_t(v2) << 32) | vertices2[i]];
+        int v2_i_pair = he_pair[v2_i];
+        int tri = he_tri[v2_i];
+        int tri_pair = he_tri[v2_i_pair];
+        tri_he[tri] = v2_i;
+        tri_he[tri_pair] = v2_i_pair;
+        for (int idx = 0; idx < 3; idx++)
+        {
+            if (tri_verts[tri][idx] == v2)
+            {
+                tri_verts[tri][idx] = v1;
+            }
+            if (tri_verts[tri_pair][idx] == v2)
+            {
+                tri_verts[tri_pair][idx] = v1;
+            }
+        }
+        if (he_vert[he_next[he_next[v2_i]]] == common[0])
+        {
+            he_next[he_next[v2_i]] = he_map[(uint64_t(common[0]) << 32) | v1];
+            he_next[he_map[(uint64_t(common[0]) << 32) | v1]] = v2_i;
+            he_tri[he_map[(uint64_t(common[0]) << 32) | v1]] = he_tri[v2_i];
+        }
+        if (he_vert[he_next[he_next[v2_i]]] == common[1])
+        {
+            he_next[he_next[v2_i]] = he_map[(uint64_t(common[1]) << 32) | v1];
+            he_next[he_map[(uint64_t(common[1]) << 32) | v1]] = v2_i;
+            he_tri[he_map[(uint64_t(common[1]) << 32) | v1]] = he_tri[v2_i];
+        }
+        if (he_vert[he_next[he_next[v2_i_pair]]] == common[0])
+        {
+            he_next[v2_i_pair] = he_map[(uint64_t(v1) << 32) | common[0]];
+            he_next[he_map[(uint64_t(v1) << 32) | common[0]]] = he_next[he_next[v2_i_pair]];
+            he_tri[he_map[(uint64_t(v1) << 32) | common[0]]] = he_tri[v2_i_pair];
+        }
+        if (he_vert[he_next[he_next[v2_i_pair]]] == common[1])
+        {
+            he_next[v2_i_pair] = he_map[(uint64_t(v1) << 32) | common[1]];
+            he_next[he_map[(uint64_t(v1) << 32) | common[1]]] = he_next[he_next[v2_i_pair]];
+            he_tri[he_map[(uint64_t(v1) << 32) | common[1]]] = he_tri[v2_i_pair];
+        }
+        he_vert[v2_i] = v1;
+    }
+    for (int i = 0; i < vertices2.size(); i++)
+    {
+        int v2_i = he_map[(uint64_t(v2) << 32) | vertices2[i]];
+        int v2_i_pair = he_pair[v2_i];
+        he_map.erase((uint64_t(v2) << 32) | vertices2[i]);
+        he_map.erase((uint64_t(vertices2[i]) << 32) | v2);
+        he_map[(uint64_t(v1) << 32) | vertices2[i]] = v2_i;
+        he_map[(uint64_t(vertices2[i]) << 32) | v1] = v2_i_pair;
+    }
+    vert_pos[v1] = (vert_pos[v1] + vert_pos[v2]) / 2.0f;
+    he_map.erase((uint64_t(v1) << 32) | v2);
+    he_map.erase((uint64_t(v2) << 32) | v1);
+    he_map.erase((uint64_t(v2) << 32) | common[0]);
+    he_map.erase((uint64_t(v2) << 32) | common[1]);
+    he_map.erase((uint64_t(common[0]) << 32) | v2);
+    he_map.erase((uint64_t(common[1]) << 32) | v2);
+    // std::cout << he_map.size() << "\n";
+    delete_he(he);
+    delete_he(pair);
+    delete_he(v2_common0);
+    delete_he(v2_common1);
+    delete_he(v2_common0_pair);
+    delete_he(v2_common1_pair);
+    delete_tri(tri0);
+    delete_tri(tri1);
+    // std::cout << "\n" << v2 << "\n";
+    delete_vert(v2);
+}
+
+void HalfEdgeMesh::delete_tri(int tri)
+{
+    int he = tri_he.back();
+    for (int i = 0; i < 3; i++)
+    {
+        he_tri[he] = tri;
+        he = he_next[he];
+    }
+    tri_he[tri] = tri_he.back();
+    tri_verts[tri] = tri_verts.back();
+    tri_he.pop_back();
+    tri_verts.pop_back();
+    n_tris--;
+}
+
+void HalfEdgeMesh::delete_he(int he)
+{
+    // std::cout << he << " " << n_he << "\n";
+    int pair = he_pair.back();
+    int v1 = he_vert.back();
+    int v2 = he_vert[pair];
+    he_map[(uint64_t(v1) << 32) | v2] = he;
+    vert_he[v1] = he;
+    tri_he[he_tri.back()] = he;
+    int he_prev = he_next.back();
+    while (he_next[he_prev] != n_he - 1)
+    {
+        he_prev = he_next[he_prev];
+    }
+    he_next[he_prev] = he;
+    he_next[he] = he_next.back();
+    he_pair[pair] = he;
+    he_pair[he] = pair;
+    he_tri[he] = he_tri.back();
+    he_vert[he] = v1;
+    he_vert.pop_back();
+    he_next.pop_back();
+    he_pair.pop_back();
+    he_tri.pop_back();
+    n_he--;
+}
+
+void HalfEdgeMesh::delete_vert(int vert)
+{
+    // std::cout << vert << "\n";
+    vert_pos[vert] = vert_pos.back();
+    vert_normal[vert] = vert_normal.back();
+    vert_he[vert] = vert_he.back();
+    std::vector<int> vertices = get_adjacent_vertices(n_verts - 1);
+    for (int i = 0; i < vertices.size(); i++)
+    {
+        int he = he_map[(uint64_t(vertices[i]) << 32) | (n_verts - 1)];
+        int pair = he_pair[he];
+        int tri_1 = he_tri[he];
+        int tri_2 = he_tri[pair];
+        for (int idx = 0; idx < 3; idx++)
+        {
+            if (tri_verts[tri_1][idx] == n_verts - 1)
+            {
+                tri_verts[tri_1][idx] = vert;
+            }
+            if (tri_verts[tri_2][idx] == n_verts - 1)
+            {
+                tri_verts[tri_2][idx] = vert;
+            }
+        }
+        he_vert[pair] = vert;
+    }
+    for (int i = 0; i < vertices.size(); i++)
+    {
+        int he = he_map[(uint64_t(vertices[i]) << 32) | (n_verts - 1)];
+        int pair = he_pair[he];
+        he_map.erase((uint64_t(vertices[i]) << 32) | (n_verts - 1));
+        he_map.erase((uint64_t(n_verts - 1) << 32) | vertices[i]);
+        he_map[(uint64_t(vertices[i]) << 32) | vert] = he;
+        he_map[(uint64_t(vert) << 32) | vertices[i]] = pair;
+    }
+    vert_he.pop_back();
+    vert_pos.pop_back();
+    vert_normal.pop_back();
+    n_verts--;
 }
 
 void HalfEdgeMesh::check_invariants()

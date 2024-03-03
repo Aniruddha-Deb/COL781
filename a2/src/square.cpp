@@ -67,10 +67,13 @@ int main(int argc, char** argv)
     mesh.set_vert_attribs(vert_pos, vert_normals);
 
     mesh.set_faces(faces);
+    print_buffer(mesh.vert_normal, "vert_normal");
+    mesh.edge_collapse(27);
 
     std::cout << "Loaded " << mesh.n_verts << " verts, " << mesh.n_tris << " triangles and " << mesh.n_he
               << " half edges\n";
 
+    std::cout << mesh.he_next.size() << "\n";
     print_buffer(mesh.he_next, "he_next");
     print_buffer(mesh.he_pair, "he_pair");
     print_buffer(mesh.he_vert, "he_vert");
@@ -78,11 +81,13 @@ int main(int argc, char** argv)
     print_buffer(mesh.vert_normal, "vert_normal");
     print_buffer(mesh.vert_he, "vert_he");
 
-    mesh.recompute_vertex_normals();
     mesh.check_invariants();
 
-    mesh.edge_flip(27);
-    mesh.edge_split(27);
+    // mesh.recompute_vertex_normals();
+    // mesh.check_invariants();
+
+    // mesh.edge_flip(27);
+    // mesh.edge_split(27);
 
     /*
     load_object(argv[1], vertices, normals, triangles);

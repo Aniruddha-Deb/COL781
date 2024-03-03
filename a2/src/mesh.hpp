@@ -1,5 +1,6 @@
 #include <vector>
 #include <unordered_map>
+#include <set>
 #include "glm/glm.hpp"
 #include "viewer.hpp"
 
@@ -38,6 +39,10 @@ class HalfEdgeMesh
     std::vector<glm::vec3> vert_pos;
     std::vector<glm::vec3> vert_normal;
 
+    std::set<int> dirty_verts;
+    std::set<int> dirty_he;
+    std::set<int> dirty_tri;
+
     void load_objfile(std::string &filename);
     void recompute_vertex_normals();
     std::vector<int> get_adjacent_vertices(int vertex);
@@ -49,6 +54,9 @@ class HalfEdgeMesh
     void set_boundary();
     bool v_in_tri(int tri, int vertex);
     void check_invariants();
+    void delete_vert(int vert);
+    void delete_tri(int tri);
+    void delete_he(int he);
     void edge_flip(int he);
     void edge_split(int he);
     void edge_collapse(int he);
