@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     }
 
     HalfEdgeMesh mesh;
-    int m = 5, n = 5;
+    int m = 3, n = 3;
     std::vector<glm::vec3> vert_pos;
     std::vector<glm::vec3> vert_normals;
     for (int i = 0; i <= n; i++)
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     mesh.set_vert_attribs(vert_pos, vert_normals);
 
     mesh.set_faces(faces);
-    mesh.edge_collapse(10);
+    mesh.edge_collapse(mesh.he_map[(uint64_t(1) << 32) | 2]);
 
     std::cout << "Loaded " << mesh.n_verts << " verts, " << mesh.n_tris << " triangles and " << mesh.n_he
               << " half edges\n";
@@ -87,7 +87,7 @@ int main(int argc, char** argv)
     //     he = mesh.he_next[he];
     // }
 
-    mesh.check_invariants();
+    // mesh.check_invariants();
 
     // mesh.recompute_vertex_normals();
     // mesh.check_invariants();

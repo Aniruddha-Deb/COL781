@@ -35,13 +35,8 @@ class HalfEdgeMesh
     std::vector<int> he_pair;
     std::vector<int> he_tri;
     std::unordered_map<uint64_t, int> he_map;
-
     std::vector<glm::vec3> vert_pos;
     std::vector<glm::vec3> vert_normal;
-
-    std::set<int> dirty_verts;
-    std::set<int> dirty_he;
-    std::set<int> dirty_tri;
 
     void load_objfile(std::string &filename);
     void recompute_vertex_normals();
