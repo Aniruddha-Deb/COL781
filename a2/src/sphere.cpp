@@ -8,30 +8,6 @@
 namespace V = COL781::Viewer;
 using namespace glm;
 
-template <typename T> void print_buffer(std::vector<T>& a, std::string bufname);
-
-template <> void print_buffer(std::vector<int>& a, std::string bufname)
-{
-
-    std::cout << bufname << ": " << std::endl;
-    for (int i : a)
-    {
-        std::cout << std::setfill(' ') << std::setw(2) << i << " ";
-    }
-    std::cout << std::endl;
-}
-
-template <> void print_buffer(std::vector<glm::vec3>& a, std::string bufname)
-{
-
-    std::cout << bufname << ": " << std::endl;
-    for (auto i : a)
-    {
-        std::cout << std::setfill(' ') << std::setw(2) << "(" << i.x << ", " << i.y << ", " << i.z << ") ";
-    }
-    std::cout << std::endl;
-}
-
 int main(int argc, char** argv)
 {
     V::Viewer v;
@@ -99,18 +75,18 @@ int main(int argc, char** argv)
     mesh.check_invariants();
     // mesh.remeshing(l - 0.02, 0);
 
-    float l = 0;
-    for (int i = 0; i < mesh.n_he; i++)
-    {
-        l += mesh.he_length(i);
-    }
-    l /= mesh.n_he;
-    std::cout << l << "\n";
-    mesh.remeshing(l, 0.33);
-    mesh.remeshing(l, 0.33);
-    mesh.remeshing(l, 0.33);
-    mesh.remeshing(l, 0.33);
-    mesh.remeshing(l, 0.33);
+    // float l = 0;
+    // for (int i = 0; i < mesh.n_he; i++)
+    // {
+    //     l += mesh.he_length(i);
+    // }
+    // l /= mesh.n_he;
+    // std::cout << l << "\n";
+    // mesh.remeshing(l, 0.33);
+    // mesh.remeshing(l, 0.33);
+    // mesh.remeshing(l, 0.33);
+    // mesh.remeshing(l, 0.33);
+    // mesh.remeshing(l, 0.33);
 
     // mesh.remeshing(l - 0.02, 0.33);
     // mesh.remeshing(l - 0.02, 0.33);

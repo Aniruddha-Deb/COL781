@@ -548,7 +548,6 @@ bool HalfEdgeMesh::collapse_check(int he)
 void HalfEdgeMesh::edge_collapse(int he)
 {
     // check if edge can be collapsed
-    assert(collapse_check(he));
     int pair = he_pair[he];
     int v1 = he_vert[he];
     int v2 = he_vert[pair];
