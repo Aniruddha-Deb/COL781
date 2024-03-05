@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     }
 
     HalfEdgeMesh mesh;
-    int m = 40, n = 40; // m is slices(longi) n is stacks(lati)
+    int m = 20, n = 20; // m is slices(longi) n is stacks(lati)
 
     float latitude_dist = M_PI / n;
     float longitude_dist = 2 * M_PI / m;
@@ -95,14 +95,28 @@ int main(int argc, char** argv)
     std::cout << "Loaded " << mesh.n_verts << " verts, " << mesh.n_tris << " triangles and " << mesh.n_he
               << "half edges\n";
 
-    // print_buffer(mesh.he_next, "he_next");
-    // print_buffer(mesh.he_pair, "he_pair");
-    // print_buffer(mesh.he_vert, "he_vert");
-    // print_buffer(mesh.vert_pos, "vert_pos");
-    // print_buffer(mesh.vert_normal, "vert_normal");
-    mesh.check_invariants();
-    // mesh.taubin_smoothing(0.33, -0.33, 10);
     mesh.recompute_vertex_normals();
+    mesh.check_invariants();
+    // mesh.remeshing(l - 0.02, 0);
+
+    float l = 0;
+    for (int i = 0; i < mesh.n_he; i++)
+    {
+        l += mesh.he_length(i);
+    }
+    l /= mesh.n_he;
+    std::cout << l << "\n";
+    mesh.remeshing(l, 0.33);
+    mesh.remeshing(l, 0.33);
+    mesh.remeshing(l, 0.33);
+    mesh.remeshing(l, 0.33);
+    mesh.remeshing(l, 0.33);
+
+    // mesh.remeshing(l - 0.02, 0.33);
+    // mesh.remeshing(l - 0.02, 0.33);
+    // mesh.remeshing(l - 0.02, 0.33);
+
+    // mesh.taubin_smoothing(0.33, -0.33, 10);
     /*
     load_object(argv[1], vertices, normals, triangles);
     int n_verts = vertices.size();

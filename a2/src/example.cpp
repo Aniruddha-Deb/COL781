@@ -57,6 +57,25 @@ int main(int argc, char** argv)
     // mesh.edge_collapse(1);
 
     mesh.check_invariants();
+    // float l = 0;
+    // for (int i = 0; i < mesh.n_he; i++)
+    // {
+    //     l += mesh.he_length(i);
+    // }
+    // l /= mesh.n_he;
+    // std::cout << l << "\n";
+    // mesh.remeshing(l, 0.03);
+    // mesh.remeshing(l, 0.03);
+    // mesh.remeshing(l, 0.03);
+    // mesh.remeshing(l, 0.03);
+
+    // mesh.remeshing(l, 0.03);
+
+    // mesh.remeshing(l, 0.03);
+    // mesh.remeshing(l, 0.03);
+
+    // mesh.remeshing(l - 0.02, 0.003);
+    // mesh.remeshing(l - 0.02, 0.003);
 
     /*
     load_object(argv[1], vertices, normals, triangles);

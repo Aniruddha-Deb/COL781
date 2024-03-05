@@ -67,7 +67,6 @@ int main(int argc, char** argv)
     mesh.set_vert_attribs(vert_pos, vert_normals);
 
     mesh.set_faces(faces);
-    mesh.edge_collapse(mesh.he_map[(uint64_t(1) << 32) | 2]);
 
     std::cout << "Loaded " << mesh.n_verts << " verts, " << mesh.n_tris << " triangles and " << mesh.n_he
               << " half edges\n";
@@ -86,10 +85,46 @@ int main(int argc, char** argv)
     //     std::cout << he << "\n";
     //     he = mesh.he_next[he];
     // }
+    // mesh.edge_split(mesh.he_map[(uint64_t(1) << 32) | 2]);
+    // mesh.edge_collapse(27);
+    // mesh.edge_flip(mesh.he_map[(uint64_t(6) << 32) | 7]);
 
-    // mesh.check_invariants();
+    // l = 0;
+    // for (int i = 0; i < mesh.n_he; i++)
+    // {
+    //     l += mesh.he_length(i);
+    // }
+    // l /= mesh.n_he;
+    // mesh.remeshing(l - 0.02, 0.33);
 
-    // mesh.recompute_vertex_normals();
+    // l = 0;
+    // for (int i = 0; i < mesh.n_he; i++)
+    // {
+    //     l += mesh.he_length(i);
+    // }
+    // l /= mesh.n_he;
+    // mesh.remeshing(l - 0.02, 0.33);
+    // mesh.edge_flip(27);
+    // mesh.edge_flip(mesh.he_map[(uint64_t(9) << 32) | 10]);
+    // std::cout << mesh.flip_check(mesh.he_map[(uint64_t(10) << 32) | 13]) << "\n";
+
+    // float l = 0;
+    // for (int i = 0; i < mesh.n_he; i++)
+    // {
+    //     l += mesh.he_length(i);
+    // }
+    // l /= mesh.n_he;
+    // std::cout << l << "\n";
+    // mesh.remeshing(l - 0.2, 0.004);
+    // mesh.remeshing(l - 0.2, 0.0);
+    // mesh.remeshing(l - 0.2, 0.0);
+    // mesh.remeshing(l - 0.22, 0.0);
+
+    // mesh.remeshing(l - 0.02, 0.004);
+
+    // mesh.edge_split(27);
+    // mesh.edge_collapse(27);
+    mesh.recompute_vertex_normals();
     // mesh.check_invariants();
 
     // mesh.edge_flip(27);

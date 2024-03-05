@@ -37,6 +37,7 @@ class HalfEdgeMesh
     std::unordered_map<uint64_t, int> he_map;
     std::vector<glm::vec3> vert_pos;
     std::vector<glm::vec3> vert_normal;
+    std::vector<glm::vec3> vert_gravity;
 
     void load_objfile(std::string &filename);
     void recompute_vertex_normals();
@@ -48,6 +49,7 @@ class HalfEdgeMesh
     void add_face(glm::ivec3 &face);
     void set_boundary();
     bool v_in_tri(int tri, int vertex);
+    int he_prev(int he);
     void check_invariants();
     void delete_vert(int vert);
     void delete_tri(int tri);
@@ -55,4 +57,10 @@ class HalfEdgeMesh
     void edge_flip(int he);
     void edge_split(int he);
     void edge_collapse(int he);
+    bool collapse_check(int he);
+    void remeshing(float l, float lambda);
+    float he_length(int he);
+    void assign_weights();
+    bool flip_check(int he);
+    bool split_check(int he);
 };

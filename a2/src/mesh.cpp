@@ -70,7 +70,7 @@ std::vector<int> HalfEdgeMesh::get_adjacent_vertices(int vertex)
     std::vector<int> vertices;
     int he = vert_he[vertex];
     int he_start = he;
-    vertices.push_back(he_vert[he_pair[he]]); // now it has a pair!
+    vertices.push_back(he_vert[he_pair[he]]);
     he = he_next[he_pair[he]];
     while (he != he_start)
     {
@@ -108,11 +108,6 @@ void HalfEdgeMesh::taubin_smoothing(float lambda, float mu, int n_iter)
     }
 }
 
-bool HalfEdgeMesh::v_in_tri(int tri, int vertex)
-{
-    return (tri != -1) && (tri_verts[tri][0] == vertex || tri_verts[tri][1] == vertex || tri_verts[tri][2] == vertex);
-}
-
 void HalfEdgeMesh::recompute_vertex_normals()
 {
 
@@ -122,38 +117,24 @@ void HalfEdgeMesh::recompute_vertex_normals()
     for (int q = 0; q < n_verts; q++)
     {
         std::vector<int> vertices = get_adjacent_vertices(q);
-        // std::cout << "neighbours of " << q << " ";
-        // for (int i : vertices)
-        // {
-        //     std::cout << i << " ";
-        // }
-        // std::cout << "\n";
         glm::vec3 normal(.0f, .0f, .0f);
         for (int i = 0; i < vertices.size(); i++)
         {
             if (he_map.find((uint64_t(vertices[(i + 1) % vertices.size()]) << 32) | vertices[i]) != he_map.end())
             {
                 int he = he_map[(uint64_t(vertices[(i + 1) % vertices.size()]) << 32) | vertices[i]];
-                if (v_in_tri(he_tri[he], q))
+                int tri = he_tri[he];
+                if ((tri != -1) && (tri_verts[tri][0] == q || tri_verts[tri][1] == q || tri_verts[tri][2] == q))
                 {
-                    // std::cout << "\n"
-                    //           << q << " includes " << vertices[i] << " " << vertices[(i + 1) % vertices.size()] <<
-                    //           "\n";
                     auto v1 = vert_pos[vertices[i]] - vert_pos[q];
                     float mv1 = length(v1);
                     auto v2 = vert_pos[vertices[(i + 1) % vertices.size()]] - vert_pos[q];
                     float mv2 = length(v2);
                     normal += glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2);
-                    // std::cout << (glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2))[0] << " "
-                    //           << (glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2))[1] << " "
-                    //           << (glm::cross(v2, v1) / (mv1 * mv1 * mv2 * mv2))[2] << "\n";
                 }
             }
         }
         vert_normal[q] = glm::normalize(normal);
-        // std::cout << "\n"
-        //           << q << " done " << vert_normal[q][0] << " " << vert_normal[q][1] << " " << vert_normal[q][2] <<
-        //           "\n";
     }
 }
 
@@ -233,17 +214,30 @@ void HalfEdgeMesh::set_faces(std::vector<glm::ivec3> &faces)
     set_boundary();
 }
 
+int HalfEdgeMesh::he_prev(int he)
+{
+    int prev = he;
+    while (he_next[prev] != he)
+    {
+        // if (he == 36385)
+        // {
+        //     std::cout << "prev " << prev << "\n";
+        // }
+        prev = he_next[prev];
+    }
+    return prev;
+}
+
 void HalfEdgeMesh::edge_flip(int he)
 {
     // check if edge is not boundary
     assert(he_tri[he] != -1 && he_tri[he_pair[he]] != -1);
-
     // get pointers
     int next = he_next[he];
-    int prev = he_next[next];
+    int prev = he_prev(he);
     int pair = he_pair[he];
     int pair_next = he_next[pair];
-    int pair_prev = he_next[pair_next];
+    int pair_prev = he_prev(pair);
     int origin = he_vert[he];
     int pair_origin = he_vert[pair];
     int new_origin = he_vert[pair_prev];
@@ -279,20 +273,23 @@ void HalfEdgeMesh::edge_flip(int he)
     he_map.erase((uint64_t(pair_origin) << 32) | origin);
     he_map[(uint64_t(new_origin) << 32) | new_pair_origin] = he;
     he_map[(uint64_t(new_pair_origin) << 32) | new_origin] = pair;
-    check_invariants();
 }
 
 void HalfEdgeMesh::edge_split(int he)
 {
-    // check if edge is not boundary
-    assert(he_tri[he] != -1 && he_tri[he_pair[he]] != -1);
+
+    // flip he to get he on the boundary
+    if (he_tri[he_pair[he]] == -1)
+    {
+        he = he_pair[he];
+    }
 
     // get pointers
     int next = he_next[he];
-    int prev = he_next[next];
+    int prev = he_prev(he);
     int pair = he_pair[he];
     int pair_next = he_next[pair];
-    int pair_prev = he_next[pair_next];
+    int pair_prev = he_prev(pair);
     int origin = he_vert[he];
     int pair_origin = he_vert[pair];
     int prev_origin = he_vert[prev];
@@ -300,87 +297,258 @@ void HalfEdgeMesh::edge_split(int he)
     int tri = he_tri[he];
     int pair_tri = he_tri[pair];
 
-    // add new vertex and new edges while recycling old ones
-    vert_pos.push_back((vert_pos[origin] + vert_pos[pair_origin]) / 2.0f);
-    vert_normal.push_back(glm::vec3(0, 0, 0));
-    vert_he.push_back(he);
-    vert_he[origin] = n_he;
-    vert_he[pair_origin] = pair;
-    vert_he[prev_origin] = n_he + 4;
-    vert_he[pair_prev_origin] = n_he + 2;
-    tri_he[tri] = he;
-    tri_he[pair_tri] = pair;
-    tri_he.resize(n_tris + 2);
-    tri_he[n_tris] = prev;
-    tri_he[n_tris + 1] = pair_next;
-    tri_verts.resize(n_tris + 2);
-    tri_verts[tri] = glm::ivec3(n_verts, pair_origin, prev_origin);
-    tri_verts[pair_tri] = glm::ivec3(n_verts, pair_prev_origin, pair_origin);
-    tri_verts[n_tris] = glm::ivec3(n_verts, prev_origin, origin);
-    tri_verts[n_tris + 1] = glm::ivec3(n_verts, origin, pair_prev_origin);
-    he_vert.resize(n_he + 6);
-    he_vert[he] = n_verts;
-    he_vert[pair] = pair_origin;
-    he_vert[n_he] = origin;
-    he_vert[n_he + 1] = n_verts;
-    he_vert[n_he + 2] = pair_prev_origin;
-    he_vert[n_he + 3] = n_verts;
-    he_vert[n_he + 4] = prev_origin;
-    he_vert[n_he + 5] = n_verts;
-    he_next.resize(n_he + 6);
-    he_next[he] = next;
-    he_next[next] = n_he + 4;
-    he_next[n_he + 4] = he;
-    he_next[pair] = n_he + 3;
-    he_next[n_he + 3] = pair_prev;
-    he_next[pair_prev] = pair;
-    he_next[pair_next] = n_he + 2;
-    he_next[n_he + 2] = n_he + 1;
-    he_next[n_he + 1] = pair_next;
-    he_next[prev] = n_he;
-    he_next[n_he] = n_he + 5;
-    he_next[n_he + 5] = prev;
-    he_pair.resize(n_he + 6);
-    he_pair[he] = pair;
-    he_pair[pair] = he;
-    he_pair[n_he] = n_he + 1;
-    he_pair[n_he + 2] = n_he + 3;
-    he_pair[n_he + 4] = n_he + 5;
-    he_pair[n_he + 1] = n_he;
-    he_pair[n_he + 3] = n_he + 2;
-    he_pair[n_he + 5] = n_he + 4;
-    he_tri.resize(n_he + 6);
-    he_tri[he] = tri;
-    he_tri[next] = tri;
-    he_tri[n_he + 4] = tri;
-    he_tri[pair] = pair_tri;
-    he_tri[n_he + 3] = pair_tri;
-    he_tri[pair_prev] = pair_tri;
-    he_tri[prev] = n_tris;
-    he_tri[n_he] = n_tris;
-    he_tri[n_he + 5] = n_tris;
-    he_tri[pair_next] = n_tris + 1;
-    he_tri[n_he + 2] = n_tris + 1;
-    he_tri[n_he + 1] = n_tris + 1;
-    he_map.erase((uint64_t(origin) << 32) | pair_origin);
-    he_map.erase((uint64_t(pair_origin) << 32) | origin);
-    he_map[(uint64_t(n_verts) << 32) | origin] = n_he + 1;
-    he_map[(uint64_t(n_verts) << 32) | prev_origin] = n_he + 5;
-    he_map[(uint64_t(n_verts) << 32) | pair_origin] = he;
-    he_map[(uint64_t(n_verts) << 32) | pair_prev_origin] = n_he + 3;
-    he_map[(uint64_t(origin) << 32) | n_verts] = n_he;
-    he_map[(uint64_t(prev_origin) << 32) | n_verts] = n_he + 4;
-    he_map[(uint64_t(pair_origin) << 32) | n_verts] = pair;
-    he_map[(uint64_t(pair_prev_origin) << 32) | n_verts] = n_he + 2;
-    n_verts++;
-    n_he += 6;
-    n_tris += 2;
-    check_invariants();
+    if (tri != -1)
+    {
+        vert_pos.push_back((vert_pos[origin] + vert_pos[pair_origin]) / 2.0f);
+        vert_normal.push_back(glm::vec3(0, 0, 0));
+        vert_he.push_back(he);
+        vert_he[origin] = n_he;
+        vert_he[pair_origin] = pair;
+        vert_he[prev_origin] = prev;
+        vert_he[pair_prev_origin] = pair_prev;
+        tri_he[pair_tri] = pair;
+        tri_he[tri] = he;
+        tri_he.resize(n_tris + 2);
+        tri_he[n_tris] = pair_next;
+        tri_he[n_tris + 1] = prev;
+        tri_verts.resize(n_tris + 2);
+        tri_verts[tri] = glm::ivec3(n_verts, pair_origin, prev_origin);
+        tri_verts[pair_tri] = glm::ivec3(n_verts, pair_prev_origin, pair_origin);
+        tri_verts[n_tris] = glm::ivec3(n_verts, origin, pair_prev_origin);
+        tri_verts[n_tris + 1] = glm::ivec3(n_verts, prev_origin, origin);
+        he_vert.resize(n_he + 6);
+        he_vert[he] = n_verts;
+        he_vert[pair] = pair_origin;
+        he_vert[n_he] = origin;
+        he_vert[n_he + 1] = n_verts;
+        he_vert[n_he + 2] = pair_prev_origin;
+        he_vert[n_he + 3] = n_verts;
+        he_vert[n_he + 4] = prev_origin;
+        he_vert[n_he + 5] = n_verts;
+        he_next.resize(n_he + 6);
+        he_next[next] = n_he + 4;
+        he_next[n_he + 4] = he;
+        he_next[pair] = n_he + 3;
+        he_next[n_he + 3] = pair_prev;
+        he_next[pair_prev] = pair;
+        he_next[pair_next] = n_he + 2;
+        he_next[n_he + 2] = n_he + 1;
+        he_next[n_he + 1] = pair_next;
+        he_next[prev] = n_he;
+        he_next[n_he] = n_he + 5;
+        he_next[n_he + 5] = prev;
+        he_pair.resize(n_he + 6);
+        he_pair[he] = pair;
+        he_pair[pair] = he;
+        he_pair[n_he] = n_he + 1;
+        he_pair[n_he + 1] = n_he;
+        he_pair[n_he + 2] = n_he + 3;
+        he_pair[n_he + 3] = n_he + 2;
+        he_pair[n_he + 4] = n_he + 5;
+        he_pair[n_he + 5] = n_he + 4;
+        he_tri.resize(n_he + 6);
+        he_tri[n_he + 4] = tri;
+        he_tri[n_he + 3] = pair_tri;
+        he_tri[prev] = n_tris + 1;
+        he_tri[n_he] = n_tris + 1;
+        he_tri[n_he + 5] = n_tris + 1;
+        he_tri[pair_next] = n_tris;
+        he_tri[n_he + 2] = n_tris;
+        he_tri[n_he + 1] = n_tris;
+        he_map.erase((uint64_t(origin) << 32) | pair_origin);
+        he_map.erase((uint64_t(pair_origin) << 32) | origin);
+        he_map[(uint64_t(n_verts) << 32) | origin] = n_he + 1;
+        he_map[(uint64_t(n_verts) << 32) | prev_origin] = n_he + 5;
+        he_map[(uint64_t(n_verts) << 32) | pair_origin] = he;
+        he_map[(uint64_t(n_verts) << 32) | pair_prev_origin] = n_he + 3;
+        he_map[(uint64_t(origin) << 32) | n_verts] = n_he;
+        he_map[(uint64_t(prev_origin) << 32) | n_verts] = n_he + 4;
+        he_map[(uint64_t(pair_origin) << 32) | n_verts] = pair;
+        he_map[(uint64_t(pair_prev_origin) << 32) | n_verts] = n_he + 2;
+        n_verts++;
+        n_he += 6;
+        n_tris += 2;
+    }
+    else // boundary case
+    {
+        vert_pos.push_back((vert_pos[origin] + vert_pos[pair_origin]) / 2.0f);
+        vert_normal.push_back(glm::vec3(0, 0, 0));
+        vert_he.push_back(he);
+        vert_he[origin] = n_he;
+        vert_he[pair_origin] = pair;
+        vert_he[prev_origin] = prev;
+        vert_he[pair_prev_origin] = pair_prev;
+        tri_he[pair_tri] = pair;
+        tri_he.resize(n_tris + 1);
+        tri_he[n_tris] = pair_next;
+        tri_verts.resize(n_tris + 1);
+        tri_verts[pair_tri] = glm::ivec3(n_verts, pair_prev_origin, pair_origin);
+        tri_verts[n_tris] = glm::ivec3(n_verts, origin, pair_prev_origin);
+        he_vert.resize(n_he + 4);
+        he_vert[he] = n_verts;
+        he_vert[pair] = pair_origin;
+        he_vert[n_he] = origin;
+        he_vert[n_he + 1] = n_verts;
+        he_vert[n_he + 2] = pair_prev_origin;
+        he_vert[n_he + 3] = n_verts;
+        he_next.resize(n_he + 4);
+        he_next[pair] = n_he + 3;
+        he_next[n_he + 3] = pair_prev;
+        he_next[pair_prev] = pair;
+        he_next[pair_next] = n_he + 2;
+        he_next[n_he + 2] = n_he + 1;
+        he_next[n_he + 1] = pair_next;
+        he_next[prev] = n_he;
+        he_next[n_he] = he;
+        he_pair.resize(n_he + 4);
+        he_pair[n_he] = n_he + 1;
+        he_pair[n_he + 1] = n_he;
+        he_pair[n_he + 2] = n_he + 3;
+        he_pair[n_he + 3] = n_he + 2;
+        he_tri.resize(n_he + 4);
+        he_tri[n_he + 3] = pair_tri;
+        he_tri[n_he] = -1;
+        he_tri[pair_next] = n_tris;
+        he_tri[n_he + 2] = n_tris;
+        he_tri[n_he + 1] = n_tris;
+        he_map.erase((uint64_t(origin) << 32) | pair_origin);
+        he_map.erase((uint64_t(pair_origin) << 32) | origin);
+        he_map[(uint64_t(n_verts) << 32) | origin] = n_he + 1;
+        he_map[(uint64_t(n_verts) << 32) | pair_origin] = he;
+        he_map[(uint64_t(n_verts) << 32) | pair_prev_origin] = n_he + 3;
+        he_map[(uint64_t(origin) << 32) | n_verts] = n_he;
+        he_map[(uint64_t(pair_origin) << 32) | n_verts] = pair;
+        he_map[(uint64_t(pair_prev_origin) << 32) | n_verts] = n_he + 2;
+        n_verts++;
+        n_he += 4;
+        n_tris += 1;
+    }
+}
+
+bool HalfEdgeMesh::v_in_tri(int tri, int v)
+{
+    return (tri != -1) && (tri_verts[tri][0] == v || tri_verts[tri][1] == v || tri_verts[tri][2] == v);
+}
+
+bool HalfEdgeMesh::collapse_check(int he)
+{
+    // https://www.merlin.uzh.ch/contributionDocument/download/14550
+    int pair = he_pair[he];
+    int v1 = he_vert[he];
+    int v2 = he_vert[pair];
+    int tri1 = he_tri[he];
+    int tri2 = he_tri[pair];
+    std::vector<int> vertices1 = get_adjacent_vertices(v1);
+    std::vector<int> vertices2 = get_adjacent_vertices(v2);
+    sort(vertices1.begin(), vertices1.end());
+    sort(vertices2.begin(), vertices2.end());
+    std::vector<int> common;
+    std::set_intersection(vertices1.begin(), vertices1.end(), vertices2.begin(), vertices2.end(),
+                          std::back_inserter(common));
+    bool boundary_1 = false, boundary_2 = false;
+    for (int i = 0; i < vertices1.size(); i++)
+    {
+        int v1_i = he_map[(uint64_t(v1) << 32) | vertices1[i]];
+        int v1_i_pair = he_pair[v1_i];
+        if (tri_he[v1_i] == -1 || tri_he[v1_i_pair] == -1)
+        {
+            boundary_1 = true;
+            break;
+        }
+    }
+    for (int i = 0; i < vertices2.size(); i++)
+    {
+        int v2_i = he_map[(uint64_t(v2) << 32) | vertices2[i]];
+        int v2_i_pair = he_pair[v2_i];
+        if (tri_he[v2_i] == -1 || tri_he[v2_i_pair] == -1)
+        {
+            boundary_2 = true;
+            break;
+        }
+    }
+    bool checks = true;
+    checks &= !(boundary_1 || boundary_2);
+    checks &= (common.size() == 2);
+
+    for (int k : common)
+    {
+        bool flag = false;
+        if (tri1 != -1)
+        {
+            flag |= (tri_verts[tri1][0] == k || tri_verts[tri1][1] == k || tri_verts[tri1][2] == k);
+        }
+        if (tri2 != -1)
+        {
+            flag |= (tri_verts[tri2][0] == k || tri_verts[tri2][1] == k || tri_verts[tri2][2] == k);
+        }
+        checks &= flag;
+    }
+    if (common.size() == 2)
+    {
+        checks &= (he_map.find((uint64_t(common[0]) << 32) | common[1]) == he_map.end());
+    }
+
+    checks &= (n_verts >= 4);
+
+    // geometric checks
+    vertices1.erase(std::find(vertices1.begin(), vertices1.end(), v2));
+    vertices2.erase(std::find(vertices2.begin(), vertices2.end(), v1));
+
+    for (int i = 0; i < vertices1.size(); i++)
+    {
+        if (he_map.find((uint64_t(vertices1[(i + 1) % vertices1.size()]) << 32) | vertices1[i]) != he_map.end())
+        {
+            int i_he = he_map[(uint64_t(vertices1[(i + 1) % vertices1.size()]) << 32) | vertices1[i]];
+            int i_tri = he_tri[i_he];
+            int i_pair = he_pair[i_he];
+            int i_tri_pair = he_tri[i_pair];
+
+            glm::vec3 normal =
+                glm::cross(glm::normalize(vert_pos[vertices1[(i + 1) % vertices1.size()]] - vert_pos[vertices1[i]]),
+                           glm::cross(glm::normalize(vert_pos[vertices1[i]] - vert_pos[v1]),
+                                      glm::normalize(vert_pos[vertices1[(i + 1) % vertices1.size()]] - vert_pos[v1])));
+            checks &= (glm::length(normal) > 0.3);
+            checks &= (glm::dot(normalize(normal), glm::normalize(vert_pos[vertices1[i]] - vert_pos[v1])) *
+                           glm::dot(normalize(normal),
+                                    glm::normalize(vert_pos[vertices1[i]] - (vert_pos[v1] + vert_pos[v2]) / 2.0f)) >
+                       0.01);
+        }
+    }
+
+    for (int i = 0; i < vertices2.size(); i++)
+    {
+        if (he_map.find((uint64_t(vertices2[(i + 1) % vertices2.size()]) << 32) | vertices2[i]) != he_map.end())
+        {
+            int i_he = he_map[(uint64_t(vertices2[(i + 1) % vertices2.size()]) << 32) | vertices2[i]];
+            int i_tri = he_tri[i_he];
+            int i_pair = he_pair[i_he];
+            int i_tri_pair = he_tri[i_pair];
+
+            glm::vec3 normal =
+                glm::cross(glm::normalize(vert_pos[vertices2[(i + 1) % vertices2.size()]] - vert_pos[vertices2[i]]),
+                           glm::cross(glm::normalize(vert_pos[vertices2[i]] - vert_pos[v2]),
+                                      glm::normalize(vert_pos[vertices2[(i + 1) % vertices2.size()]] - vert_pos[v2])));
+            checks &= (glm::length(normal) > 0.3);
+            checks &= (glm::dot(normalize(normal), glm::normalize(vert_pos[vertices2[i]] - vert_pos[v2])) *
+                           glm::dot(normalize(normal),
+                                    glm::normalize(vert_pos[vertices2[i]] - (vert_pos[v2] + vert_pos[v2]) / 2.0f)) >
+                       0.01);
+        }
+    }
+    for (int i = 0; i < common.size(); i++)
+    {
+        vertices1.erase(std::find(vertices1.begin(), vertices1.end(), common[i]));
+        vertices2.erase(std::find(vertices2.begin(), vertices2.end(), common[i]));
+    }
+    checks &= !(vertices1.empty() || vertices2.empty());
+
+    return checks;
 }
 
 void HalfEdgeMesh::edge_collapse(int he)
 {
-    // give up
+    // check if edge can be collapsed
+    assert(collapse_check(he));
     int pair = he_pair[he];
     int v1 = he_vert[he];
     int v2 = he_vert[pair];
@@ -391,51 +559,81 @@ void HalfEdgeMesh::edge_collapse(int he)
     std::vector<int> common;
     std::set_intersection(vertices1.begin(), vertices1.end(), vertices2.begin(), vertices2.end(),
                           std::back_inserter(common));
-    // for (int i : vertices1)
-    // {
-    //     std::cout << i << " ";
-    // }
-    // std::cout << "\n";
-    assert(common.size() <= 2);
+    vertices1.erase(std::find(vertices1.begin(), vertices1.end(), v2));
     vertices2.erase(std::find(vertices2.begin(), vertices2.end(), v1));
     for (int i = 0; i < common.size(); i++)
     {
+        vertices1.erase(std::find(vertices1.begin(), vertices1.end(), common[i]));
         vertices2.erase(std::find(vertices2.begin(), vertices2.end(), common[i]));
+    }
+
+    for (int i = 0; i < common.size(); i++)
+    {
         vert_he[common[i]] = he_map[(uint64_t(common[i]) << 32) | v1];
     }
+    // get relevant pointers
+    int tri1 = he_tri[he];
+    int tri2 = he_tri[pair];
+    int next_he = he_next[he];
+    int prev_he = he_prev(he);
+    int next_pair = he_next[pair];
+    int prev_pair = he_prev(pair);
+
     vert_he[v1] = he_map[(uint64_t(v1) << 32) | common[0]];
+    // handle he_next continuity when he is a boundary edge
+    if (tri1 == -1)
+    {
+        he_next[prev_he] = next_he;
+    }
+    if (tri2 == -1)
+    {
+        he_next[prev_pair] = next_pair;
+    }
     for (int i = 0; i < vertices2.size(); i++)
     {
         int v2_i = he_map[(uint64_t(v2) << 32) | vertices2[i]];
         int v2_i_pair = he_pair[v2_i];
         int tri = he_tri[v2_i];
         int tri_pair = he_tri[v2_i_pair];
-        tri_he[tri] = v2_i;
-        tri_he[tri_pair] = v2_i_pair;
+        int v2_i_prev = he_prev(v2_i);
+        int v2_i_pair_prev = he_prev(v2_i_pair);
+        assert(tri == -1 || (tri != tri1 && tri != tri2));
+        assert(tri_pair == -1 || (tri_pair != tri1 && tri_pair != tri2));
+        if (tri != -1)
+        {
+            tri_he[tri] = v2_i;
+        }
+        if (tri_pair != -1)
+        {
+            tri_he[tri_pair] = v2_i_pair;
+        }
         for (int idx = 0; idx < 3; idx++)
         {
-            if (tri_verts[tri][idx] == v2)
+            if (tri != -1 && tri_verts[tri][idx] == v2)
             {
                 tri_verts[tri][idx] = v1;
             }
-            if (tri_verts[tri_pair][idx] == v2)
+            if (tri_pair != -1 && tri_verts[tri_pair][idx] == v2)
             {
                 tri_verts[tri_pair][idx] = v1;
             }
         }
         for (int idx = 0; idx < common.size(); idx++)
         {
-            if (he_vert[he_next[he_next[v2_i]]] == common[idx])
+            if (he_vert[v2_i_prev] == common[idx])
             {
-                he_next[he_next[v2_i]] = he_map[(uint64_t(common[idx]) << 32) | v1];
+                // std::cout << common[idx] << "detected";
+                he_next[he_prev(v2_i_prev)] = he_map[(uint64_t(common[idx]) << 32) | v1];
                 he_next[he_map[(uint64_t(common[idx]) << 32) | v1]] = v2_i;
-                he_tri[he_map[(uint64_t(common[idx]) << 32) | v1]] = he_tri[v2_i];
+                assert(he_tri[he_map[(uint64_t(common[idx]) << 32) | v1]] == tri1 ||
+                       he_tri[he_map[(uint64_t(common[idx]) << 32) | v1]] == tri2);
+                he_tri[he_map[(uint64_t(common[idx]) << 32) | v1]] = tri;
             }
             if (he_vert[he_next[he_next[v2_i_pair]]] == common[idx])
             {
                 he_next[he_map[(uint64_t(v1) << 32) | common[idx]]] = he_next[he_next[v2_i_pair]];
                 he_next[v2_i_pair] = he_map[(uint64_t(v1) << 32) | common[idx]];
-                he_tri[he_map[(uint64_t(v1) << 32) | common[idx]]] = he_tri[v2_i_pair];
+                he_tri[he_map[(uint64_t(v1) << 32) | common[idx]]] = tri_pair;
             }
         }
         he_vert[v2_i] = v1;
@@ -450,19 +648,24 @@ void HalfEdgeMesh::edge_collapse(int he)
         he_map[(uint64_t(vertices2[i]) << 32) | v1] = v2_i_pair;
     }
     vert_pos[v1] = (vert_pos[v1] + vert_pos[v2]) / 2.0f;
-    delete_tri(he_tri[he]);
-    delete_tri(he_tri[pair]);
-    delete_he(he);
-    delete_he(pair);
-    for (int i = 0; i < common.size(); i++)
+
+    std::vector<int> order_list = {he, pair};
+    for (int i : common)
     {
-        delete_he(he_map[(uint64_t(v2) << 32) | common[i]]);
-        delete_he(he_map[(uint64_t(common[i]) << 32) | v2]);
-        he_map.erase((uint64_t(v2) << 32) | common[i]);
-        he_map.erase((uint64_t(common[i]) << 32) | v2);
+        order_list.push_back(he_map[(uint64_t(v2) << 32) | i]);
+        order_list.push_back(he_map[(uint64_t(i) << 32) | v2]);
+        he_map.erase((uint64_t(v2) << 32) | i);
+        he_map.erase((uint64_t(i) << 32) | v2);
     }
     he_map.erase((uint64_t(v1) << 32) | v2);
     he_map.erase((uint64_t(v2) << 32) | v1);
+    std::sort(order_list.begin(), order_list.end());
+    for (int i = order_list.size() - 1; i >= 0; i--)
+    {
+        delete_he(order_list[i]);
+    }
+    delete_tri(std::max(tri1, tri2));
+    delete_tri(std::min(tri1, tri2));
     delete_vert(v2);
 }
 
@@ -480,7 +683,10 @@ void HalfEdgeMesh::delete_tri(int tri)
         return;
     }
     int he = tri_he.back();
-    for (int i = 0; i < 3; i++)
+    assert(he_tri[he] == n_tris - 1);
+    he_tri[he] = tri;
+    he = he_next[he];
+    while (he != tri_he.back())
     {
         he_tri[he] = tri;
         he = he_next[he];
@@ -506,20 +712,19 @@ void HalfEdgeMesh::delete_he(int he)
     int pair = he_pair.back();
     int v1 = he_vert.back();
     int v2 = he_vert[pair];
-    he_map[(uint64_t(v1) << 32) | v2] = he;
+    int prev = he_prev(n_he - 1);
     vert_he[v1] = he;
-    tri_he[he_tri.back()] = he;
-    int he_prev = he_next.back();
-    while (he_next[he_prev] != n_he - 1)
+    if (he_tri.back() != -1)
     {
-        he_prev = he_next[he_prev];
+        tri_he[he_tri.back()] = he;
     }
-    he_next[he_prev] = he;
+    he_next[prev] = he;
     he_next[he] = he_next.back();
     he_pair[pair] = he;
     he_pair[he] = pair;
     he_tri[he] = he_tri.back();
     he_vert[he] = v1;
+    he_map[(uint64_t(v1) << 32) | v2] = he;
     he_vert.pop_back();
     he_next.pop_back();
     he_pair.pop_back();
@@ -535,6 +740,7 @@ void HalfEdgeMesh::delete_vert(int vert)
         vert_normal.pop_back();
         vert_pos.pop_back();
         n_verts--;
+        return;
     }
     vert_pos[vert] = vert_pos.back();
     vert_normal[vert] = vert_normal.back();
@@ -548,11 +754,11 @@ void HalfEdgeMesh::delete_vert(int vert)
         int tri_2 = he_tri[pair];
         for (int idx = 0; idx < 3; idx++)
         {
-            if (tri_verts[tri_1][idx] == n_verts - 1)
+            if (tri_1 != -1 && tri_verts[tri_1][idx] == n_verts - 1)
             {
                 tri_verts[tri_1][idx] = vert;
             }
-            if (tri_verts[tri_2][idx] == n_verts - 1)
+            if (tri_2 != -1 && tri_verts[tri_2][idx] == n_verts - 1)
             {
                 tri_verts[tri_2][idx] = vert;
             }
@@ -572,6 +778,148 @@ void HalfEdgeMesh::delete_vert(int vert)
     vert_pos.pop_back();
     vert_normal.pop_back();
     n_verts--;
+}
+
+float HalfEdgeMesh::he_length(int he)
+{
+    int v1 = he_vert[he];
+    int v2 = he_vert[he_pair[he]];
+    return glm::length(vert_pos[v1] - vert_pos[v2]);
+}
+
+float cotan(float angle)
+{
+    return cos(angle) / sin(angle);
+}
+
+void HalfEdgeMesh::assign_weights()
+{
+    vert_gravity.clear();
+    vert_gravity.resize(n_verts, glm::vec3(0.0, 0.0, 0.0));
+    std::vector<float> vert_areas(n_verts, 0.0);
+    // assign gravity to all vertices
+    for (int q = 0; q < n_verts; q++)
+    {
+        std::vector<int> vertices = get_adjacent_vertices(q);
+        for (int i = 0; i < vertices.size(); i++)
+        {
+            if (he_map.find((uint64_t(vertices[(i + 1) % vertices.size()]) << 32) | vertices[i]) != he_map.end())
+            {
+                int he = he_map[(uint64_t(vertices[(i + 1) % vertices.size()]) << 32) | vertices[i]];
+                int tri = he_tri[he];
+                if ((tri != -1) && (tri_verts[tri][0] == q || tri_verts[tri][1] == q || tri_verts[tri][2] == q))
+                {
+                    glm::vec3 q_one = vert_pos[vertices[i]] - vert_pos[q];
+                    glm::vec3 one_two = vert_pos[vertices[(i + 1) % vertices.size()]] - vert_pos[vertices[i]];
+                    glm::vec3 two_q = vert_pos[q] - vert_pos[vertices[(i + 1) % vertices.size()]];
+                    float alpha_i = acos(glm::dot(q_one / glm::length(q_one), -two_q / glm::length(two_q)));
+                    float alpha_j = acos(glm::dot(-q_one / glm::length(q_one), one_two / glm::length(one_two)));
+                    float alpha_k = acos(glm::dot(two_q / glm::length(two_q), -one_two / glm::length(one_two)));
+                    if (std::max({alpha_i, alpha_j, alpha_k}) <= M_PI / 2)
+                    {
+                        vert_areas[q] += (cotan(alpha_j) * glm::length(two_q) * glm::length(two_q) +
+                                          cotan(alpha_k) * glm::length(q_one) * glm::length(q_one)) /
+                                         8.0;
+                    }
+                    else if (alpha_i > M_PI / 2)
+                    {
+                        vert_areas[q] += 0.25 * glm::length(q_one) * glm::length(two_q) * sin(alpha_i);
+                    }
+                    else
+                    {
+                        vert_areas[q] += 0.125 * glm::length(q_one) * glm::length(two_q) * sin(alpha_i);
+                    }
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < n_verts; i++)
+    {
+        float denom = 0;
+        std::vector<int> vertices = get_adjacent_vertices(i);
+        for (int j = 0; j < vertices.size(); j++)
+        {
+            vert_gravity[i] += vert_areas[vertices[j]] * vert_pos[vertices[j]];
+            denom += vert_areas[vertices[j]];
+        }
+        vert_gravity[i] /= denom;
+    }
+}
+
+bool HalfEdgeMesh::flip_check(int he)
+{
+    int next = he_next[he];
+    int prev = he_prev(he);
+    int pair = he_pair[he];
+    int pair_next = he_next[pair];
+    int pair_prev = he_prev(pair);
+    int origin = he_vert[he];
+    int pair_origin = he_vert[pair];
+    int new_origin = he_vert[pair_prev];
+    int new_pair_origin = he_vert[prev];
+    int tri = he_tri[he];
+    int pair_tri = he_tri[pair];
+
+    bool checks = true;
+    checks &= (tri != -1);
+    checks &= (pair_tri != -1);
+    checks &= (he_tri[he_pair[next]] == -1) || (he_tri[he_pair[pair_prev]] == -1) ||
+              (he_tri[he_pair[next]] != he_tri[he_pair[pair_prev]]);
+    checks &= (he_tri[he_pair[prev]] == -1) || (he_tri[he_pair[pair_next]] == -1) ||
+              (he_tri[he_pair[prev]] != he_tri[he_pair[pair_next]]);
+
+    // geometric constraints
+    std::vector<glm::vec3> vertices = {vert_pos[origin], vert_pos[new_origin], vert_pos[pair_origin],
+                                       vert_pos[new_pair_origin]};
+    std::vector<glm::vec3> crosses;
+    for (int i = 0; i < 4; i++)
+    {
+        crosses.push_back(glm::cross(glm::normalize(vertices[(i + 2) % 4] - vertices[(i + 1) % 4]),
+                                     glm::normalize(vertices[(i + 1) % 4] - vertices[i % 4])));
+        checks &= (glm::length(crosses[i]) > 0.3); // approx 5 degrees
+
+        for (int j = 0; j < i; j++)
+        {
+            checks &= (glm::dot(glm::normalize(crosses[j]), glm::normalize(crosses[i])) > 0.5);
+        }
+    }
+    return checks;
+}
+
+bool HalfEdgeMesh::split_check(int he)
+{
+    if (he_tri[he_pair[he]] == -1 || he_tri[he] == -1)
+    {
+        return false;
+    }
+    return true;
+}
+
+void HalfEdgeMesh::remeshing(float l, float lambda)
+{
+
+    for (int i = 0; i < n_he; i++)
+    {
+        if (he_length(i) > (4 * l) / 3 && split_check(i))
+        {
+            edge_split(i);
+        }
+    }
+    for (int i = 0; i < n_he; i++)
+    {
+        if (he_length(i) < (4 * l) / 5 && collapse_check(i) && collapse_check(he_pair[i]))
+        {
+            edge_collapse(i);
+        }
+    }
+    recompute_vertex_normals();
+    assign_weights();
+    for (int i = 0; i < n_verts; i++)
+    {
+        vert_pos[i] = vert_pos[i] + lambda * (glm::mat3(1.0f) - glm::outerProduct(vert_normal[i], vert_normal[i])) *
+                                        (vert_gravity[i] - vert_pos[i]);
+    }
 }
 
 void HalfEdgeMesh::check_invariants()
@@ -654,12 +1002,6 @@ void HalfEdgeMesh::check_invariants()
     // check if he.target is same as he.next.source
     for (const auto &[v1v2, he] : he_map)
     {
-        if ((v1v2 & ((1UL << 32) - 1)) != he_vert[he_next[he]])
-        {
-            std::cout << "\n";
-            std::cout << (v1v2 & ((1UL << 32) - 1)) << " " << he << " " << he_next[he] << " " << he_vert[he_next[he]]
-                      << "\n";
-        }
         assert((v1v2 & ((1UL << 32) - 1)) == he_vert[he_next[he]]);
     }
     // check if he.pair.pair = he and he.pair != he
@@ -684,9 +1026,9 @@ void HalfEdgeMesh::check_invariants()
     // each half edge is part of closed loop
     for (int i = 0; i < n_he; i++)
     {
-        int he = he_next[i];
+        int he = i;
         int cnt = 0;
-        while (he != i)
+        while (he_next[he] != i)
         {
             he = he_next[he];
             cnt++;
@@ -733,6 +1075,4 @@ void HalfEdgeMesh::check_invariants()
             he = he_next[he];
         } while (he != start_he);
     }
-
-    // Manifold check
 }
