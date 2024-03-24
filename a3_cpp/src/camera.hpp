@@ -12,7 +12,7 @@ public:
 
     float cameraSpeed, yaw, pitch, lastX, lastY, fov, aspect;
     bool firstMouse;
-    void initialize(float aspect);
+    Camera(float aspect);
     glm::mat4 getViewMatrix();
     glm::mat4 getProjectionMatrix();
     glm::vec3 getViewDir();

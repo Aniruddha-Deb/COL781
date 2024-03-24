@@ -1,0 +1,110 @@
+You are given the following classes corresponding to objects in a raytracer:
+
+```c++
+#include "ray.hpp"
+#include <glm/glm.hpp>
+
+class Object {
+
+    public:
+    virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec);
+    virtual Box bounding_box();
+    virtual void transform(const glm::mat4x4& M);
+};
+
+class Sphere: public Object {
+    public:
+    glm::vec3 c;
+    float r;
+    Sphere(float _c, float _r);
+
+    virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec);
+    virtual Box bounding_box();
+    virtual void transform(const glm::mat4x4& M);
+};
+
+class Plane: public Object {
+    public:
+    glm::vec3 n, pt;
+    Plane(glm::vec3& _n, glm::vec3& _pt);
+
+    virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec);
+    virtual Box bounding_box();
+    virtual void transform(const glm::mat4x4& M);
+};
+
+class Triangle: public Object {
+    public:
+    glm::vec3 p0, p1, p2;
+    Triangle(glm::vec3& p0, glm::vec3& p1, glm::vec3& p2);
+
+    virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec);
+    virtual Box bounding_box();
+    virtual void transform(const glm::mat4x4& M);
+};
+```
+
+ray.hpp contains the following classes:
+
+```c++
+#include <glm/glm.hpp>
+
+struct Ray {
+    glm::vec3 o, d;
+};
+
+struct Box {
+    glm::vec3 tl, br;
+};
+
+struct HitRecord {
+    glm::vec3 pos;
+    glm::vec3 normal;
+};
+```
+
+You need to implement the hit, bounding_box and transform methods for Sphere, 
+Plane and Triangle to be properly raytraced. Assume whatever BRDF you need.
+Generate the impelmentation of all these methods.
+
+You need to now write the methods for tracing rays in a scene, with a camera. Given the following definition of a scene in scene.hpp:
+
+```c++
+class Scene {
+    public:
+    int w, h;
+    Camera camera;
+    std::vector<Object> objects;
+
+    Ray generate_ray(int px, int py);
+    glm::vec4 trace_ray(Ray& r);
+    glm::vec4 trace_path(Ray& r);
+};
+```
+
+Where objects are as before, and `Camera` looks like this:
+
+```c++
+class Camera {
+public:
+    glm::vec3 position;
+    glm::vec3 front;
+    glm::vec3 up; 
+    glm::vec3 lookAt;
+    glm::mat4 viewMatrix;
+
+    float cameraSpeed, yaw, pitch, lastX, lastY, fov, aspect;
+    bool firstMouse;
+    void initialize(float aspect);
+    glm::mat4 getViewMatrix();
+    glm::mat4 getProjectionMatrix();
+    glm::vec3 getViewDir();
+    glm::vec3 getRightVector();
+
+    void setCameraView(glm::vec3 position_vector, glm::vec3 lookat_vector, glm::vec3 up_vector);
+    void updateViewMatrix();
+};
+```
+
+Write the implementation of the `Scene` class, containing the methods `generate_ray`, `trace_ray` and `trace_path`.
+

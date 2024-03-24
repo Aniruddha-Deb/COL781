@@ -5,14 +5,18 @@
 
 #include "camera.hpp"
 #include "object.hpp"
+#include "window.hpp"
+#include "scene.hpp"
 
-class RayTracer {
+class Renderer {
 
     SDL_Surface* framebuffer;
-    Camera* camera;
-    std::vector<Object*> objects;
+    Scene& scene;
+    Window& win;
+    int spp;
 
-    RayTracer(int w, int h);
+    public:
+    Renderer(Window& w, Scene& s, int _spp=1);
 
     void render();
     void view();

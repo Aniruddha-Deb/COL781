@@ -6,22 +6,38 @@
 class Object {
 
     public:
-    virtual bool hit(const Ray& r, float t_min, float t_max, HitRecord& rec);
+    virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
     virtual Box bounding_box();
     virtual void transform(const glm::mat4x4& M);
 };
 
-class Sphere: virtual Object {
-    float c, r;
-    Sphere(float _c, float _r);
+class Sphere: public Object {
+    public:
+    glm::vec3 c;
+    float r;
+    Sphere(glm::vec3 _c, float _r);
+
+    virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
+    virtual Box bounding_box();
+    virtual void transform(const glm::mat4x4& M);
 };
 
-class Plane: virtual Object {
+class Plane: public Object {
+    public:
     glm::vec3 n, pt;
     Plane(glm::vec3& _n, glm::vec3& _pt);
+
+    virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
+    virtual Box bounding_box();
+    virtual void transform(const glm::mat4x4& M);
 };
 
-class Triangle: virtual Object {
+class Triangle: public Object {
+    public:
     glm::vec3 p0, p1, p2;
     Triangle(glm::vec3& p0, glm::vec3& p1, glm::vec3& p2);
+
+    virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
+    virtual Box bounding_box();
+    virtual void transform(const glm::mat4x4& M);
 };
