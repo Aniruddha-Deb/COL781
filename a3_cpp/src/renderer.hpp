@@ -17,6 +17,7 @@ class Renderer {
 
     public:
     Renderer(Window& w, Scene& s, int _spp=1);
+    ~Renderer();
 
     void render();
     void view();

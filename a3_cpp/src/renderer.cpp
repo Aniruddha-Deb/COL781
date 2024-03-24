@@ -2,16 +2,28 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "SDL2/SDL_surface.h"
 #include "renderer.hpp"
 
-Renderer::Renderer(Window& _w, Scene& _s, int _spp): win{_w}, scene{_s}, spp{_spp} {}
+#define vec4_to_color(fmt, color) SDL_MapRGBA(fmt, (Uint8)(color[0] * 255), (Uint8)(color[1] * 255), (Uint8)(color[2] * 255), (Uint8)(color[3] * 255))
+
+Renderer::Renderer(Window& _w, Scene& _s, int _spp): win{_w}, scene{_s}, spp{_spp} {
+    framebuffer = SDL_CreateRGBSurface(0, win.w, win.h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0);
+}
+
+Renderer::~Renderer() {
+    SDL_FreeSurface(framebuffer);
+}
 
 void Renderer::render() {
     // TODO possibly parallelize
+    Uint32 *pixels = (Uint32 *)framebuffer->pixels;
+    SDL_PixelFormat *format = framebuffer->format;
     for (int px=0; px < win.w; px++) {
         for (int py=0; py<win.h; py++) {
             Ray r = scene.generate_ray(px, py);
             glm::vec4 pxcolor = scene.trace_ray(r);
+            pixels[(win.h - py - 1) * win.w + px] = vec4_to_color(format, pxcolor);
         }
     }
 }

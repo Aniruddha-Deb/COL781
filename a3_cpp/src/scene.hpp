@@ -9,7 +9,7 @@ class Scene {
     public:
     int w, h;
     Camera camera;
-    std::vector<Object> objects;
+    std::vector<std::reference_wrapper<Object>> objects;
 
     Scene(int _w, int _h);
     Ray generate_ray(int px, int py);

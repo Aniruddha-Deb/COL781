@@ -1,5 +1,6 @@
 #include "camera.hpp"
 #include <glm/gtc/matrix_transform.hpp>
+#include <utility>
 
 Camera::Camera(float aspect) {
     firstMouse = true;
@@ -13,7 +14,7 @@ Camera::Camera(float aspect) {
 
     position = glm::vec3(0.0f, 0.0f, 0.0f);
     lookAt = glm::vec3(0.0f, 0.0f, -1.0f);
-    up = glm::vec3(0.0f, 1.0f,  0.0f);
+    up = glm::vec3(0.0f, -1.0f,  0.0f);
 
     updateViewMatrix();
 }

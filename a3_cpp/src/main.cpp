@@ -14,8 +14,10 @@ void two_sphere_scene() {
 
     Window win(WIDTH, HEIGHT, "Raytracer");
     Scene s(WIDTH, HEIGHT);
-    s.objects.push_back(Sphere(glm::vec3(0.f, 0.f, -2.f), 1.f));
-    s.objects.push_back(Sphere(glm::vec3(0.f, -101.f, -2.f), 100.f));
+    Sphere s1 = Sphere(glm::vec3(0.f, 0.f, -2.f), 1.f);
+    Sphere s2 = Sphere(glm::vec3(0.f, -101.f, -2.f), 100.f);
+    s.objects.push_back(s1);
+    s.objects.push_back(s2);
     Renderer renderer(win, s);
 
     renderer.view();

@@ -1,4 +1,5 @@
 #include <glm/glm.hpp>
+#include <iostream>
 
 #include "scene.hpp"
 
@@ -33,29 +34,32 @@ glm::vec4 Scene::trace_ray(Ray& r, int n_bounces) {
         return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // Return black color if no bounces to do
     }
 
-    for (const auto& obj : objects) {
+    for (const auto& obj_rw : objects) {
+        Object& obj = obj_rw.get();
         if (obj.hit(r, 0.001f, closest_hit, rec)) {
+            hit_color = (rec.normal + glm::vec3(1.f, 1.f, 1.f)) * 0.5f;
             hit_found = true;
-            closest_hit = rec.pos.length();
+            break;
+            // closest_hit = rec.pos.length();
 
-            // Calculate Blinn-Phong shading
-            glm::vec3 light_dir = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f)); // Assume a single light source at (1, 1, 1)
-            glm::vec3 view_dir = glm::normalize(-r.d);
-            glm::vec3 halfway_vec = glm::normalize(view_dir + light_dir);
+            // // Calculate Blinn-Phong shading
+            // glm::vec3 light_dir = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f)); // Assume a single light source at (1, 1, 1)
+            // glm::vec3 view_dir = glm::normalize(-r.d);
+            // glm::vec3 halfway_vec = glm::normalize(view_dir + light_dir);
 
-            float diffuse_factor = std::max(0.0f, glm::dot(rec.normal, light_dir));
-            float specular_factor = std::pow(std::max(0.0f, glm::dot(rec.normal, halfway_vec)), 32.0f); // Shininess = 32
+            // float diffuse_factor = std::max(0.0f, glm::dot(rec.normal, light_dir));
+            // float specular_factor = std::pow(std::max(0.0f, glm::dot(rec.normal, halfway_vec)), 32.0f); // Shininess = 32
 
-            hit_color = diffuse_factor * glm::vec3(0.8f, 0.8f, 0.8f) + // Diffuse component
-                        specular_factor * glm::vec3(0.5f, 0.5f, 0.5f); // Specular component
+            // hit_color = diffuse_factor * glm::vec3(0.8f, 0.8f, 0.8f) + // Diffuse component
+            //             specular_factor * glm::vec3(0.5f, 0.5f, 0.5f); // Specular component
 
-            // Calculate reflection ray
-            glm::vec3 reflectionDir = glm::reflect(-r.d, rec.normal);
-            Ray reflectionRay = { rec.pos, reflectionDir };
+            // // Calculate reflection ray
+            // glm::vec3 reflectionDir = glm::reflect(-r.d, rec.normal);
+            // Ray reflectionRay = { rec.pos, reflectionDir };
 
-            // Trace reflection ray recursively
-            glm::vec4 reflectionColor = trace_ray(reflectionRay, n_bounces - 1);
-            hit_color += glm::vec3(reflectionColor); // Accumulate reflection color
+            // // Trace reflection ray recursively
+            // glm::vec4 reflectionColor = trace_ray(reflectionRay, n_bounces - 1);
+            // hit_color += glm::vec3(reflectionColor); // Accumulate reflection color
         }
     }
 
