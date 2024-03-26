@@ -5,22 +5,28 @@
 #include "SDL2/SDL_surface.h"
 #include "renderer.hpp"
 
-#define vec4_to_color(fmt, color) SDL_MapRGBA(fmt, (Uint8)(color[0] * 255), (Uint8)(color[1] * 255), (Uint8)(color[2] * 255), (Uint8)(color[3] * 255))
+#define vec4_to_color(fmt, color)                                                                                      \
+    SDL_MapRGBA(fmt, (Uint8)(color[0] * 255), (Uint8)(color[1] * 255), (Uint8)(color[2] * 255), (Uint8)(color[3] * 255))
 
-Renderer::Renderer(Window& _w, Scene& _s, int _spp): win{_w}, scene{_s}, spp{_spp} {
+Renderer::Renderer(Window &_w, Scene &_s, int _spp) : win{_w}, scene{_s}, spp{_spp}
+{
     framebuffer = SDL_CreateRGBSurface(0, win.w, win.h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0);
 }
 
-Renderer::~Renderer() {
+Renderer::~Renderer()
+{
     SDL_FreeSurface(framebuffer);
 }
 
-void Renderer::render() {
+void Renderer::render()
+{
     // TODO possibly parallelize
     Uint32 *pixels = (Uint32 *)framebuffer->pixels;
     SDL_PixelFormat *format = framebuffer->format;
-    for (int px=0; px < win.w; px++) {
-        for (int py=0; py<win.h; py++) {
+    for (int px = 0; px < win.w; px++)
+    {
+        for (int py = 0; py < win.h; py++)
+        {
             Ray r = scene.generate_ray(px, py);
             glm::vec4 pxcolor = scene.trace_ray(r);
             pixels[(win.h - py - 1) * win.w + px] = vec4_to_color(format, pxcolor);
@@ -28,13 +34,12 @@ void Renderer::render() {
     }
 }
 
-void Renderer::view() {
+void Renderer::view()
+{
 
     // The transformation matrix.
-    glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view;
-    Camera& camera = scene.camera;
-    glm::mat4 projection = camera.getProjectionMatrix();
+    Camera &camera = scene.camera;
 
     float deltaAngleX = 2.0 * 3.14 / 800.0;
     float deltaAngleY = 3.14 / 600.0;
@@ -43,12 +48,14 @@ void Renderer::view() {
 
     SDL_GetMouseState(&lastxPos, &lastyPos);
 
-    while (!win.should_quit()) {
+    while (!win.should_quit())
+    {
 
         camera.updateViewMatrix();
 
         Uint32 buttonState = SDL_GetMouseState(&xPos, &yPos);
-        if( buttonState & SDL_BUTTON(SDL_BUTTON_LEFT) ) {
+        if (buttonState & SDL_BUTTON(SDL_BUTTON_LEFT))
+        {
             glm::vec4 pivot = glm::vec4(camera.lookAt.x, camera.lookAt.y, camera.lookAt.z, 1.0f);
             glm::vec4 position = glm::vec4(camera.position.x, camera.position.y, camera.position.z, 1.0f);
 
@@ -57,7 +64,7 @@ void Renderer::view() {
 
             float cosAngle = dot(camera.getViewDir(), camera.up);
 
-            if(cosAngle * signbit(deltaAngleY) > 0.99f)
+            if (cosAngle * signbit(deltaAngleY) > 0.99f)
                 deltaAngleY = 0.0f;
 
             glm::mat4 rotationMatX(1.0f);
@@ -72,19 +79,21 @@ void Renderer::view() {
         }
 
         buttonState = SDL_GetMouseState(&xPos, &yPos);
-        if( buttonState & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
+        if (buttonState & SDL_BUTTON(SDL_BUTTON_RIGHT))
+        {
             // Update camera parameters
 
-            float deltaY =  (float)(lastyPos - yPos) * 0.01f;
+            float deltaY = (float)(lastyPos - yPos) * 0.01f;
             glm::mat4 dollyTransform = glm::mat4(1.0f);
             dollyTransform = glm::translate(dollyTransform, normalize(camera.lookAt - camera.position) * deltaY);
             glm::vec3 newCameraPosition = dollyTransform * glm::vec4(camera.position, 1.0f);
             float newCameraFov = 2 * glm::atan(600.0f / (2 * deltaY)); // TODO Ask
-            
-            if(signbit(newCameraPosition.z) == signbit(camera.position.z)) {
+
+            if (signbit(newCameraPosition.z) == signbit(camera.position.z))
+            {
                 camera.position = newCameraPosition;
                 camera.fov = newCameraFov; // TODO Ask
-                }
+            }
         }
 
         lastxPos = xPos;

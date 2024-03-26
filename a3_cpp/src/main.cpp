@@ -10,7 +10,8 @@
 const int WIDTH = 640;
 const int HEIGHT = 480;
 
-void two_sphere_scene() {
+void two_sphere_scene()
+{
 
     Window win(WIDTH, HEIGHT, "Raytracer");
     Scene s(WIDTH, HEIGHT);
@@ -23,7 +24,8 @@ void two_sphere_scene() {
     renderer.view();
 }
 
-int main() {
+int main()
+{
 
     two_sphere_scene();
 
