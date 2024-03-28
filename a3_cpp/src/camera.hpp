@@ -2,22 +2,19 @@
 
 #include <glm/glm.hpp>
 
-class Camera {
-public:
+class Camera
+{
+  public:
     glm::vec3 position;
-    glm::vec3 front;
-    glm::vec3 up; 
+    glm::vec3 up;
     glm::vec3 lookAt;
     glm::mat4 viewMatrix;
 
-    float cameraSpeed, yaw, pitch, lastX, lastY, fov, aspect;
-    bool firstMouse;
-    Camera(float aspect);
+    float fov;
+    Camera(float fov_degrees, glm::vec3 _position, glm::vec3 _lookat, glm::vec3 _up);
     glm::mat4 getViewMatrix();
-    glm::mat4 getProjectionMatrix();
     glm::vec3 getViewDir();
     glm::vec3 getRightVector();
-
     void setCameraView(glm::vec3 position_vector, glm::vec3 lookat_vector, glm::vec3 up_vector);
     void updateViewMatrix();
 };

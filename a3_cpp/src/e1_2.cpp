@@ -14,11 +14,12 @@ void two_sphere_scene()
 {
 
     Window win(WIDTH, HEIGHT, "Raytracer");
-    Scene s(WIDTH, HEIGHT);
+    Camera camera(60, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+    Scene s(WIDTH, HEIGHT, camera);
     Sphere s1 = Sphere(glm::vec3(0.f, 0.f, -2.f), 1.f);
-    Sphere s2 = Sphere(glm::vec3(0.f, -101.f, -2.f), 100.f);
+    Plane p1 = Plane(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
     s.objects.push_back(s1);
-    s.objects.push_back(s2);
+    s.objects.push_back(p1);
     Renderer renderer(win, s);
 
     renderer.view();

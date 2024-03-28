@@ -2,16 +2,19 @@
 
 #include <glm/glm.hpp>
 
-struct Ray {
+struct Ray
+{
     glm::vec3 o, d;
 };
 
-struct Box {
+struct Box
+{
     glm::vec3 tl, br;
 };
 
-struct HitRecord {
+struct HitRecord
+{
     glm::vec3 pos;
     glm::vec3 normal;
+    float t;
 };
-

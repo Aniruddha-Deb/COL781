@@ -28,6 +28,7 @@ bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
     // std::cout << a * root * root + b * root + c << "\n";
     rec.pos = ray.o + root * ray.d;
     rec.normal = (rec.pos - center) / radius;
+    rec.t = root;
     // std::cout << glm::length(rec.pos - center) << " " << radius << "\n";
     // std::cout << rec.normal[0] << " " << rec.normal[1] << " " << rec.normal[2] << "\n";
     return true;
@@ -52,7 +53,7 @@ void Sphere::transform(const glm::mat4x4& M)
 }
 
 // Plane implementation
-Plane::Plane(glm::vec3& _n, glm::vec3& _pt) : n(_n), pt(_pt)
+Plane::Plane(glm::vec3 _n, glm::vec3 _pt) : n(_n), pt(_pt)
 {
 }
 
@@ -66,6 +67,7 @@ bool Plane::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
         return false;
     rec.pos = ray.o + t * ray.d;
     rec.normal = n;
+    rec.t = t;
     return true;
 }
 
@@ -114,6 +116,7 @@ bool Triangle::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) con
         return false;
     rec.pos = ray.o + t * ray.d;
     rec.normal = glm::normalize(glm::cross(e1, e2));
+    rec.t = t;
     return true;
 }
 

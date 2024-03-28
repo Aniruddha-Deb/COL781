@@ -28,7 +28,7 @@ class Plane : public Object
 {
   public:
     glm::vec3 n, pt;
-    Plane(glm::vec3& _n, glm::vec3& _pt);
+    Plane(glm::vec3 _n, glm::vec3 _pt);
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
     virtual Box bounding_box();

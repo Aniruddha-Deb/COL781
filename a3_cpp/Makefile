@@ -10,11 +10,19 @@ else
 	LDFLAGS=-L/opt/homebrew/lib -lSDL2 -lGLEW -framework OpenGL -framework Cocoa
 endif
 
-SRC = src/main.cpp src/object.cpp src/camera.cpp src/renderer.cpp src/scene.cpp src/window.cpp
+SRC = src/e1_1.cpp src/e1_2.cpp src/object.cpp src/camera.cpp src/renderer.cpp src/scene.cpp src/window.cpp
+HEADERS = src/object.cpp src/camera.cpp src/renderer.cpp src/scene.cpp src/window.cpp
 OBJ = $(patsubst src/%.cpp,bin/%.o,$(SRC))
+HEADEROBJS = $(patsubst src/%.cpp,bin/%.o,$(HEADERS))
+TARGET = e1_1 e1_2
 
-all: $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) $(LDFLAGS) -o bin/main
+all: $(TARGET)
+
+e1_1: $(OBJ)
+	$(CC) $(CFLAGS) bin/e1_1.o $(HEADEROBJS) $(LDFLAGS) -o bin/e1_1
+
+e1_2: $(OBJ)
+	$(CC) $(CFLAGS) bin/e1_2.o $(HEADEROBJS) $(LDFLAGS) -o bin/e1_2
 
 bin/%.o: src/%.cpp
 	$(CC) $(CFLAGS) -c $< -o $@

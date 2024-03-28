@@ -3,7 +3,7 @@
 
 #include "scene.hpp"
 
-Scene::Scene(int _w, int _h) : w{_w}, h{_h}, camera(float(_w) / float(_h)), objects()
+Scene::Scene(int _w, int _h, Camera& _camera) : w{_w}, h{_h}, camera{_camera}, objects()
 {
 }
 
@@ -15,8 +15,8 @@ Ray Scene::generate_ray(int px, int py)
     float screen_x = (2.0f * (px + 0.5)) / w - 1.0f;
     float screen_y = 1.0f - (2.0f * (py + 0.5)) / h;
 
-    float camera_x = (screen_x * w * tan(camera.fov * M_PI / 360.0f)) / h;
-    float camera_y = screen_y * tan(camera.fov * M_PI / 360.0f);
+    float camera_x = (screen_x * w * tan(camera.fov / 2.0f)) / h;
+    float camera_y = screen_y * tan(camera.fov / 2.0f);
 
     glm::vec4 camera_point(camera_x, camera_y, -1.0f, 1.0f);
 
@@ -52,8 +52,7 @@ glm::vec4 Scene::trace_ray(Ray& r, int n_bounces)
         {
             hit_color = (rec.normal + glm::vec3(1.f, 1.f, 1.f)) * 0.5f;
             hit_found = true;
-            break;
-            // closest_hit = rec.pos.length();
+            closest_hit = rec.t;
 
             // // Calculate Blinn-Phong shading
             // glm::vec3 light_dir = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f)); // Assume a single light source at (1,
