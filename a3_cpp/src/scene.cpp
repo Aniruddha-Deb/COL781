@@ -3,7 +3,8 @@
 
 #include "scene.hpp"
 
-Scene::Scene(int _w, int _h, Camera& _camera) : w{_w}, h{_h}, camera{_camera}, objects()
+Scene::Scene(int _w, int _h, Camera& _camera, std::function<glm::vec3(HitRecord&, Scene&)> _shader) : 
+    w{_w}, h{_h}, camera{_camera}, shader{_shader}
 {
 }
 
@@ -35,7 +36,7 @@ Ray Scene::generate_ray(int px, int py)
 
 glm::vec4 Scene::trace_ray(Ray& r, int n_bounces)
 {
-    HitRecord rec;
+    HitRecord rec, closest_hit_rec;
     float closest_hit = std::numeric_limits<float>::max();
     bool hit_found = false;
     glm::vec3 hit_color;
@@ -50,35 +51,16 @@ glm::vec4 Scene::trace_ray(Ray& r, int n_bounces)
         Object& obj = obj_rw.get();
         if (obj.hit(r, 0.001f, closest_hit, rec))
         {
-            hit_color = (rec.normal + glm::vec3(1.f, 1.f, 1.f)) * 0.5f;
             hit_found = true;
+            closest_hit_rec = rec;
             closest_hit = rec.t;
-
-            // // Calculate Blinn-Phong shading
-            // glm::vec3 light_dir = glm::normalize(glm::vec3(1.0f, 1.0f, 1.0f)); // Assume a single light source at (1,
-            // 1, 1) glm::vec3 view_dir = glm::normalize(-r.d); glm::vec3 halfway_vec = glm::normalize(view_dir +
-            // light_dir);
-
-            // float diffuse_factor = std::max(0.0f, glm::dot(rec.normal, light_dir));
-            // float specular_factor = std::pow(std::max(0.0f, glm::dot(rec.normal, halfway_vec)), 32.0f); // Shininess
-            // = 32
-
-            // hit_color = diffuse_factor * glm::vec3(0.8f, 0.8f, 0.8f) + // Diffuse component
-            //             specular_factor * glm::vec3(0.5f, 0.5f, 0.5f); // Specular component
-
-            // // Calculate reflection ray
-            // glm::vec3 reflectionDir = glm::reflect(-r.d, rec.normal);
-            // Ray reflectionRay = { rec.pos, reflectionDir };
-
-            // // Trace reflection ray recursively
-            // glm::vec4 reflectionColor = trace_ray(reflectionRay, n_bounces - 1);
-            // hit_color += glm::vec3(reflectionColor); // Accumulate reflection color
         }
     }
 
     if (hit_found)
     {
-        return glm::vec4(hit_color, 1.0f);
+        // TODO recurse and trace rays!
+        return glm::vec4(shader(closest_hit_rec, *this), 1.0f);
     }
     else
     {
@@ -90,4 +72,14 @@ glm::vec4 Scene::trace_ray(Ray& r, int n_bounces)
 glm::vec4 Scene::trace_path(Ray& ray, int n_bounces)
 {
     return trace_ray(ray, n_bounces);
+}
+
+glm::vec3 normal_shader(HitRecord& rec, Scene& scene) {
+    glm::vec3 hit_color = glm::normalize((rec.normal + glm::vec3(1.f, 1.f, 1.f)) * 0.5f);
+    return hit_color;
+}
+
+glm::vec3 diffuse_shader(HitRecord& rec, Scene& scene) {
+    glm::vec3 hit_color = (rec.normal + glm::vec3(0.f, 0.f, 1.f)) * 0.5f;
+    return hit_color;
 }

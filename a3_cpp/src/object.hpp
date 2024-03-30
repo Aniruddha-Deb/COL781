@@ -17,7 +17,8 @@ class Sphere : public Object
   public:
     glm::vec3 center;
     float radius;
-    Sphere(glm::vec3 _c, float _r);
+    glm::vec3 albedo;
+    Sphere(glm::vec3 _c, float _r, glm::vec3 _a);
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
     virtual Box bounding_box();
@@ -28,7 +29,20 @@ class Plane : public Object
 {
   public:
     glm::vec3 n, pt;
-    Plane(glm::vec3 _n, glm::vec3 _pt);
+    glm::vec3 albedo;
+    Plane(glm::vec3 _n, glm::vec3 _pt, glm::vec3 _a);
+
+    virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
+    virtual Box bounding_box();
+    virtual void transform(const glm::mat4x4& M);
+};
+
+class AxisAlignedBox : public Object
+{
+  public:
+    Box box;
+    glm::vec3 albedo;
+    AxisAlignedBox(Box _b, glm::vec3 _a);
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
     virtual Box bounding_box();
@@ -39,7 +53,8 @@ class Triangle : public Object
 {
   public:
     glm::vec3 p0, p1, p2;
-    Triangle(glm::vec3& p0, glm::vec3& p1, glm::vec3& p2);
+    glm::vec3 albedo;
+    Triangle(glm::vec3& p0, glm::vec3& p1, glm::vec3& p2, glm::vec3 _a);
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
     virtual Box bounding_box();
