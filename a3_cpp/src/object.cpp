@@ -5,14 +5,25 @@ Ray transform_ray(const Ray& ray, const glm::mat4x4& transform_mat) {
     Ray transformed_ray = ray;
     glm::vec4 o_t = transform_mat * glm::vec4(transformed_ray.o, 1.f);
     transformed_ray.o = glm::vec3(o_t) / o_t.w;
-    glm::vec4 d_t = transform_mat * glm::vec4(transformed_ray.d, 1.f);
-    transformed_ray.d = glm::vec3(d_t) / d_t.w;
+    glm::vec4 d_t = transform_mat * glm::vec4(transformed_ray.d, 0.f);
+    transformed_ray.d = glm::normalize(glm::vec3(d_t)); /// d_t.w;
     return transformed_ray;
 }
 
 // Sphere implementation
-Sphere::Sphere(glm::vec3 _c, float _r, glm::vec3 _a) : center(_c), radius(_r), albedo(_a), inv_transform_mat(1.f)
+Sphere::Sphere(glm::vec3 _c, float _r, glm::vec3 _a) 
+    : center(_c), radius(_r), albedo(_a), inv_transform_mat(1.f), inv_transform_normal_mat(1.f)
 {
+}
+
+glm::mat3x3 mat4tomat3(const glm::mat4x4& mat4) {
+    glm::mat3x3 mat3;
+    for (int i=0; i<3; i++) {
+        for (int j=0; j<3; j++) {
+            mat3[i][j] = mat4[i][j];
+        }
+    }
+    return mat3;
 }
 
 bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
@@ -37,7 +48,7 @@ bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
     // std::cout << a * root * root + b * root + c << "\n";
     rec.pos = ray.o + root * ray.d;
     rec.normal = (rec.pos - center) / radius;
-    rec.normal = glm::transpose(glm::mat3x3(inv_transform_mat)) * rec.normal;
+    rec.normal = glm::transpose(inv_transform_normal_mat) * rec.normal;
     rec.t = root;
     rec.surf_albedo = albedo;
     // std::cout << glm::length(rec.pos - center) << " " << radius << "\n";
@@ -63,10 +74,12 @@ void Sphere::transform(const glm::mat4x4& M)
     radius = glm::length(glm::vec3(point) / point.w - center);
 
     inv_transform_mat = glm::inverse(M) * inv_transform_mat;
+    inv_transform_normal_mat = glm::inverse(mat4tomat3(M)) * inv_transform_normal_mat;
 }
 
 // Plane implementation
-Plane::Plane(glm::vec3 _n, glm::vec3 _pt, glm::vec3 _a) : n(_n), pt(_pt), albedo(_a), inv_transform_mat(1.f)
+Plane::Plane(glm::vec3 _n, glm::vec3 _pt, glm::vec3 _a) : 
+    n(_n), pt(_pt), albedo(_a), inv_transform_mat(1.f), inv_transform_normal_mat(1.f)
 {
 }
 
@@ -105,20 +118,25 @@ void Plane::transform(const glm::mat4x4& M)
     inv_transform_mat = glm::inverse(M) * inv_transform_mat;
 }
 
-AxisAlignedBox::AxisAlignedBox(Box _b, glm::vec3 _a) : box{_b}, albedo(_a), inv_transform_mat(1.f)
+AxisAlignedBox::AxisAlignedBox(Box _b, glm::vec3 _a) : 
+    box{_b}, albedo(_a), inv_transform_mat(1.f), inv_transform_normal_mat(1.f)
 {
 }
 
 bool AxisAlignedBox::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
 {
+    Ray transformed_ray = transform_ray(ray, inv_transform_mat);
+    glm::vec3 o = transformed_ray.o, d = transformed_ray.d;
+
     // Check if the ray is parallel to any axis
-    if (ray.d.x == 0 && ray.d.y == 0 && ray.d.z == 0)
+    // TODO fix
+    if (abs(d.x) < 1e-6 || abs(d.y) < 1e-6 || abs(d.z) < 1e-6)
         return false;
 
-    glm::vec3 inv_direction = 1.0f / ray.d;
+    glm::vec3 inv_direction = 1.0f / d;
 
-    glm::vec3 t0 = (box.tl - ray.o) * inv_direction;
-    glm::vec3 t1 = (box.br - ray.o) * inv_direction;
+    glm::vec3 t0 = (box.tl - o) * inv_direction;
+    glm::vec3 t1 = (box.br - o) * inv_direction;
 
     glm::vec3 tmin = glm::min(t0, t1);
     glm::vec3 tmax = glm::max(t0, t1);
@@ -132,7 +150,7 @@ bool AxisAlignedBox::hit(const Ray& ray, float t_min, float t_max, HitRecord& re
 
     // Record the hit information
     rec.t = t_enter;
-    rec.pos = ray.o + rec.t*ray.d;
+    rec.pos = o + rec.t*d;
 
     if (abs(rec.pos.x - box.tl.x) < 1e-6)
         rec.normal = glm::vec3(-1, 0, 0);
