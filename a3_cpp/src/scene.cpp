@@ -80,6 +80,21 @@ glm::vec3 normal_shader(HitRecord& rec, Scene& scene) {
 }
 
 glm::vec3 diffuse_shader(HitRecord& rec, Scene& scene) {
-    glm::vec3 hit_color = (rec.normal + glm::vec3(0.f, 0.f, 1.f)) * 0.5f;
+
+    glm::vec3 hit_point = rec.pos;
+    glm::vec3 hit_color(0.f, 0.f, 0.f);
+    HitRecord dummy;
+    for (const LightSource& light : scene.lights) {
+        Ray r = {hit_point, light.pos - hit_point};
+        bool hit_object = false;
+        for (const Object& obj : scene.objects) {
+            if (obj.hit(r, 0.001, 1, dummy)) {
+                hit_object = true;
+            }
+        }
+        if (hit_object) continue;
+        else hit_color += rec.surf_albedo * light.rgb * glm::dot(glm::normalize(r.d), rec.normal);
+    }
+
     return hit_color;
 }

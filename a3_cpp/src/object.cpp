@@ -29,6 +29,7 @@ bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
     rec.pos = ray.o + root * ray.d;
     rec.normal = (rec.pos - center) / radius;
     rec.t = root;
+    rec.surf_albedo = albedo;
     // std::cout << glm::length(rec.pos - center) << " " << radius << "\n";
     // std::cout << rec.normal[0] << " " << rec.normal[1] << " " << rec.normal[2] << "\n";
     return true;
@@ -67,6 +68,7 @@ bool Plane::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
         return false;
     rec.pos = ray.o + t * ray.d;
     rec.normal = n;
+    rec.surf_albedo = albedo;
     rec.t = t;
     return true;
 }
@@ -87,6 +89,61 @@ void Plane::transform(const glm::mat4x4& M)
     n = glm::vec3(normal);
     glm::vec4 point = M * glm::vec4(pt, 1.0f);
     pt = glm::vec3(point) / point.w;
+}
+
+AxisAlignedBox::AxisAlignedBox(Box _b, glm::vec3 _a) : box{_b}, albedo(_a) {}
+
+bool AxisAlignedBox::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
+{
+    // Check if the ray is parallel to any axis
+    if (ray.d.x == 0 && ray.d.y == 0 && ray.d.z == 0)
+        return false;
+
+    glm::vec3 inv_direction = 1.0f / ray.d;
+
+    glm::vec3 t0 = (box.tl - ray.o) * inv_direction;
+    glm::vec3 t1 = (box.br - ray.o) * inv_direction;
+
+    glm::vec3 tmin = glm::min(t0, t1);
+    glm::vec3 tmax = glm::max(t0, t1);
+
+    float t_enter = glm::max(glm::max(tmin.x, tmin.y), tmin.z);
+    float t_exit = glm::min(glm::min(tmax.x, tmax.y), tmax.z);
+
+    // Check for edge cases
+    if (t_exit < 0 || t_enter > t_exit || t_enter > t_max || t_exit < t_min)
+        return false;
+
+    // Record the hit information
+    rec.t = t_enter;
+    rec.pos = ray.o + rec.t*ray.d;
+
+    if (abs(rec.pos.x - box.tl.x) < 1e-6)
+        rec.normal = glm::vec3(-1, 0, 0);
+    else if (abs(rec.pos.x - box.br.x) < 1e-6)
+        rec.normal = glm::vec3(1, 0, 0);
+    else if (abs(rec.pos.y - box.tl.y) < 1e-6) 
+        rec.normal = glm::vec3(0, -1, 0);
+    else if (abs(rec.pos.y - box.br.y) < 1e-6)
+        rec.normal = glm::vec3(0, 1, 0);
+    else if (abs(rec.pos.z - box.tl.z) < 1e-6)
+        rec.normal = glm::vec3(0, 0, -1);
+    else if (abs(rec.pos.z - box.br.z) < 1e-6)
+        rec.normal = glm::vec3(0, 0, 1);
+
+    rec.surf_albedo = albedo;
+
+    return true;
+}
+
+Box AxisAlignedBox::bounding_box()
+{
+    return box;
+}
+
+void AxisAlignedBox::transform(const glm::mat4x4& M) {
+    box.tl = glm::vec3(M * glm::vec4(box.tl, 1.0f));
+    box.br = glm::vec3(M * glm::vec4(box.br, 1.0f));
 }
 
 // Triangle implementation
