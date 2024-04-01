@@ -18,6 +18,7 @@ class Sphere : public Object
     glm::vec3 center;
     float radius;
     glm::vec3 albedo;
+    glm::mat4x4 inv_transform_mat;
     Sphere(glm::vec3 _c, float _r, glm::vec3 _a);
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
@@ -30,6 +31,7 @@ class Plane : public Object
   public:
     glm::vec3 n, pt;
     glm::vec3 albedo;
+    glm::mat4x4 inv_transform_mat;
     Plane(glm::vec3 _n, glm::vec3 _pt, glm::vec3 _a);
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
@@ -42,6 +44,7 @@ class AxisAlignedBox : public Object
   public:
     Box box;
     glm::vec3 albedo;
+    glm::mat4x4 inv_transform_mat;
     AxisAlignedBox(Box _b, glm::vec3 _a);
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
