@@ -5,8 +5,8 @@ ifeq ($(UNAME), Linux)
 	CFLAGS=-std=c++17 -Wall -O2
 	LDFLAGS=-lGLEW -lGLU -lGL -lSDL2
 else
-	CC=g++
-	CFLAGS=-std=c++17 -O2 -Wall -I/opt/homebrew/include -fno-stack-protector
+	CC=clang++
+	CFLAGS=-std=c++17  -Wall -I/opt/homebrew/include -fno-stack-protector
 	LDFLAGS=-L/opt/homebrew/lib -lSDL2 -lGLEW -framework OpenGL -framework Cocoa
 endif
 

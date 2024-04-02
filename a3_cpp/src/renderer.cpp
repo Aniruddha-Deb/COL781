@@ -25,6 +25,7 @@ Renderer::~Renderer()
 void Renderer::render()
 {
     // TODO possibly parallelize
+    SDL_LockSurface(framebuffer);
     Uint32 *pixels = (Uint32 *)framebuffer->pixels;
     SDL_PixelFormat *format = framebuffer->format;
     for (int px = 0; px < win.w; px++)
@@ -36,6 +37,7 @@ void Renderer::render()
             pixels[(win.h - py - 1) * win.w + px] = vec3_to_color(format, pxcolor);
         }
     }
+    SDL_UnlockSurface(framebuffer);
 }
 
 void Renderer::view()
