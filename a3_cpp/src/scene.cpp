@@ -5,8 +5,8 @@
 
 constexpr glm::vec3 SKY(0.f, 0.f, 0.0f);
 
-Scene::Scene(int _w, int _h, Camera& _camera, int _max_bounces) : 
-    w{_w}, h{_h}, camera{_camera}, max_bounces{_max_bounces}
+Scene::Scene(int _w, int _h, Camera& _camera, int _max_bounces)
+    : w{_w}, h{_h}, camera{_camera}, max_bounces{_max_bounces}
 {
 }
 
@@ -43,7 +43,8 @@ glm::vec3 Scene::trace_ray(Ray& r)
 
 glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
 {
-    if (n_bounces_left == 0) return SKY;
+    if (n_bounces_left == 0)
+        return SKY;
 
     HitRecord rec, closest_hit_rec;
     float closest_hit = std::numeric_limits<float>::max();
@@ -66,7 +67,8 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
     if (hit_found)
     {
         // TODO recurse and trace rays!
-        closest_hit_rec.n_bounces_left = n_bounces_left-1;
+        // std::cout << "hit\n";
+        closest_hit_rec.n_bounces_left = n_bounces_left - 1;
         return hit_obj->mat->shade(closest_hit_rec, *this);
     }
     else

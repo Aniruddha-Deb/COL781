@@ -1,7 +1,8 @@
 #include "object.hpp"
 #include "iostream"
 
-Ray transform_ray(const Ray& ray, const glm::mat4x4& transform_mat) {
+Ray transform_ray(const Ray& ray, const glm::mat4x4& transform_mat)
+{
     Ray transformed_ray = ray;
     glm::vec4 o_t = transform_mat * glm::vec4(transformed_ray.o, 1.f);
     transformed_ray.o = glm::vec3(o_t) / o_t.w;
@@ -10,17 +11,21 @@ Ray transform_ray(const Ray& ray, const glm::mat4x4& transform_mat) {
     return transformed_ray;
 }
 
-glm::mat3x3 mat4tomat3(const glm::mat4x4& mat4) {
+glm::mat3x3 mat4tomat3(const glm::mat4x4& mat4)
+{
     glm::mat3x3 mat3;
-    for (int i=0; i<3; i++) {
-        for (int j=0; j<3; j++) {
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
             mat3[i][j] = mat4[i][j];
         }
     }
     return mat3;
 }
 
-void Object::transform(const glm::mat4x4& M) {
+void Object::transform(const glm::mat4x4& M)
+{
     inv_transform_mat = glm::inverse(M) * inv_transform_mat;
     inv_transform_normal_mat = glm::inverse(glm::mat3x3(M)) * inv_transform_normal_mat;
 }
@@ -79,7 +84,8 @@ bool Plane::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
     Ray transformed_ray = transform_ray(ray, inv_transform_mat);
     glm::vec3 o = transformed_ray.o, d = transformed_ray.d;
     float denom = glm::dot(n, d);
-    if (abs(denom) < 1e-8)
+    // std::cout << denom << " " << glm::abs(denom) << " denom \n";
+    if (glm::abs(denom) < 1e-8)
         return false;
     float t = glm::dot(pt - o, n) / denom;
     if (t < t_min || t > t_max)
@@ -116,7 +122,7 @@ bool AxisAlignedBox::hit(const Ray& ray, float t_min, float t_max, HitRecord& re
 
     // Check if the ray is parallel to any axis
     // TODO fix
-    if (abs(d.x) < 1e-6 || abs(d.y) < 1e-6 || abs(d.z) < 1e-6)
+    if (glm::abs(d.x) < 1e-6 || glm::abs(d.y) < 1e-6 || glm::abs(d.z) < 1e-6)
         return false;
 
     glm::vec3 inv_direction = 1.0f / d;
@@ -136,22 +142,22 @@ bool AxisAlignedBox::hit(const Ray& ray, float t_min, float t_max, HitRecord& re
 
     // Record the hit information
     rec.t = t_enter;
-    rec.pos = o + rec.t*d;
+    rec.pos = o + rec.t * d;
 
-    if (abs(rec.pos.x - box.tl.x) < 1e-6)
+    if (glm::abs(rec.pos.x - box.tl.x) < 1e-6)
         rec.normal = glm::vec3(-1, 0, 0);
-    else if (abs(rec.pos.x - box.br.x) < 1e-6)
+    else if (glm::abs(rec.pos.x - box.br.x) < 1e-6)
         rec.normal = glm::vec3(1, 0, 0);
-    else if (abs(rec.pos.y - box.tl.y) < 1e-6) 
+    else if (glm::abs(rec.pos.y - box.tl.y) < 1e-6)
         rec.normal = glm::vec3(0, -1, 0);
-    else if (abs(rec.pos.y - box.br.y) < 1e-6)
+    else if (glm::abs(rec.pos.y - box.br.y) < 1e-6)
         rec.normal = glm::vec3(0, 1, 0);
-    else if (abs(rec.pos.z - box.tl.z) < 1e-6)
+    else if (glm::abs(rec.pos.z - box.tl.z) < 1e-6)
         rec.normal = glm::vec3(0, 0, -1);
-    else if (abs(rec.pos.z - box.br.z) < 1e-6)
+    else if (glm::abs(rec.pos.z - box.br.z) < 1e-6)
         rec.normal = glm::vec3(0, 0, 1);
-    
-    // transform normal 
+
+    // transform normal
     rec.normal = glm::transpose(glm::mat3x3(inv_transform_normal_mat)) * rec.normal;
 
     return true;
@@ -162,7 +168,8 @@ Box AxisAlignedBox::bounding_box()
     return box;
 }
 
-void AxisAlignedBox::transform(const glm::mat4x4& M) {
+void AxisAlignedBox::transform(const glm::mat4x4& M)
+{
     Object::transform(M);
     box.tl = glm::vec3(M * glm::vec4(box.tl, 1.0f));
     box.br = glm::vec3(M * glm::vec4(box.br, 1.0f));
