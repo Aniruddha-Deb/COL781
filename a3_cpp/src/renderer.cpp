@@ -34,10 +34,6 @@ void Renderer::render()
             Ray r = scene.generate_ray(px, py);
             glm::vec3 pxcolor = scene.trace_ray(r);
             pixels[(win.h - py - 1) * win.w + px] = vec3_to_color(format, pxcolor);
-            if (px == 320 && py == 240) {
-                std::cout << pxcolor.x << ", " << pxcolor.y << ", " << pxcolor.z << std::endl;
-                std::cout << std::hex << pixels[(win.h - py - 1) * win.w + px] << std::dec << std::endl;
-            }
         }
     }
 }
@@ -110,13 +106,6 @@ void Renderer::view()
         view = camera.getViewMatrix();
 
         render();
-        int px = 320, py = 240;
-        if (px == 320 && py == 240) {
-            std::cout << std::hex << ((Uint32*)(framebuffer->pixels))[(win.h - py - 1) * win.w + px] << std::dec << std::endl;
-        }
         win.blit_surface(framebuffer);
-        if (px == 320 && py == 240) {
-            std::cout << std::hex << ((Uint32*)(framebuffer->pixels))[(win.h - py - 1) * win.w + px] << std::dec << std::endl;
-        }
     }
 }

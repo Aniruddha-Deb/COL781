@@ -4,7 +4,7 @@
 
 struct Ray
 {
-    glm::vec3 o, d, color;
+    glm::vec3 o, d;
 };
 
 struct Box
@@ -14,6 +14,7 @@ struct Box
 
 struct HitRecord
 {
+    Ray ray;
     glm::vec3 pos;
     glm::vec3 normal;
     int n_bounces_left;

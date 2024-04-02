@@ -50,7 +50,6 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
     float closest_hit = std::numeric_limits<float>::max();
     Object* hit_obj = nullptr;
     bool hit_found = false;
-    glm::vec3 hit_color;
 
     for (const auto& obj_rw : objects)
     {
@@ -68,6 +67,7 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
     {
         // TODO recurse and trace rays!
         // std::cout << "hit\n";
+        rec.ray = r;
         closest_hit_rec.n_bounces_left = n_bounces_left - 1;
         return hit_obj->mat->shade(closest_hit_rec, *this);
     }

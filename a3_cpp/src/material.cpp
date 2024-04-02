@@ -24,3 +24,24 @@ glm::vec3 DiffuseMaterial::shade(HitRecord& rec, Scene& scene) {
 
     return hit_color;
 }
+
+glm::vec3 BlinnPhongMaterial::shade(HitRecord& rec, Scene& scene) {
+
+    glm::vec3 hit_color = k_a * 0.05f;
+    for (const LightSource& light : scene.lights) {
+        glm::vec3 v = glm::normalize(-rec.ray.d);
+        glm::vec3 l = glm::normalize(light.pos - rec.pos);
+        glm::vec3 h = glm::normalize(v + l);
+        glm::vec3 n = rec.normal;
+
+        hit_color += k_d * light.rgb * glm::max(0.f, glm::dot(rec.normal, l))
+                   + k_s * light.rgb * glm::pow(glm::max(0.f, glm::dot(rec.normal, h)), p);
+    }
+    glm::vec3 tangent_vector = glm::normalize(glm::cross(glm::cross(rec.ray.d, rec.normal), -rec.normal));
+    Ray reflected_ray{rec.pos, tangent_vector * glm::dot(rec.ray.d, tangent_vector) - rec.normal * glm::dot(rec.ray.d, rec.normal)};
+    hit_color += k_r * scene.trace_ray_rec(reflected_ray, rec.n_bounces_left);
+
+    hit_color = glm::min(glm::vec3(1.f, 1.f, 1.f), hit_color);
+
+    return hit_color;
+}
