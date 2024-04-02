@@ -3,8 +3,10 @@
 
 #include "scene.hpp"
 
-Scene::Scene(int _w, int _h, Camera& _camera, std::function<glm::vec3(HitRecord&, Scene&)> _shader) : 
-    w{_w}, h{_h}, camera{_camera}, shader{_shader}
+constexpr glm::vec4 SKY(0.f, 0.f, 0.f, 1.f);
+
+Scene::Scene(int _w, int _h, Camera& _camera, int _max_bounces) : 
+    w{_w}, h{_h}, camera{_camera}, max_bounces{_max_bounces}
 {
 }
 
@@ -34,17 +36,20 @@ Ray Scene::generate_ray(int px, int py)
     return ray;
 }
 
-glm::vec4 Scene::trace_ray(Ray& r, int n_bounces)
+glm::vec3 Scene::trace_ray(Ray& r)
 {
+    return trace_ray_rec(r, max_bounces);
+}
+
+glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
+{
+    if (n_bounces_left == 0) return SKY;
+
     HitRecord rec, closest_hit_rec;
     float closest_hit = std::numeric_limits<float>::max();
+    Object* hit_obj = nullptr;
     bool hit_found = false;
     glm::vec3 hit_color;
-
-    if (n_bounces == 0)
-    {
-        return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // Return black color if no bounces to do
-    }
 
     for (const auto& obj_rw : objects)
     {
@@ -54,47 +59,29 @@ glm::vec4 Scene::trace_ray(Ray& r, int n_bounces)
             hit_found = true;
             closest_hit_rec = rec;
             closest_hit = rec.t;
+            hit_obj = &obj;
         }
     }
 
     if (hit_found)
     {
         // TODO recurse and trace rays!
-        return glm::vec4(shader(closest_hit_rec, *this), 1.0f);
+        closest_hit_rec.n_bounces_left = n_bounces_left-1;
+        return hit_obj->mat->shade(closest_hit_rec, *this);
     }
     else
     {
-        return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // Background color
+        return glm::vec3(0.0f, 0.0f, 0.0f); // Background color
     }
 }
 
 // for now
-glm::vec4 Scene::trace_path(Ray& ray, int n_bounces)
+glm::vec3 Scene::trace_path(Ray& ray)
 {
-    return trace_ray(ray, n_bounces);
+    return trace_ray_rec(ray, max_bounces);
 }
 
-glm::vec3 normal_shader(HitRecord& rec, Scene& scene) {
-    glm::vec3 hit_color = glm::normalize((rec.normal + glm::vec3(1.f, 1.f, 1.f)) * 0.5f);
-    return hit_color;
-}
-
-glm::vec3 diffuse_shader(HitRecord& rec, Scene& scene) {
-
-    glm::vec3 hit_point = rec.pos;
-    glm::vec3 hit_color(0.f, 0.f, 0.f);
-    HitRecord dummy;
-    for (const LightSource& light : scene.lights) {
-        Ray r = {hit_point, light.pos - hit_point};
-        bool hit_object = false;
-        for (const Object& obj : scene.objects) {
-            if (obj.hit(r, 0.001, 1, dummy)) {
-                hit_object = true;
-            }
-        }
-        if (hit_object) continue;
-        else hit_color += rec.surf_albedo * light.rgb * glm::dot(glm::normalize(r.d), rec.normal);
-    }
-
-    return hit_color;
+glm::vec3 Scene::trace_path_rec(Ray& r, int n_bounces_left)
+{
+    return trace_ray_rec(r, n_bounces_left);
 }

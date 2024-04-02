@@ -7,6 +7,8 @@
 
 #define vec4_to_color(fmt, color)                                                                                      \
     SDL_MapRGBA(fmt, (Uint8)(color[0] * 255), (Uint8)(color[1] * 255), (Uint8)(color[2] * 255), (Uint8)(color[3] * 255))
+#define vec3_to_color(fmt, color)                                                                                      \
+    SDL_MapRGBA(fmt, (Uint8)(color[0] * 255), (Uint8)(color[1] * 255), (Uint8)(color[2] * 255), (Uint8)(255))
 
 Renderer::Renderer(Window &_w, Scene &_s, int _spp) : win{_w}, scene{_s}, spp{_spp}
 {
@@ -28,8 +30,8 @@ void Renderer::render()
         for (int py = 0; py < win.h; py++)
         {
             Ray r = scene.generate_ray(px, py);
-            glm::vec4 pxcolor = scene.trace_ray(r);
-            pixels[(win.h - py - 1) * win.w + px] = vec4_to_color(format, pxcolor);
+            glm::vec3 pxcolor = scene.trace_ray(r);
+            pixels[(win.h - py - 1) * win.w + px] = vec3_to_color(format, pxcolor);
         }
     }
 }

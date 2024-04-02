@@ -16,7 +16,6 @@ struct HitRecord
 {
     glm::vec3 pos;
     glm::vec3 normal;
-    glm::vec3 surf_albedo;
-    glm::vec3 ray_intensity;
+    int n_bounces_left;
     float t;
 };

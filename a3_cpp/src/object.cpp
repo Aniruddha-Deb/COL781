@@ -10,12 +10,6 @@ Ray transform_ray(const Ray& ray, const glm::mat4x4& transform_mat) {
     return transformed_ray;
 }
 
-// Sphere implementation
-Sphere::Sphere(glm::vec3 _c, float _r, glm::vec3 _a) 
-    : center(_c), radius(_r), albedo(_a), inv_transform_mat(1.f), inv_transform_normal_mat(1.f)
-{
-}
-
 glm::mat3x3 mat4tomat3(const glm::mat4x4& mat4) {
     glm::mat3x3 mat3;
     for (int i=0; i<3; i++) {
@@ -24,6 +18,11 @@ glm::mat3x3 mat4tomat3(const glm::mat4x4& mat4) {
         }
     }
     return mat3;
+}
+
+void Object::transform(const glm::mat4x4& M) {
+    inv_transform_mat = glm::inverse(M) * inv_transform_mat;
+    inv_transform_normal_mat = glm::inverse(glm::mat3x3(M)) * inv_transform_normal_mat;
 }
 
 bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
@@ -50,7 +49,6 @@ bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
     rec.normal = (rec.pos - center) / radius;
     rec.normal = glm::transpose(inv_transform_normal_mat) * rec.normal;
     rec.t = root;
-    rec.surf_albedo = albedo;
     // std::cout << glm::length(rec.pos - center) << " " << radius << "\n";
     // std::cout << rec.normal[0] << " " << rec.normal[1] << " " << rec.normal[2] << "\n";
     return true;
@@ -66,34 +64,28 @@ Box Sphere::bounding_box()
 
 void Sphere::transform(const glm::mat4x4& M)
 {
+    Object::transform(M);
+
     // Apply the transformation matrix to the center and radius
     glm::vec4 center_homo = M * glm::vec4(center, 1.0f);
     center = glm::vec3(center_homo) / center_homo.w;
     // Calculate the new radius by transforming a point on the sphere
     glm::vec4 point = M * glm::vec4(center + glm::vec3(radius, 0, 0), 1.0f);
     radius = glm::length(glm::vec3(point) / point.w - center);
-
-    inv_transform_mat = glm::inverse(M) * inv_transform_mat;
-    inv_transform_normal_mat = glm::inverse(mat4tomat3(M)) * inv_transform_normal_mat;
-}
-
-// Plane implementation
-Plane::Plane(glm::vec3 _n, glm::vec3 _pt, glm::vec3 _a) : 
-    n(_n), pt(_pt), albedo(_a), inv_transform_mat(1.f), inv_transform_normal_mat(1.f)
-{
 }
 
 bool Plane::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
 {
-    float denom = glm::dot(n, ray.d);
+    Ray transformed_ray = transform_ray(ray, inv_transform_mat);
+    glm::vec3 o = transformed_ray.o, d = transformed_ray.d;
+    float denom = glm::dot(n, d);
     if (abs(denom) < 1e-8)
         return false;
-    float t = glm::dot(pt - ray.o, n) / denom;
+    float t = glm::dot(pt - o, n) / denom;
     if (t < t_min || t > t_max)
         return false;
-    rec.pos = ray.o + t * ray.d;
-    rec.normal = n;
-    rec.surf_albedo = albedo;
+    rec.pos = o + t * d;
+    rec.normal = glm::transpose(glm::mat3x3(inv_transform_normal_mat)) * n;
     rec.t = t;
     return true;
 }
@@ -109,18 +101,12 @@ Box Plane::bounding_box()
 
 void Plane::transform(const glm::mat4x4& M)
 {
+    Object::transform(M);
     // Apply the transformation matrix to the normal and point
     glm::vec4 normal = M * glm::vec4(n, 0.0f);
     n = glm::vec3(normal);
     glm::vec4 point = M * glm::vec4(pt, 1.0f);
     pt = glm::vec3(point) / point.w;
-
-    inv_transform_mat = glm::inverse(M) * inv_transform_mat;
-}
-
-AxisAlignedBox::AxisAlignedBox(Box _b, glm::vec3 _a) : 
-    box{_b}, albedo(_a), inv_transform_mat(1.f), inv_transform_normal_mat(1.f)
-{
 }
 
 bool AxisAlignedBox::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
@@ -166,9 +152,7 @@ bool AxisAlignedBox::hit(const Ray& ray, float t_min, float t_max, HitRecord& re
         rec.normal = glm::vec3(0, 0, 1);
     
     // transform normal 
-    rec.normal = glm::transpose(glm::mat3x3(inv_transform_mat)) * rec.normal;
-
-    rec.surf_albedo = albedo;
+    rec.normal = glm::transpose(glm::mat3x3(inv_transform_normal_mat)) * rec.normal;
 
     return true;
 }
@@ -179,16 +163,12 @@ Box AxisAlignedBox::bounding_box()
 }
 
 void AxisAlignedBox::transform(const glm::mat4x4& M) {
+    Object::transform(M);
     box.tl = glm::vec3(M * glm::vec4(box.tl, 1.0f));
     box.br = glm::vec3(M * glm::vec4(box.br, 1.0f));
-    inv_transform_mat = glm::inverse(M) * inv_transform_mat;
 }
 
 // Triangle implementation
-Triangle::Triangle(glm::vec3& _p0, glm::vec3& _p1, glm::vec3& _p2, glm::vec3 _a) : p0(_p0), p1(_p1), p2(_p2), albedo(_a)
-{
-}
-
 bool Triangle::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
 {
     glm::vec3 e1 = p1 - p0;
