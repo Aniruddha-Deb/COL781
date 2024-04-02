@@ -38,5 +38,7 @@ bool Window::blit_surface(SDL_Surface* surf) {
         std::cout << "Could not update window surface. SDL_Error: %s\n" << SDL_GetError() << std::endl;
         return false;
     }
+    int px = 320, py = 240;
+    std::cout << std::hex << ((Uint32*)(win_surf->pixels))[(h - py - 1) * w + px] << std::dec << std::endl;
     return true;
 }

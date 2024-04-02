@@ -14,7 +14,7 @@
 
 Renderer::Renderer(Window &_w, Scene &_s, int _spp) : win{_w}, scene{_s}, spp{_spp}
 {
-    framebuffer = SDL_CreateRGBSurface(0, win.w, win.h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+    framebuffer = SDL_CreateRGBSurface(0, win.w, win.h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0);
 }
 
 Renderer::~Renderer()
@@ -110,6 +110,13 @@ void Renderer::view()
         view = camera.getViewMatrix();
 
         render();
+        int px = 320, py = 240;
+        if (px == 320 && py == 240) {
+            std::cout << std::hex << ((Uint32*)(framebuffer->pixels))[(win.h - py - 1) * win.w + px] << std::dec << std::endl;
+        }
         win.blit_surface(framebuffer);
+        if (px == 320 && py == 240) {
+            std::cout << std::hex << ((Uint32*)(framebuffer->pixels))[(win.h - py - 1) * win.w + px] << std::dec << std::endl;
+        }
     }
 }

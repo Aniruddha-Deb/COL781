@@ -3,7 +3,7 @@
 
 #include "scene.hpp"
 
-constexpr glm::vec3 SKY(0.f, 0.f, 0.5f);
+constexpr glm::vec3 SKY(0.f, 0.f, 0.0f);
 
 Scene::Scene(int _w, int _h, Camera& _camera, int _max_bounces) : 
     w{_w}, h{_h}, camera{_camera}, max_bounces{_max_bounces}
