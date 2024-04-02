@@ -24,3 +24,5 @@ bin/%.o: src/%.cpp
 
 clean:
 	rm -f bin/*
+
+.PRECIOUS: bin/%.o

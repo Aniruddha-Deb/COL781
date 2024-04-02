@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
+#include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "SDL2/SDL_surface.h"
@@ -7,12 +8,13 @@
 
 #define vec4_to_color(fmt, color)                                                                                      \
     SDL_MapRGBA(fmt, (Uint8)(color[0] * 255), (Uint8)(color[1] * 255), (Uint8)(color[2] * 255), (Uint8)(color[3] * 255))
+
 #define vec3_to_color(fmt, color)                                                                                      \
     SDL_MapRGBA(fmt, (Uint8)(color[0] * 255), (Uint8)(color[1] * 255), (Uint8)(color[2] * 255), (Uint8)(255))
 
 Renderer::Renderer(Window &_w, Scene &_s, int _spp) : win{_w}, scene{_s}, spp{_spp}
 {
-    framebuffer = SDL_CreateRGBSurface(0, win.w, win.h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0);
+    framebuffer = SDL_CreateRGBSurface(0, win.w, win.h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
 }
 
 Renderer::~Renderer()
@@ -32,6 +34,10 @@ void Renderer::render()
             Ray r = scene.generate_ray(px, py);
             glm::vec3 pxcolor = scene.trace_ray(r);
             pixels[(win.h - py - 1) * win.w + px] = vec3_to_color(format, pxcolor);
+            if (px == 320 && py == 240) {
+                std::cout << pxcolor.x << ", " << pxcolor.y << ", " << pxcolor.z << std::endl;
+                std::cout << std::hex << pixels[(win.h - py - 1) * win.w + px] << std::dec << std::endl;
+            }
         }
     }
 }

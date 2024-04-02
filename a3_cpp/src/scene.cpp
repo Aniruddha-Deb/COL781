@@ -3,7 +3,7 @@
 
 #include "scene.hpp"
 
-constexpr glm::vec4 SKY(0.f, 0.f, 0.f, 1.f);
+constexpr glm::vec3 SKY(0.f, 0.f, 0.5f);
 
 Scene::Scene(int _w, int _h, Camera& _camera, int _max_bounces) : 
     w{_w}, h{_h}, camera{_camera}, max_bounces{_max_bounces}
@@ -71,7 +71,7 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
     }
     else
     {
-        return glm::vec3(0.0f, 0.0f, 0.0f); // Background color
+        return SKY; // Background color
     }
 }
 
