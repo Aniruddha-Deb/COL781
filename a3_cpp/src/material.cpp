@@ -20,7 +20,12 @@ glm::vec3 DiffuseMaterial::shade(HitRecord& rec, Scene& scene) {
             }
         }
         if (hit_object) continue;
-        else hit_color += albedo * light.rgb * glm::dot(glm::normalize(r.d), rec.normal);
+        else {
+            float r_sq = glm::pow(glm::length(light.pos - hit_point), 2);
+            // cdebug << r_sq << std::endl;
+            hit_color += albedo * light.rgb * glm::abs(glm::dot(glm::normalize(r.d), glm::normalize(rec.normal))); // / r_sq;
+            // cdebug << vec3_to_str(hit_color) << std::endl;
+        }
     }
 
     return hit_color;
@@ -45,4 +50,8 @@ glm::vec3 BlinnPhongMaterial::shade(HitRecord& rec, Scene& scene) {
     hit_color = glm::min(glm::vec3(1.f, 1.f, 1.f), hit_color);
 
     return hit_color;
+}
+
+glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene) {
+
 }

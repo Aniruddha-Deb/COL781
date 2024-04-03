@@ -1,4 +1,5 @@
 #include "object.hpp"
+#include "debug.hpp"
 #include "iostream"
 
 Ray transform_ray(const Ray& ray, const glm::mat4x4& transform_mat)
@@ -178,26 +179,28 @@ void AxisAlignedBox::transform(const glm::mat4x4& M)
 // Triangle implementation
 bool Triangle::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
 {
+    Ray transformed_ray = transform_ray(ray, inv_transform_mat);
+    glm::vec3 o = transformed_ray.o, d = transformed_ray.d;
     glm::vec3 e1 = p1 - p0;
     glm::vec3 e2 = p2 - p0;
-    glm::vec3 pvec = glm::cross(ray.d, e2);
+    glm::vec3 pvec = glm::cross(d, e2);
     float det = glm::dot(e1, pvec);
-    if (det < 1e-8 && det > -1e-8)
+    if (glm::abs(det) < 1e-6)
         return false;
     float inv_det = 1.0f / det;
-    glm::vec3 tvec = ray.o - p0;
+    glm::vec3 tvec = o - p0;
     float u = glm::dot(tvec, pvec) * inv_det;
     if (u < 0.0f || u > 1.0f)
         return false;
     glm::vec3 qvec = glm::cross(tvec, e1);
-    float v = glm::dot(ray.d, qvec) * inv_det;
+    float v = glm::dot(d, qvec) * inv_det;
     if (v < 0.0f || u + v > 1.0f)
         return false;
     float t = glm::dot(e2, qvec) * inv_det;
     if (t < t_min || t > t_max)
         return false;
-    rec.pos = ray.o + t * ray.d;
-    rec.normal = glm::normalize(glm::cross(e1, e2));
+    rec.pos = o + t * d;
+    rec.normal = glm::transpose(glm::mat3x3(inv_transform_normal_mat)) * glm::normalize(glm::cross(e1, e2));
     rec.t = t;
     return true;
 }
@@ -212,6 +215,7 @@ Box Triangle::bounding_box()
 
 void Triangle::transform(const glm::mat4x4& M)
 {
+    Object::transform(M);
     // Apply the transformation matrix to the vertices
     glm::vec4 v0 = M * glm::vec4(p0, 1.0f);
     p0 = glm::vec3(v0) / v0.w;

@@ -17,7 +17,7 @@ void two_sphere_scene()
     std::shared_ptr<Material> red_diffuse_material = std::make_shared<DiffuseMaterial>(glm::vec3(0.8f, 0.3f, 0.4f));
     std::shared_ptr<Material> green_diffuse_material = std::make_shared<DiffuseMaterial>(glm::vec3(0.3f, 0.8f, 0.4f));
     Window win(WIDTH, HEIGHT, "Raytracer");
-    Camera camera(60, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+    Camera camera(60, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     Scene s(WIDTH, HEIGHT, camera, 1);
     Sphere s1(glm::vec3(1.f, 2.f, -10.f), 1.f, red_diffuse_material);
     glm::mat4x4 s1_t = glm::scale(glm::mat4x4(1.f), glm::vec3(1.5f, 1.f, 1.f));

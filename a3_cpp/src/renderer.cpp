@@ -34,7 +34,7 @@ void Renderer::render()
         {
             Ray r = scene.generate_ray(px, py);
             glm::vec3 pxcolor = scene.trace_ray(r);
-            pixels[(win.h - py - 1) * win.w + px] = vec3_to_color(format, pxcolor);
+            pixels[py * win.w + px] = vec3_to_color(format, pxcolor);
         }
     }
     SDL_UnlockSurface(framebuffer);

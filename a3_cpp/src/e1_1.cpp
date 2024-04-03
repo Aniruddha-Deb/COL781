@@ -15,7 +15,8 @@ void two_sphere_scene()
 
     std::shared_ptr<Material> normal_material = std::make_shared<NormalMaterial>(); 
     Window win(WIDTH, HEIGHT, "Raytracer");
-    Camera camera(60, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+    // why is up -1.f here? we've been doing this wrong?
+    Camera camera(60, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     Scene s(WIDTH, HEIGHT, camera, 2);
     Sphere s1 = Sphere(glm::vec3(0.f, 0.f, -2.f), 1.f, normal_material);
     Sphere s2 = Sphere(glm::vec3(0.f, -101.f, -2.f), 100.f, normal_material);

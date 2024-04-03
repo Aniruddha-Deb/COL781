@@ -2,15 +2,14 @@
 #include <iostream>
 
 #include "scene.hpp"
+#include "debug.hpp"
 
 constexpr glm::vec3 SKY(0.f, 0.f, 0.0f);
 
 Scene::Scene(int _w, int _h, Camera& _camera, int _max_bounces)
-    : w{_w}, h{_h}, camera{_camera}, max_bounces{_max_bounces}
+    : w{_w}, h{_h}, camera{_camera}, objects(), lights(), max_bounces{_max_bounces}
 {
 }
-
-// auto-generated with Claude
 
 Ray Scene::generate_ray(int px, int py)
 {

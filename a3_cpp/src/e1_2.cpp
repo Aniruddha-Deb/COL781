@@ -16,7 +16,7 @@ void two_sphere_scene()
 
     Window win(WIDTH, HEIGHT, "Raytracer");
     std::shared_ptr<Material> normal_material = std::make_shared<NormalMaterial>();
-    Camera camera(60, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+    Camera camera(60, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     Scene s(WIDTH, HEIGHT, camera, 1);
     Sphere s1(glm::vec3(1.f, 2.f, -4.f), 1.f, normal_material);
     Plane p1(glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), normal_material);

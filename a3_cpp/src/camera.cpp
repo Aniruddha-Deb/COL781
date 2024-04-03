@@ -31,9 +31,9 @@ glm::vec3 Camera::getRightVector()
 
 void Camera::setCameraView(glm::vec3 position_vector, glm::vec3 lookat_vector, glm::vec3 up_vector)
 {
-    position = std::move(position_vector);
-    lookAt = std::move(lookat_vector);
-    up = std::move(up_vector);
+    position = position_vector;
+    lookAt = lookat_vector;
+    up = up_vector;
 
     updateViewMatrix();
 }

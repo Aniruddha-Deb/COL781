@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <glm/gtc/matrix_transform.hpp>
 #include <GL/glew.h>
 #include <iostream>
 #include <fstream>
@@ -32,14 +33,30 @@ void two_sphere_scene()
             glm::vec3(0.3f, 0.3f, 0.3f), // k_r
             90);
     Window win(WIDTH, HEIGHT, "Raytracer");
-    Camera camera(60, glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(1.0f, 2.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+
+    glm::vec3 camera_pos = glm::vec3(0.f, 2.f, 2.f);
+    glm::vec3 camera_lookat = glm::vec3(2.f, 1.f, -2.f);
+    glm::vec3 camera_look_dir = camera_lookat - camera_pos;
+    glm::vec3 camera_up = glm::vec3(glm::rotate(
+            glm::mat4x4(1.f), 
+            glm::radians(90.f), 
+            glm::normalize(glm::cross(camera_look_dir, glm::vec3(0.f, -1.f, 0.f)))) * glm::vec4(camera_look_dir, 1.f));
+
+    Camera camera(60, camera_pos, camera_lookat, camera_up);
     Scene s(WIDTH, HEIGHT, camera, 4);
     Sphere s1(glm::vec3(1.f, 2.f, -4.f), 1.f, blue_blinn_phong_material);
     Sphere s2(glm::vec3(3.f, 1.f, -3.f), 1.f, green_blinn_phong_material);
+    Triangle t1(
+            glm::vec3(0.f, 0.f, 0.f),
+            glm::vec3(3.f, -0.5f, -1.f),
+            glm::vec3(2.f, -0.5f, -3.f),
+            red_blinn_phong_material
+        );
     AxisAlignedBox b1({glm::vec3(1.f, 2.f, -4.f), glm::vec3(5.f, 3.f, -2.f)}, red_blinn_phong_material);
     s.objects.push_back(s1);
     s.objects.push_back(b1);
     s.objects.push_back(s2);
+    s.objects.push_back(t1);
     LightSource l1(glm::vec3(0.f, 0.f, -3.f), glm::vec3(1.f, 1.f, 1.f));
     LightSource l2(glm::vec3(3.f, 0.f, -0.f), glm::vec3(1.f, .5f, .2f));
     s.lights.push_back(l1);
