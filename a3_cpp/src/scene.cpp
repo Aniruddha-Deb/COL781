@@ -67,7 +67,7 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
     {
         // TODO recurse and trace rays!
         // std::cout << "hit\n";
-        rec.ray = r;
+        closest_hit_rec.ray = r;
         closest_hit_rec.n_bounces_left = n_bounces_left - 1;
         return hit_obj->mat->shade(closest_hit_rec, *this);
     }

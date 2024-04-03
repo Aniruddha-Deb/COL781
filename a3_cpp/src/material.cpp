@@ -1,5 +1,6 @@
 #include "material.hpp"
 #include "scene.hpp"
+#include "debug.hpp"
 
 glm::vec3 NormalMaterial::shade(HitRecord& rec, Scene& scene) {
     glm::vec3 hit_color = glm::normalize((rec.normal + glm::vec3(1.f, 1.f, 1.f)) * 0.5f);
