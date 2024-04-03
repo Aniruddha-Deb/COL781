@@ -13,7 +13,7 @@ class Material {
 class DiffuseMaterial : public Material {
     public:
     glm::vec3 albedo;
-    DiffuseMaterial(glm::vec3 color) : albedo(1.f-color) {}
+    DiffuseMaterial(glm::vec3 _albedo) : albedo(_albedo) {}
     glm::vec3 shade(HitRecord& rec, Scene& scene);
 };
 

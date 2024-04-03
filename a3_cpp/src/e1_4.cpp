@@ -27,7 +27,7 @@ void two_sphere_scene()
     s.objects.push_back(b1);
     s1.transform(s1_t);
     b1.transform(b1_r);
-    LightSource l1(glm::vec3(0.f, 0.f, -1.f), glm::vec3(1.f, 1.f, 1.f));
+    LightSource l1(glm::vec3(0.f, 0.f, -1.f), glm::vec3(1.f, 1.f, 1.f), 1.f);
     s.lights.push_back(l1);
     Renderer renderer(win, s);
 

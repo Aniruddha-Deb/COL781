@@ -22,7 +22,7 @@ void two_sphere_scene()
     AxisAlignedBox b1({glm::vec3(1.f, 2.f, -4.f), glm::vec3(5.f, 3.f, -2.f)}, green_diffuse_material);
     s.objects.push_back(s1);
     s.objects.push_back(b1);
-    LightSource l1(glm::vec3(0.f, 0.f, -3.f), glm::vec3(1.f, 1.f, 1.f));
+    LightSource l1(glm::vec3(0.f, 0.f, -3.f), glm::vec3(1.f, 1.f, 1.f), 1.f);
     s.lights.push_back(l1);
     Renderer renderer(win, s);
 
