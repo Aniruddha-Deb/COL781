@@ -41,6 +41,7 @@ class CornellBoxScene : public Scene {
                 glm::vec3(0.f, 0.f, 0.f),
                 glm::vec3(1.f, 1.f, 1.f),
                 0);
+        std::shared_ptr<Material> glass_material = std::make_shared<TransparentMaterial>(1.33);
 
         glm::vec3 verts[8] = {
             glm::vec3(-2.f, 2.f, -2.f),
@@ -82,7 +83,7 @@ class CornellBoxScene : public Scene {
         }
 
         Sphere reflective_sphere = Sphere(glm::vec3(-.75f, -1.25f, -5.f), .75f, mirror_material);
-        Sphere refractive_sphere = Sphere(glm::vec3(.75f, -1.25f, -4.f), .75f, mirror_material);
+        Sphere refractive_sphere = Sphere(glm::vec3(.75f, -1.25f, -4.f), .75f, glass_material);
         spheres.push_back(reflective_sphere);
         spheres.push_back(refractive_sphere);
 

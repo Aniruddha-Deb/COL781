@@ -21,4 +21,8 @@ struct HitRecord
     glm::vec3 normal;
     int n_bounces_left;
     float t;
+
+    // transparency
+    float mu_1;
+    float mu_2;
 };

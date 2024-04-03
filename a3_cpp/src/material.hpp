@@ -33,5 +33,7 @@ class BlinnPhongMaterial : public Material {
 
 class TransparentMaterial : public Material {
     public:
+    float mu;
+    TransparentMaterial(float _mu) : mu{_mu} {}
     glm::vec3 shade(HitRecord& rec, Scene& scene);
 };
