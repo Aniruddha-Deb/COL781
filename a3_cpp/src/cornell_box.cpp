@@ -28,7 +28,7 @@ class CornellBoxScene : public Scene {
     std::vector<LightSource> point_lights;
 
     public:
-    CornellBoxScene(Camera& cam): Scene(WIDTH, HEIGHT, cam, 4) { 
+    CornellBoxScene(Camera& cam): Scene(WIDTH, HEIGHT, cam, 6) { 
         LightSource l1(glm::vec3(0.f, 1.f, -4.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
         point_lights.push_back(l1);
         

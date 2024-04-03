@@ -65,16 +65,17 @@ glm::vec3 BlinnPhongMaterial::shade(HitRecord& rec, Scene& scene) {
 
 glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene) {
 
-    // if the ray originated in the... ah, I see...
     glm::vec3 n = rec.normal;
     glm::vec3 i = rec.ray.d;
 
     Ray reflected_ray{rec.pos, glm::normalize(i - 2 * glm::dot(i, n) * n)};
     // compute critical angle 
-    float critical_angle = asinf(rec.mu_2 / rec.mu_1);
-    if (acosf(glm::dot(rec.ray.d, rec.normal)) > critical_angle) {
-        // total internal reflection.
-        return scene.trace_ray_rec(reflected_ray, rec.n_bounces_left);
+    if (rec.mu_2 < rec.mu_1) {
+        float critical_angle = asinf(rec.mu_2 / rec.mu_1);
+        if (acosf(glm::dot(rec.ray.d, rec.normal)) > critical_angle) {
+            // total internal reflection.
+            return scene.trace_ray_rec(reflected_ray, rec.n_bounces_left);
+        }
     }
     float mu_r = rec.mu_1 / rec.mu_2;
     float ndoti = glm::dot(n,i);
@@ -82,9 +83,10 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene) {
 
     // fresnel formula
     float R_0 = glm::pow((rec.mu_1 - rec.mu_2) / (rec.mu_1 + rec.mu_2), 2);
-    float cos_theta_max = glm::max(ndoti, glm::dot(refracted_ray.d, n));
+    float cos_theta_max = glm::max(ndoti, glm::dot(refracted_ray.d, -n));
 
     float R = R_0 + (1-R_0) * glm::pow(1 - cos_theta_max, 5);
+    // looks very dark. My guess is that the ray is terminating and getting 0 for the final color.
     return glm::min(glm::vec3(1.f, 1.f, 1.f), gamma_restore(
                 R * gamma_correct(scene.trace_ray_rec(reflected_ray, rec.n_bounces_left)) + 
                 (1-R) * gamma_correct(scene.trace_ray_rec(refracted_ray, rec.n_bounces_left)) 
