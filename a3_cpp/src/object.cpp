@@ -50,13 +50,16 @@ bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
         if (root < t_min || root > t_max)
             return false;
     }
-    if (TransparentMaterial* transp_mat = dynamic_cast<TransparentMaterial*>(mat.get())) {
-        if (glm::length(ray.o - center) + 1e-3 <= radius) {
+    if (TransparentMaterial* transp_mat = dynamic_cast<TransparentMaterial*>(mat.get()))
+    {
+        if (glm::length(ray.o - center) - 1e-3 <= radius)
+        {
             // ray originated in the sphere
             rec.mu_1 = transp_mat->mu;
             rec.mu_2 = 1.f;
         }
-        else {
+        else
+        {
             rec.mu_1 = 1.f;
             rec.mu_2 = transp_mat->mu;
         }
