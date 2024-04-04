@@ -28,7 +28,7 @@ glm::vec3 DiffuseMaterial::shade(HitRecord& rec, Scene& scene)
     HitRecord dummy;
     for (const LightSource& light : scene.lights)
     {
-        Ray r = {hit_point, light.pos - hit_point};
+        Ray r(hit_point, light.pos - hit_point);
         bool hit_object = false;
         for (const Object& obj : scene.objects)
         {
@@ -67,7 +67,7 @@ glm::vec3 BlinnPhongMaterial::shade(HitRecord& rec, Scene& scene)
         hit_color += gamma_correct(k_d) * light_irradiance * glm::max(0.f, glm::dot(rec.normal, l)) +
                      gamma_correct(k_s) * light_irradiance * glm::pow(glm::max(0.f, glm::dot(rec.normal, h)), p);
     }
-    Ray reflected_ray{rec.pos, rec.ray.d - 2 * glm::dot(rec.ray.d, rec.normal) * rec.normal};
+    Ray reflected_ray(rec.pos, rec.ray.d - 2 * glm::dot(rec.ray.d, rec.normal) * rec.normal);
     hit_color += gamma_correct(k_r) * gamma_correct(scene.trace_ray_rec(reflected_ray, rec.n_bounces_left));
 
     hit_color = glm::min(glm::vec3(1.f, 1.f, 1.f), gamma_restore(hit_color));
@@ -83,7 +83,7 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
     // std::cout << glm::dot(n, i) << "\n";
     // std::cout << i[2] << "\n";
 
-    Ray reflected_ray{rec.pos, glm::normalize(i - 2 * glm::dot(i, n) * n)};
+    Ray reflected_ray(rec.pos, glm::normalize(i - 2 * glm::dot(i, n) * n));
     // compute critical angle
     if (rec.mu_2 < rec.mu_1)
     {
@@ -96,8 +96,8 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
     }
     float mu_r = rec.mu_1 / rec.mu_2;
     float ndoti = glm::dot(n, i);
-    Ray refracted_ray = {
-        rec.pos, glm::normalize((mu_r * ndoti - glm::sqrt(1 - mu_r * mu_r * (1 - ndoti * ndoti))) * n - mu_r * i)};
+    Ray refracted_ray(
+        rec.pos, glm::normalize((mu_r * ndoti - glm::sqrt(1 - mu_r * mu_r * (1 - ndoti * ndoti))) * n - mu_r * i));
 
     // fresnel formula
     float R_0 = glm::pow((rec.mu_1 - rec.mu_2) / (rec.mu_1 + rec.mu_2), 2);

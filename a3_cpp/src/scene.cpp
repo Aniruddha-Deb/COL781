@@ -31,7 +31,7 @@ Ray Scene::generate_ray(int px, int py)
     // std::cout << camera.position[0] << " " << camera.position[1] << " " << camera.position[2] << " camera \n";
     // std::cout << world_point[0] << " " << world_point[1] << " " << world_point[2] << " camera \n";
     // Create the ray with the camera position and calculated direction
-    Ray ray = {camera.position, glm::normalize(world_point - camera.position)};
+    Ray ray(camera.position, world_point - camera.position);
     return ray;
 }
 

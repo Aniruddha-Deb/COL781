@@ -29,10 +29,11 @@ class CornellBoxScene : public Scene
 
     std::vector<Triangle> walls;
     std::vector<Sphere> spheres;
+    std::vector<AxisAlignedBox> boxes;
     std::vector<LightSource> point_lights;
 
   public:
-    CornellBoxScene(Camera& cam) : Scene(WIDTH, HEIGHT, cam, 6)
+    CornellBoxScene(Camera& cam) : Scene(WIDTH, HEIGHT, cam, 8)
     {
         LightSource l1(glm::vec3(0.f, 1.f, -4.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
         point_lights.push_back(l1);
@@ -77,12 +78,16 @@ class CornellBoxScene : public Scene
         }
 
         Sphere reflective_sphere = Sphere(glm::vec3(-.75f, -1.25f, -5.f), .75f, mirror_material);
-        Sphere refractive_sphere = Sphere(glm::vec3(.75f, -1.25f, -4.f), .75f, glass_material);
+        Sphere refractive_sphere = Sphere(glm::vec3(.75f, -1.25f, -5.f), .75f, glass_material);
         spheres.push_back(reflective_sphere);
         spheres.push_back(refractive_sphere);
 
+        AxisAlignedBox refractive_box = AxisAlignedBox({.tl=glm::vec3(-1.f, 0.f, -3.f), .br=glm::vec3(0.f, -2.f, -4.f)}, glass_material);
+        boxes.push_back(refractive_box);
+
         objects.insert(objects.end(), walls.begin(), walls.end());
-        objects.insert(objects.end(), spheres.begin(), spheres.end());
+       //  objects.insert(objects.end(), spheres.begin(), spheres.end());
+        objects.insert(objects.end(), boxes.begin(), boxes.end());
         lights.insert(lights.end(), point_lights.begin(), point_lights.end());
     }
 };

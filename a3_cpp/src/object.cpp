@@ -33,11 +33,11 @@ void Object::transform(const glm::mat4x4& M)
 
 bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
 {
-    std::cout << glm::length(ray.d) << "\n";
+    // std::cout << glm::length(ray.d) << "\n";
     Ray transformed_ray = transform_ray(ray, inv_transform_mat);
     glm::vec3 o = transformed_ray.o, d = transformed_ray.d;
     glm::vec3 oc = o - center;
-    float a = glm::dot(d, d);
+    float a = 1.0f;
     float b = 2.0f * glm::dot(oc, d);
     float c = glm::dot(oc, oc) - radius * radius;
     float discriminant = b * b - 4 * a * c;
@@ -51,6 +51,9 @@ bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
         if (root < t_min || root > t_max)
             return false;
     }
+    rec.pos = ray.o + root * ray.d;
+    rec.normal = (rec.pos - center) / radius;
+    rec.normal = glm::normalize(glm::transpose(inv_transform_normal_mat) * rec.normal);
     if (TransparentMaterial* transp_mat = dynamic_cast<TransparentMaterial*>(mat.get()))
     {
         if (glm::length(ray.o - center) - 1e-3 <= radius)
@@ -58,6 +61,7 @@ bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
             // ray originated in the sphere
             rec.mu_1 = transp_mat->mu;
             rec.mu_2 = 1.f;
+            rec.normal *= -1;
         }
         else
         {
@@ -65,9 +69,6 @@ bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
             rec.mu_2 = transp_mat->mu;
         }
     }
-    rec.pos = ray.o + root * ray.d;
-    rec.normal = (rec.pos - center) / radius;
-    rec.normal = glm::transpose(inv_transform_normal_mat) * rec.normal;
     rec.t = root;
     return true;
 }
@@ -171,7 +172,24 @@ bool AxisAlignedBox::hit(const Ray& ray, float t_min, float t_max, HitRecord& re
         rec.normal = glm::vec3(0, 0, 1);
 
     // transform normal
-    rec.normal = glm::transpose(glm::mat3x3(inv_transform_normal_mat)) * rec.normal;
+    rec.normal = glm::transpose(inv_transform_normal_mat) * rec.normal;
+    if (TransparentMaterial* transp_mat = dynamic_cast<TransparentMaterial*>(mat.get()))
+    {
+        if (box.br.x - 1e-3 < ray.o.x && box.tl.x + 1e-3 > ray.o.x &&
+            box.br.y - 1e-3 < ray.o.y && box.tl.y + 1e-3 > ray.o.y &&
+            box.br.z - 1e-3 < ray.o.z && box.tl.z + 1e-3 > ray.o.z )
+        {
+            // ray originated in the sphere
+            rec.mu_1 = transp_mat->mu;
+            rec.mu_2 = 1.f;
+            rec.normal *= -1;
+        }
+        else
+        {
+            rec.mu_1 = 1.f;
+            rec.mu_2 = transp_mat->mu;
+        }
+    }
 
     return true;
 }
