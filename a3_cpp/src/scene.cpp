@@ -4,7 +4,7 @@
 #include "scene.hpp"
 #include "debug.hpp"
 
-constexpr glm::vec3 SKY(0.0f, 0.0f, 0.0f);
+constexpr glm::vec3 SKY(0.f, 0.f, 0.f);
 
 Scene::Scene(int _w, int _h, Camera& _camera, int _max_bounces)
     : w{_w}, h{_h}, camera{_camera}, objects(), lights(), max_bounces{_max_bounces}
@@ -49,9 +49,11 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
     float closest_hit = std::numeric_limits<float>::max();
     Object* hit_obj = nullptr;
     bool hit_found = false;
-
+    int curr = 0;
+    int hit_curr = -1;
     for (const auto& obj_rw : objects)
     {
+        curr++;
         Object& obj = obj_rw.get();
         if (obj.hit(r, 0.001f, closest_hit, rec))
         {
@@ -59,6 +61,7 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
             closest_hit_rec = rec;
             closest_hit = rec.t;
             hit_obj = &obj;
+            hit_curr = curr;
         }
     }
 
@@ -68,7 +71,13 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
         // std::cout << "hit\n";
         closest_hit_rec.ray = r;
         closest_hit_rec.n_bounces_left = n_bounces_left - 1;
-        return hit_obj->mat->shade(closest_hit_rec, *this);
+        glm::vec3 color = hit_obj->mat->shade(closest_hit_rec, *this);
+        // if (fabs(r.o[2] + 3.0f) <= 1e-3)
+        // {
+        //     std::cout << vec3_to_str(color) << "\n";
+        //     std::cout << vec3_to_str(closest_hit_rec.pos) << "\n";
+        // }
+        return color;
     }
     else
     {

@@ -155,7 +155,19 @@ bool AxisAlignedBox::hit(const Ray& ray, float t_min, float t_max, HitRecord& re
         return false;
 
     // Record the hit information
-    rec.t = t_enter;
+    // std::cout << t_enter << " " << t_exit << " " << t_min << " " << t_max << "\n";
+    if (t_min - 1e-3 <= t_enter && t_enter <= t_max + 1e-3)
+    {
+        rec.t = t_enter;
+    }
+    else if (t_min - 1e-3 <= t_exit && t_exit <= t_max + 1e-3)
+    {
+        rec.t = t_exit;
+    }
+    else
+    {
+        return false;
+    }
     rec.pos = o + rec.t * d;
 
     if (glm::abs(rec.pos.x - box.tl.x) < 1e-6)
@@ -175,9 +187,8 @@ bool AxisAlignedBox::hit(const Ray& ray, float t_min, float t_max, HitRecord& re
     rec.normal = glm::transpose(inv_transform_normal_mat) * rec.normal;
     if (TransparentMaterial* transp_mat = dynamic_cast<TransparentMaterial*>(mat.get()))
     {
-        if (box.br.x - 1e-3 < ray.o.x && box.tl.x + 1e-3 > ray.o.x &&
-            box.br.y - 1e-3 < ray.o.y && box.tl.y + 1e-3 > ray.o.y &&
-            box.br.z - 1e-3 < ray.o.z && box.tl.z + 1e-3 > ray.o.z )
+        if (box.tl.x - 1e-3 < ray.o.x && box.br.x + 1e-3 > ray.o.x && box.tl.y - 1e-3 < ray.o.y &&
+            box.br.y + 1e-3 > ray.o.y && box.tl.z - 1e-3 < ray.o.z && box.br.z + 1e-3 > ray.o.z)
         {
             // ray originated in the sphere
             rec.mu_1 = transp_mat->mu;

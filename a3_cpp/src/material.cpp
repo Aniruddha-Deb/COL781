@@ -83,21 +83,25 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
     // std::cout << glm::dot(n, i) << "\n";
     // std::cout << i[2] << "\n";
 
-    Ray reflected_ray(rec.pos, glm::normalize(i - 2 * glm::dot(i, n) * n));
+    Ray reflected_ray(rec.pos, glm::normalize(-i - 2 * glm::dot(-i, n) * n));
     // compute critical angle
     if (rec.mu_2 < rec.mu_1)
     {
         float critical_angle = asinf(rec.mu_2 / rec.mu_1);
-        if (acosf(glm::dot(rec.ray.d, rec.normal)) > critical_angle)
+        if (acosf(glm::dot(i, rec.normal)) > critical_angle)
         {
+            // std::cout << vec3_to_str(rec.pos) << "\n";
+            // std::cout << vec3_to_str(rec.ray.d) << "\n";
+            // std::cout << vec3_to_str(n) << " normal\n";
+            // std::cout << vec3_to_str(reflected_ray.d) << "\n";
             // total internal reflection.
             return scene.trace_ray_rec(reflected_ray, rec.n_bounces_left);
         }
     }
     float mu_r = rec.mu_1 / rec.mu_2;
     float ndoti = glm::dot(n, i);
-    Ray refracted_ray(
-        rec.pos, glm::normalize((mu_r * ndoti - glm::sqrt(1 - mu_r * mu_r * (1 - ndoti * ndoti))) * n - mu_r * i));
+    Ray refracted_ray(rec.pos,
+                      glm::normalize((mu_r * ndoti - glm::sqrt(1 - mu_r * mu_r * (1 - ndoti * ndoti))) * n - mu_r * i));
 
     // fresnel formula
     float R_0 = glm::pow((rec.mu_1 - rec.mu_2) / (rec.mu_1 + rec.mu_2), 2);
@@ -109,8 +113,14 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
     // std::cout << refracted_ray.o[0] << " " << refracted_ray.o[1] << " " << refracted_ray.o[2] << " origin \n";
 
     // std::cout << rec.n_bounces_left << "\n";
-    // glm::vec3 color = scene.trace_ray_rec(refracted_ray, rec.n_bounces_left);
+    // glm::vec3 color = ;
     // std::cout << color[0] << " " << color[1] << " " << color[2] << "\n";
+    // R = 0;
+    // if (fabs(rec.pos[1] + 1.3f) <= 1e-3)
+    // {
+    //     std::cout << vec3_to_str(refracted_ray.d) << " " << vec3_to_str(refracted_ray.o) << " " << vec3_to_str(n)
+    //               << "\n";
+    // }
     return glm::min(glm::vec3(1.f, 1.f, 1.f),
                     gamma_restore(R * gamma_correct(scene.trace_ray_rec(reflected_ray, rec.n_bounces_left)) +
                                   (1 - R) * gamma_correct(scene.trace_ray_rec(refracted_ray, rec.n_bounces_left))));
