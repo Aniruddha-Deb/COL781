@@ -33,6 +33,7 @@ void Object::transform(const glm::mat4x4& M)
 
 bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
 {
+    std::cout << glm::length(ray.d) << "\n";
     Ray transformed_ray = transform_ray(ray, inv_transform_mat);
     glm::vec3 o = transformed_ray.o, d = transformed_ray.d;
     glm::vec3 oc = o - center;

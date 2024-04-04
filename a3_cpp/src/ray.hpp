@@ -7,6 +7,14 @@
 struct Ray
 {
     glm::vec3 o, d;
+
+    Ray() : o(), d()
+    {
+    }
+
+    Ray(glm::vec3 _o, glm::vec3 _d) : o{_o}, d{glm::normalize(_d)}
+    {
+    }
 };
 
 struct Box
