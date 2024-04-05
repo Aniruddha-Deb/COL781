@@ -3,8 +3,8 @@
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "SDL2/SDL_surface.h"
 #include "renderer.hpp"
+#include "debug.hpp"
 
 #define vec4_to_color(fmt, color)                                                                                      \
     SDL_MapRGBA(fmt, (Uint8)(color[0] * 255), (Uint8)(color[1] * 255), (Uint8)(color[2] * 255), (Uint8)(color[3] * 255))
@@ -93,12 +93,10 @@ void Renderer::view()
             glm::mat4 dollyTransform = glm::mat4(1.0f);
             dollyTransform = glm::translate(dollyTransform, normalize(camera.lookAt - camera.position) * deltaY);
             glm::vec3 newCameraPosition = dollyTransform * glm::vec4(camera.position, 1.0f);
-            float newCameraFov = 2 * glm::atan(600.0f / (2 * deltaY)); // TODO Ask
 
             if (signbit(newCameraPosition.z) == signbit(camera.position.z))
             {
                 camera.position = newCameraPosition;
-                camera.fov = newCameraFov; // TODO Ask
             }
         }
 

@@ -78,18 +78,22 @@ class CornellBoxScene : public Scene
             }
         }
 
-        Sphere reflective_sphere = Sphere(glm::vec3(-.75f, -1.25f, -5.f), .75f, copper_material);
-        Sphere refractive_sphere = Sphere(glm::vec3(.75f, -1.25f, -4.f), .75f, glass_material);
-        spheres.push_back(reflective_sphere);
-        spheres.push_back(refractive_sphere);
+        // Sphere reflective_sphere = Sphere(glm::vec3(-.75f, -1.25f, -5.f), .75f, copper_material);
+        // Sphere refractive_sphere = Sphere(glm::vec3(.75f, -1.25f, -4.f), .75f, glass_material);
+        // spheres.push_back(reflective_sphere);
+        // spheres.push_back(refractive_sphere);
 
         AxisAlignedBox refractive_box =
-            AxisAlignedBox({.tl = glm::vec3(-2.f, -1.3f, -4.f), .br = glm::vec3(-1.f, 0.f, -3.f)}, glass_material);
+            AxisAlignedBox({.tl = glm::vec3(-.5f, -2.0f, -.5f), .br = glm::vec3(.5f, .5f, .5f)}, green_wall_material);
+        glm::mat4x4 box_rotate = glm::rotate(glm::mat4x4(1.f), glm::radians(45.f), glm::vec3(0.f, 1.f, 0.f));
+        glm::mat4x4 box_translate = glm::translate(glm::mat4x4(1.f), glm::vec3(1.f, 0.f, -1.f));
+        refractive_box.transform(box_rotate);
+        refractive_box.transform(box_translate);
         boxes.push_back(refractive_box);
 
         objects.insert(objects.end(), walls.begin(), walls.end());
-        objects.insert(objects.end(), spheres.begin(), spheres.end());
-        // objects.insert(objects.end(), boxes.begin(), boxes.end());
+        // objects.insert(objects.end(), spheres.begin(), spheres.end());
+        objects.insert(objects.end(), boxes.begin(), boxes.end());
         std::cout << objects.size() << "\n";
         lights.insert(lights.end(), point_lights.begin(), point_lights.end());
     }

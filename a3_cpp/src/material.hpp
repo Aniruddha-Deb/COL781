@@ -37,3 +37,11 @@ class TransparentMaterial : public Material {
     TransparentMaterial(float _mu) : mu{_mu} {}
     glm::vec3 shade(HitRecord& rec, Scene& scene);
 };
+
+class MetallicMaterial : public Material {
+    public:
+    glm::vec3 F_0;
+
+    MetallicMaterial(glm::vec3 _F_0) : F_0{_F_0} {}
+    glm::vec3 shade(HitRecord& rec, Scene& scene);
+};

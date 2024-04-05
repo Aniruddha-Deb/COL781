@@ -85,10 +85,8 @@ void Sphere::transform(const glm::mat4x4& M)
 {
     Object::transform(M);
 
-    // Apply the transformation matrix to the center and radius
     glm::vec4 center_homo = M * glm::vec4(center, 1.0f);
     center = glm::vec3(center_homo) / center_homo.w;
-    // Calculate the new radius by transforming a point on the sphere
     glm::vec4 point = M * glm::vec4(center + glm::vec3(radius, 0, 0), 1.0f);
     radius = glm::length(glm::vec3(point) / point.w - center);
 }

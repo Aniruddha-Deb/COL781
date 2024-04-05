@@ -1,0 +1,7 @@
+- [X] Copper material
+- [ ] Transform ray before/after collision
+- [X] Mouse right click camera
+- [ ] Multisampling
+- [ ] Path tracing
+
+- [ ] Cook-Torrance material?

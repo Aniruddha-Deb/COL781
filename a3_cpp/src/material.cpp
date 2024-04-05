@@ -80,8 +80,6 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
 
     glm::vec3 n = rec.normal;
     glm::vec3 i = -rec.ray.d;
-    // std::cout << glm::dot(n, i) << "\n";
-    // std::cout << i[2] << "\n";
 
     Ray reflected_ray(rec.pos, glm::normalize(-i - 2 * glm::dot(-i, n) * n));
     // compute critical angle
@@ -90,10 +88,6 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
         float critical_angle = asinf(rec.mu_2 / rec.mu_1);
         if (acosf(glm::dot(i, rec.normal)) > critical_angle)
         {
-            // std::cout << vec3_to_str(rec.pos) << "\n";
-            // std::cout << vec3_to_str(rec.ray.d) << "\n";
-            // std::cout << vec3_to_str(n) << " normal\n";
-            // std::cout << vec3_to_str(reflected_ray.d) << "\n";
             // total internal reflection.
             return scene.trace_ray_rec(reflected_ray, rec.n_bounces_left);
         }
@@ -108,20 +102,22 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
     float cos_theta_max = glm::max(ndoti, glm::dot(refracted_ray.d, -n));
 
     float R = R_0 + (1 - R_0) * glm::pow(1 - cos_theta_max, 5);
-    // looks very dark. My guess is that the ray is terminating and getting 0 for the final color.
-    // std::cout << refracted_ray.d[0] << " " << refracted_ray.d[1] << " " << refracted_ray.d[2] << "\n";
-    // std::cout << refracted_ray.o[0] << " " << refracted_ray.o[1] << " " << refracted_ray.o[2] << " origin \n";
-
-    // std::cout << rec.n_bounces_left << "\n";
-    // glm::vec3 color = ;
-    // std::cout << color[0] << " " << color[1] << " " << color[2] << "\n";
-    // R = 0;
-    // if (fabs(rec.pos[1] + 1.3f) <= 1e-3)
-    // {
-    //     std::cout << vec3_to_str(refracted_ray.d) << " " << vec3_to_str(refracted_ray.o) << " " << vec3_to_str(n)
-    //               << "\n";
-    // }
     return glm::min(glm::vec3(1.f, 1.f, 1.f),
                     gamma_restore(R * gamma_correct(scene.trace_ray_rec(reflected_ray, rec.n_bounces_left)) +
                                   (1 - R) * gamma_correct(scene.trace_ray_rec(refracted_ray, rec.n_bounces_left))));
+}
+
+glm::vec3 MetallicMaterial::shade(HitRecord& rec, Scene& scene)
+{
+
+    glm::vec3 n = rec.normal;
+    glm::vec3 i = -rec.ray.d;
+
+    Ray reflected_ray(rec.pos, glm::normalize(-i - 2 * glm::dot(-i, n) * n));
+    float ndoti = glm::dot(n, i);
+    // fresnel formula
+    glm::vec3 F = F_0 + (1.f - F_0) * float(glm::pow(1 - ndoti, 5));
+    return glm::min(glm::vec3(1.f, 1.f, 1.f),
+                    gamma_restore(F * gamma_correct(scene.trace_ray_rec(reflected_ray, rec.n_bounces_left)))
+                    );
 }
