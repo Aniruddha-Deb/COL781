@@ -81,3 +81,17 @@ class Triangle : public Object
     virtual Box bounding_box();
     virtual ~Triangle() {}
 };
+
+class Mesh : public Object
+{
+  public:
+    std::vector<glm::vec3> verts;
+    std::vector<glm::ivec3> idxs;
+    Mesh(std::shared_ptr<Material>& _mat) :
+        Object{_mat} {}
+
+    void load_from_file(std::string objfile_path);
+    virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
+    virtual Box bounding_box();
+    virtual ~Mesh() {}
+};

@@ -1,7 +1,7 @@
 #include "debug.hpp"
 #include <sstream>
 
-std::string vec3_to_str(glm::vec3& vec3) {
+std::string vec3_to_str(const glm::vec3& vec3) {
     std::stringstream ss;
     ss.precision(3);
     ss << "(" << vec3.x << ", " << vec3.y << ", " << vec3.z << ")";

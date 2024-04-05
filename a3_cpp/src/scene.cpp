@@ -46,11 +46,8 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
     float closest_hit = std::numeric_limits<float>::max();
     Object* hit_obj = nullptr;
     bool hit_found = false;
-    int curr = 0;
-    int hit_curr = -1;
     for (const auto& obj_rw : objects)
     {
-        curr++;
         Object& obj = obj_rw.get();
         if (obj.hit(r, RAY_EPS, closest_hit, rec))
         {
@@ -58,7 +55,6 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
             closest_hit_rec = rec;
             closest_hit = rec.t;
             hit_obj = &obj;
-            hit_curr = curr;
         }
     }
 
@@ -75,25 +71,15 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
     }
 }
 
-glm::vec3 Scene::trace_path(Ray& ray)
+glm::vec3 Scene::trace_path(Ray& r)
 {
-    return trace_path_rec(ray, max_bounces);
-}
-
-glm::vec3 Scene::trace_path_rec(Ray& r, int n_bounces_left)
-{
-    if (n_bounces_left == 0)
-        return SKY;
 
     HitRecord rec, closest_hit_rec;
     float closest_hit = std::numeric_limits<float>::max();
     Object* hit_obj = nullptr;
     bool hit_found = false;
-    int curr = 0;
-    int hit_curr = -1;
     for (const auto& obj_rw : objects)
     {
-        curr++;
         Object& obj = obj_rw.get();
         if (obj.hit(r, RAY_EPS, closest_hit, rec))
         {
@@ -101,14 +87,12 @@ glm::vec3 Scene::trace_path_rec(Ray& r, int n_bounces_left)
             closest_hit_rec = rec;
             closest_hit = rec.t;
             hit_obj = &obj;
-            hit_curr = curr;
         }
     }
 
     if (hit_found)
     {
         closest_hit_rec.ray = r;
-        closest_hit_rec.n_bounces_left = n_bounces_left - 1;
         glm::vec3 color = hit_obj->mat->shade(closest_hit_rec, *this);
         return color;
     }

@@ -7,13 +7,17 @@
 - [X] Mouse right click camera
 - [ ] Path tracing
   - [X] Russian Roulette
+  - [X] Importance Sampling
   - [X] Accumulating samples
   - [X] Materials ported
     - [X] Diffuse
     - [X] Emissive
     - [ ] Reflective
     - [ ] Transparent
+- [X] Mesh loading
+- [X] Mesh intersection
 - [ ] BB hit test (early exit)
 
 - [ ] Multisampling?
 - [ ] Cook-Torrance material?
+

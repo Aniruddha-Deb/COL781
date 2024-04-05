@@ -10,4 +10,4 @@
 #endif
 
 void debug_hitrecord(HitRecord& rec);
-std::string vec3_to_str(glm::vec3& vec3);
+std::string vec3_to_str(const glm::vec3& vec3);

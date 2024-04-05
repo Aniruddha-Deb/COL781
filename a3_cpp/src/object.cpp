@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "object.hpp"
 #include "debug.hpp"
 #include "iostream"
@@ -243,4 +245,93 @@ Box Triangle::bounding_box()
     box.tl = glm::min(glm::min(p0, p1), p2);
     box.br = glm::max(glm::max(p0, p1), p2);
     return box;
+}
+
+void Mesh::load_from_file(std::string objfile_path) {
+
+    std::ifstream objFile(objfile_path);
+    if (!objFile.is_open())
+    {
+        std::cerr << "Unable to open file: " << objfile_path << '\n';
+    }
+    std::string line;
+    while (getline(objFile, line))
+    {
+        if (line.size() == 0)
+            continue;
+        std::istringstream iss(line);
+        std::string token;
+        iss >> token;
+        if (token == "#")
+            continue;
+        if (token == "v")
+        {
+            glm::vec3 v;
+            iss >> v.x >> v.y >> v.z;
+            verts.push_back(v);
+        }
+        else if (token == "f")
+        {
+            // vertex_index/texture_index/normal_index. Parse.
+            glm::ivec3 v;
+            int t1, t2;
+            std::string e1, e2, e3;
+            iss >> e1 >> e2 >> e3;
+            sscanf(e1.data(), "%d/%d/%d", &v[0], &t1, &t2);
+            sscanf(e2.data(), "%d/%d/%d", &v[1], &t1, &t2);
+            sscanf(e3.data(), "%d/%d/%d", &v[2], &t1, &t2);
+            v -= 1; // obj files are 1-indexed
+            // assuming all the triangles are counter-clockwise
+            idxs.push_back(v);
+        }
+    }
+    objFile.close();
+}
+
+Box Mesh::bounding_box() {
+    return {glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f)};
+}
+
+bool Mesh::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) const
+{
+    Ray os_ray = ray_ws_to_os(ws_ray, *this);
+    glm::vec3 o = os_ray.o, d = os_ray.d;
+
+    float min_t = std::numeric_limits<float>::max();
+    glm::vec3 os_pos, os_normal;
+    bool hit = false;
+
+    for (const glm::ivec3& tri : idxs) {
+
+        glm::vec3 p0 = verts[tri[0]], p1 = verts[tri[1]], p2 = verts[tri[2]];
+        glm::vec3 e1 = p1 - p0;
+        glm::vec3 e2 = p2 - p0;
+        // std::cout << vec3_to_str(e1) << " " << vec3_to_str(e2) << "\n";
+        glm::vec3 pvec = glm::cross(d, e2);
+        float det = glm::dot(e1, pvec);
+        if (glm::abs(det) < EPS) continue;
+        float inv_det = 1.0f / det;
+        glm::vec3 tvec = o - p0;
+        float u = glm::dot(tvec, pvec) * inv_det;
+        if (u < 0.0f || u > 1.0f) continue;
+        glm::vec3 qvec = glm::cross(tvec, e1);
+        float v = glm::dot(d, qvec) * inv_det;
+        if (v < 0.0f || u + v > 1.0f) continue;
+        float t = glm::dot(e2, qvec) * inv_det;
+        if (t < t_min || t > t_max) continue;
+
+        if (t < min_t) {
+            // we've hit the tri here.
+            hit = true;
+            os_pos = o + t*d;
+            os_normal = glm::normalize(glm::cross(e2, e1));
+            min_t = t;
+        }
+    }
+    
+    if (hit) {
+        populate_hitrecord(ws_ray, os_ray, os_pos, os_normal, false, *this, rec);
+        return true;
+    }
+    return false;
 }

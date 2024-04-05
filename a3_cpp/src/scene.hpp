@@ -23,5 +23,4 @@ class Scene
     glm::vec3 trace_ray(Ray& r);
     glm::vec3 trace_path(Ray& r);
     glm::vec3 trace_ray_rec(Ray& r, int n_bounces_left);
-    glm::vec3 trace_path_rec(Ray& r, int n_bounces_left);
 };

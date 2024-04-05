@@ -15,12 +15,11 @@ static std::uniform_real_distribution<float> uniform(0.0, 1.0);
 glm::vec3 sample_hemisphere_cosine_weighted() {
     float u = uniform(gen);
     float v = uniform(gen);
-    float theta = 2 * PI * u;
-    float phi = acos(sqrt(1 - v));
+    float theta = 2 * PI * v;
 
-    float x = cos(theta) * sin(phi);
-    float y = sin(theta) * sin(phi);
-    float z = cos(phi);
+    float x = sqrt(1-u*u) * cos(theta);
+    float y = sqrt(1-u*u) * sin(theta);
+    float z = u;
     return glm::vec3(x, y, z);
 }
 
