@@ -2,6 +2,8 @@
 #include "debug.hpp"
 #include "iostream"
 
+#define EPS 1e-4f
+
 Ray transform_ray(const Ray& ray, const glm::mat4x4& transform_mat)
 {
     Ray transformed_ray = ray;
@@ -12,53 +14,61 @@ Ray transform_ray(const Ray& ray, const glm::mat4x4& transform_mat)
     return transformed_ray;
 }
 
-glm::mat3x3 mat4tomat3(const glm::mat4x4& mat4)
-{
-    glm::mat3x3 mat3;
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
-            mat3[i][j] = mat4[i][j];
-        }
-    }
-    return mat3;
+glm::vec3 point_os_to_ws(const glm::vec3& os_pt, const Object& obj) {
+    glm::vec4 ws_pt_hom = glm::inverse(obj.inv_transform_mat) * glm::vec4(os_pt, 1.f);
+    return glm::vec3(ws_pt_hom) / ws_pt_hom[3];
 }
 
-void Object::transform(const glm::mat4x4& M)
-{
-    inv_transform_mat = glm::inverse(M) * inv_transform_mat;
-    inv_transform_normal_mat = glm::inverse(glm::mat3x3(M)) * inv_transform_normal_mat;
+glm::vec3 point_ws_to_os(const glm::vec3& ws_pt, const Object& obj) {
+    glm::vec4 os_pt_hom = obj.inv_transform_mat * glm::vec4(ws_pt, 1.f);
+    return glm::vec3(os_pt_hom) / os_pt_hom[3];
 }
 
-bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
-{
-    // std::cout << glm::length(ray.d) << "\n";
-    Ray transformed_ray = transform_ray(ray, inv_transform_mat);
-    glm::vec3 o = transformed_ray.o, d = transformed_ray.d;
-    glm::vec3 oc = o - center;
-    float a = 1.0f;
-    float b = 2.0f * glm::dot(oc, d);
-    float c = glm::dot(oc, oc) - radius * radius;
-    float discriminant = b * b - 4 * a * c;
-    if (discriminant < 0)
-        return false;
-    float sqrt_discriminant = sqrt(discriminant);
-    float root = (-b - sqrt_discriminant) / (2.0f * a);
-    if (root < t_min || root > t_max)
+glm::vec3 direction_os_to_ws(const glm::vec3& os_dir, const Object& obj) {
+    return glm::vec3(glm::inverse(obj.inv_transform_mat) * glm::vec4(os_dir, 0.f));
+}
+
+glm::vec3 direction_ws_to_os(const glm::vec3& ws_dir, const Object& obj) {
+    return glm::vec3(obj.inv_transform_mat * glm::vec4(ws_dir, 0.f));
+}
+
+glm::vec3 normal_os_to_ws(const glm::vec3& os_normal, const Object& obj) {
+    return glm::normalize(glm::transpose(obj.inv_transform_normal_mat) * os_normal);
+}
+
+Ray ray_os_to_ws(const Ray& os_ray, const Object& obj) {
+    Ray ws_ray = os_ray;
+    ws_ray.o = point_os_to_ws(os_ray.o, obj);
+    ws_ray.d = glm::normalize(direction_ws_to_os(os_ray.d, obj));
+    return ws_ray;
+}
+
+Ray ray_ws_to_os(const Ray& ws_ray, const Object& obj) {
+    Ray os_ray = ws_ray;
+    os_ray.o = point_ws_to_os(ws_ray.o, obj);
+    os_ray.d = glm::normalize(direction_ws_to_os(ws_ray.d, obj));
+    return os_ray;
+}
+
+void populate_hitrecord(const Ray& ws_ray, const Ray& os_ray,
+                        glm::vec3 os_pos, glm::vec3 os_normal,
+                        bool ray_originated_in_object,
+                        const Object& obj, HitRecord& rec) {
+    // the HitRecord is in world space.
+    glm::vec3 ws_pos = point_os_to_ws(os_pos, obj);
+    float ws_t = glm::length(ws_pos - ws_ray.o);
+    glm::vec3 ws_normal = normal_os_to_ws(os_normal, obj);
+
+    rec.ray = ws_ray;
+    rec.pos = ws_pos;
+    rec.normal = ws_normal;
+    rec.t = ws_t;
+
+    // all transparent objects would be subclasses of TransparentMaterial
+    if (TransparentMaterial* transp_mat = dynamic_cast<TransparentMaterial*>(obj.mat.get()))
     {
-        root = (-b + sqrt_discriminant) / (2.0f * a);
-        if (root < t_min || root > t_max)
-            return false;
-    }
-    rec.pos = ray.o + root * ray.d;
-    rec.normal = (rec.pos - center) / radius;
-    rec.normal = glm::normalize(glm::transpose(inv_transform_normal_mat) * rec.normal);
-    if (TransparentMaterial* transp_mat = dynamic_cast<TransparentMaterial*>(mat.get()))
-    {
-        if (glm::length(ray.o - center) - 1e-3 <= radius)
+        if (ray_originated_in_object)
         {
-            // ray originated in the sphere
             rec.mu_1 = transp_mat->mu;
             rec.mu_2 = 1.f;
             rec.normal *= -1;
@@ -69,7 +79,42 @@ bool Sphere::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const
             rec.mu_2 = transp_mat->mu;
         }
     }
-    rec.t = root;
+    else {
+        rec.mu_1 = rec.mu_2 = 1.f;
+    }
+}
+
+void Object::transform(const glm::mat4x4& M)
+{
+    inv_transform_mat = glm::inverse(M) * inv_transform_mat;
+    inv_transform_normal_mat = glm::inverse(glm::mat3x3(M)) * inv_transform_normal_mat;
+}
+
+bool Sphere::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) const
+{
+    // std::cout << glm::length(ray.d) << "\n";
+    Ray os_ray = ray_ws_to_os(ws_ray, *this);
+    glm::vec3 o = os_ray.o, d = os_ray.d;
+    glm::vec3 oc = o - center;
+    float b = 2.0f * glm::dot(oc, d);
+    float c = glm::dot(oc, oc) - radius * radius;
+    float discr = b * b - 4 * c;
+    if (discr < 0)
+        return false;
+    float sqrt_discr = sqrt(discr);
+    float root = (-b - sqrt_discr) / 2.f;
+    if (root < t_min || root > t_max)
+    {
+        root = (-b + sqrt_discr) / 2.f;
+        if (root < t_min || root > t_max)
+            return false;
+    }
+
+    glm::vec3 os_pos = o + root * d;
+    glm::vec3 os_normal = (os_pos - center) / radius;
+    bool ray_originated_in_object = (glm::length(o - center) <= radius + EPS);
+
+    populate_hitrecord(ws_ray, os_ray, os_pos, os_normal, ray_originated_in_object, *this, rec);
     return true;
 }
 
@@ -85,10 +130,10 @@ void Sphere::transform(const glm::mat4x4& M)
 {
     Object::transform(M);
 
-    glm::vec4 center_homo = M * glm::vec4(center, 1.0f);
-    center = glm::vec3(center_homo) / center_homo.w;
-    glm::vec4 point = M * glm::vec4(center + glm::vec3(radius, 0, 0), 1.0f);
-    radius = glm::length(glm::vec3(point) / point.w - center);
+    // glm::vec4 center_homo = M * glm::vec4(center, 1.0f);
+    // center = glm::vec3(center_homo) / center_homo.w;
+    // glm::vec4 point = M * glm::vec4(center + glm::vec3(radius, 0, 0), 1.0f);
+    // radius = glm::length(glm::vec3(point) / point.w - center);
 }
 
 bool Plane::hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const

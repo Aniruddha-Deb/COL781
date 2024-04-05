@@ -101,10 +101,13 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
     float R_0 = glm::pow((rec.mu_1 - rec.mu_2) / (rec.mu_1 + rec.mu_2), 2);
     float cos_theta_max = glm::max(ndoti, glm::dot(refracted_ray.d, -n));
 
+
     float R = R_0 + (1 - R_0) * glm::pow(1 - cos_theta_max, 5);
+    glm::vec3 refract_color = (1 - R) * gamma_correct(scene.trace_ray_rec(refracted_ray, rec.n_bounces_left));
+    // cdebug << vec3_to_str(refract_color) << "\n";
     return glm::min(glm::vec3(1.f, 1.f, 1.f),
                     gamma_restore(R * gamma_correct(scene.trace_ray_rec(reflected_ray, rec.n_bounces_left)) +
-                                  (1 - R) * gamma_correct(scene.trace_ray_rec(refracted_ray, rec.n_bounces_left))));
+                                  refract_color));
 }
 
 glm::vec3 MetallicMaterial::shade(HitRecord& rec, Scene& scene)

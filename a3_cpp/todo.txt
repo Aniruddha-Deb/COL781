@@ -1,7 +1,12 @@
 - [X] Copper material
-- [ ] Transform ray before/after collision
+- [X] Transform ray before/after collision
+  - [ ] Sphere
+  - [ ] Plane
+  - [ ] AxisAlignedBox
+  - [ ] Triangle
 - [X] Mouse right click camera
 - [ ] Multisampling
 - [ ] Path tracing
+- [ ] BB hit test (early exit)
 
 - [ ] Cook-Torrance material?

@@ -33,7 +33,7 @@ class CornellBoxScene : public Scene
     std::vector<LightSource> point_lights;
 
   public:
-    CornellBoxScene(Camera& cam) : Scene(WIDTH, HEIGHT, cam, 6)
+    CornellBoxScene(Camera& cam) : Scene(WIDTH, HEIGHT, cam, 8)
     {
         LightSource l1(glm::vec3(0.f, 1.f, -4.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
         point_lights.push_back(l1);
@@ -78,7 +78,9 @@ class CornellBoxScene : public Scene
             }
         }
 
-        Sphere reflective_sphere = Sphere(glm::vec3(-.75f, -1.25f, -5.f), .75f, copper_material);
+        Sphere reflective_sphere = Sphere(glm::vec3(-.75f, -.5f, -5.f), .75f, copper_material);
+        glm::mat4x4 scale_y_by_2 = glm::scale(glm::mat4x4(1.f), glm::vec3(1.f, 2.f, 1.f));
+        reflective_sphere.transform(scale_y_by_2);
         Sphere refractive_sphere = Sphere(glm::vec3(.75f, -1.25f, -4.f), .75f, glass_material);
         spheres.push_back(reflective_sphere);
         spheres.push_back(refractive_sphere);
