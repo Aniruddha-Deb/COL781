@@ -7,9 +7,7 @@
 #include <vector>
 #include "window.hpp"
 #include "renderer.hpp"
-
-const int WIDTH = 640;
-const int HEIGHT = 480;
+#include "constants.hpp"
 
 void two_sphere_scene()
 {
@@ -32,7 +30,7 @@ void two_sphere_scene()
             glm::vec3(1.f, 1.f, 1.f), // k_s
             glm::vec3(0.3f, 0.3f, 0.3f), // k_r
             90);
-    Window win(WIDTH, HEIGHT, "Raytracer");
+    Window win(WIN_WIDTH, WIN_HEIGHT, "Raytracer");
 
     glm::vec3 camera_pos = glm::vec3(0.f, 2.f, 2.f);
     glm::vec3 camera_lookat = glm::vec3(2.f, 1.f, -2.f);
@@ -43,7 +41,7 @@ void two_sphere_scene()
             glm::normalize(glm::cross(camera_look_dir, glm::vec3(0.f, -1.f, 0.f)))) * glm::vec4(camera_look_dir, 1.f));
 
     Camera camera(60, camera_pos, camera_lookat, camera_up);
-    Scene s(WIDTH, HEIGHT, camera, 4);
+    Scene s(WIN_WIDTH, WIN_HEIGHT, camera, RAY_TRACING_DEPTH);
     Sphere s1(glm::vec3(1.f, 2.f, -4.f), 1.f, blue_blinn_phong_material);
     Sphere s2(glm::vec3(3.f, 1.f, -3.f), 1.f, green_blinn_phong_material);
     Triangle t1(

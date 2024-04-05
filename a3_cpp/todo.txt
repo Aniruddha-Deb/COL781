@@ -5,8 +5,15 @@
   - [X] AxisAlignedBox
   - [X] Triangle
 - [X] Mouse right click camera
-- [ ] Multisampling
 - [ ] Path tracing
+  - [X] Russian Roulette
+  - [X] Accumulating samples
+  - [X] Materials ported
+    - [X] Diffuse
+    - [X] Emissive
+    - [ ] Reflective
+    - [ ] Transparent
 - [ ] BB hit test (early exit)
 
+- [ ] Multisampling?
 - [ ] Cook-Torrance material?

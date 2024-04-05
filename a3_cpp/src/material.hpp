@@ -4,10 +4,20 @@
 
 class Scene;
 
+glm::vec3 gamma_correct(glm::vec3 color);
+glm::vec3 gamma_restore(glm::vec3 color);
+
 class Material {
     public:
     virtual glm::vec3 shade(HitRecord& rec, Scene& scene) = 0;
     virtual ~Material() {}
+};
+
+class EmissiveMaterial : public Material {
+    public:
+    glm::vec3 emissivity;
+    EmissiveMaterial(glm::vec3 _emissivity): emissivity{_emissivity} {}
+    glm::vec3 shade(HitRecord& rec, Scene& scene);
 };
 
 class DiffuseMaterial : public Material {

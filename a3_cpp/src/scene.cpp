@@ -27,8 +27,6 @@ Ray Scene::generate_ray(int px, int py)
     glm::vec3 world_point(world_point_homo[0] / world_point_homo[3], world_point_homo[1] / world_point_homo[3],
                           world_point_homo[2] / world_point_homo[3]);
 
-    // std::cout << camera.position[0] << " " << camera.position[1] << " " << camera.position[2] << " camera \n";
-    // std::cout << world_point[0] << " " << world_point[1] << " " << world_point[2] << " camera \n";
     // Create the ray with the camera position and calculated direction
     Ray ray(camera.position, world_point - camera.position);
     return ray;
@@ -66,16 +64,9 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
 
     if (hit_found)
     {
-        // TODO recurse and trace rays!
-        // std::cout << "hit\n";
         closest_hit_rec.ray = r;
         closest_hit_rec.n_bounces_left = n_bounces_left - 1;
         glm::vec3 color = hit_obj->mat->shade(closest_hit_rec, *this);
-        // if (fabs(r.o[2] + 3.0f) <= 1e-3)
-        // {
-        //     std::cout << vec3_to_str(color) << "\n";
-        //     std::cout << vec3_to_str(closest_hit_rec.pos) << "\n";
-        // }
         return color;
     }
     else
@@ -84,13 +75,45 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
     }
 }
 
-// for now
 glm::vec3 Scene::trace_path(Ray& ray)
 {
-    return trace_ray_rec(ray, max_bounces);
+    return trace_path_rec(ray, max_bounces);
 }
 
 glm::vec3 Scene::trace_path_rec(Ray& r, int n_bounces_left)
 {
-    return trace_ray_rec(r, n_bounces_left);
+    if (n_bounces_left == 0)
+        return SKY;
+
+    HitRecord rec, closest_hit_rec;
+    float closest_hit = std::numeric_limits<float>::max();
+    Object* hit_obj = nullptr;
+    bool hit_found = false;
+    int curr = 0;
+    int hit_curr = -1;
+    for (const auto& obj_rw : objects)
+    {
+        curr++;
+        Object& obj = obj_rw.get();
+        if (obj.hit(r, RAY_EPS, closest_hit, rec))
+        {
+            hit_found = true;
+            closest_hit_rec = rec;
+            closest_hit = rec.t;
+            hit_obj = &obj;
+            hit_curr = curr;
+        }
+    }
+
+    if (hit_found)
+    {
+        closest_hit_rec.ray = r;
+        closest_hit_rec.n_bounces_left = n_bounces_left - 1;
+        glm::vec3 color = hit_obj->mat->shade(closest_hit_rec, *this);
+        return color;
+    }
+    else
+    {
+        return SKY; // Background color
+    }
 }

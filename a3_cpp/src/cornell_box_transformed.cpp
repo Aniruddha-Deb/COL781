@@ -8,9 +8,7 @@
 #include "window.hpp"
 #include "debug.hpp"
 #include "renderer.hpp"
-
-const int WIDTH = 640;
-const int HEIGHT = 480;
+#include "constants.hpp"
 
 const glm::vec3 ORIGIN = glm::vec3(0.f, 0.f, 0.f);
 const glm::vec3 NEG_Z = glm::vec3(0.f, 0.f, -1.f);
@@ -33,7 +31,7 @@ class CornellBoxScene : public Scene
     std::vector<LightSource> point_lights;
 
   public:
-    CornellBoxScene(Camera& cam) : Scene(WIDTH, HEIGHT, cam, 6)
+    CornellBoxScene(Camera& cam) : Scene(WIN_WIDTH, WIN_HEIGHT, cam, RAY_TRACING_DEPTH)
     {
         LightSource l1(glm::vec3(0.f, 1.f, -4.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
         LightSource l2(glm::vec3(0.f, 1.f, -1.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
@@ -104,7 +102,7 @@ class CornellBoxScene : public Scene
 void view_cornell_box_scene()
 {
 
-    Window win(WIDTH, HEIGHT, "Raytracer");
+    Window win(WIN_WIDTH, WIN_HEIGHT, "Raytracer");
     CornellBoxCamera c;
     CornellBoxScene s(c);
     Renderer renderer(win, s);
