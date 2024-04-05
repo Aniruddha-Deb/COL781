@@ -20,7 +20,7 @@ class Object
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const = 0;
     virtual Box bounding_box() = 0;
-    virtual void transform(const glm::mat4x4& M);
+    void transform(const glm::mat4x4& M);
 
     ~Object() {}
 };
@@ -37,7 +37,6 @@ class Sphere : public Object
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
     virtual Box bounding_box();
-    virtual void transform(const glm::mat4x4& M);
     virtual ~Sphere() {}
 };
 
@@ -52,7 +51,6 @@ class Plane : public Object
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
     virtual Box bounding_box();
-    virtual void transform(const glm::mat4x4& M);
     virtual ~Plane() {}
 };
 
@@ -66,7 +64,6 @@ class AxisAlignedBox : public Object
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
     virtual Box bounding_box();
-    virtual void transform(const glm::mat4x4& M);
     virtual ~AxisAlignedBox() {}
 };
 
@@ -82,6 +79,5 @@ class Triangle : public Object
 
     virtual bool hit(const Ray& ray, float t_min, float t_max, HitRecord& rec) const;
     virtual Box bounding_box();
-    virtual void transform(const glm::mat4x4& M);
     virtual ~Triangle() {}
 };

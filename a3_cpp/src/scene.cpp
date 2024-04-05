@@ -3,8 +3,7 @@
 
 #include "scene.hpp"
 #include "debug.hpp"
-
-constexpr glm::vec3 SKY(0.f, 0.f, 0.f);
+#include "constants.hpp"
 
 Scene::Scene(int _w, int _h, Camera& _camera, int _max_bounces)
     : w{_w}, h{_h}, camera{_camera}, objects(), lights(), max_bounces{_max_bounces}
@@ -55,7 +54,7 @@ glm::vec3 Scene::trace_ray_rec(Ray& r, int n_bounces_left)
     {
         curr++;
         Object& obj = obj_rw.get();
-        if (obj.hit(r, 0.001f, closest_hit, rec))
+        if (obj.hit(r, RAY_EPS, closest_hit, rec))
         {
             hit_found = true;
             closest_hit_rec = rec;

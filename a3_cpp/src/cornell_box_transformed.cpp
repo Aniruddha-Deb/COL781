@@ -36,7 +36,9 @@ class CornellBoxScene : public Scene
     CornellBoxScene(Camera& cam) : Scene(WIDTH, HEIGHT, cam, 6)
     {
         LightSource l1(glm::vec3(0.f, 1.f, -4.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
+        LightSource l2(glm::vec3(0.f, 1.f, -1.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
         point_lights.push_back(l1);
+        point_lights.push_back(l2);
 
         std::shared_ptr<Material> white_wall_material = std::make_shared<DiffuseMaterial>(glm::vec3(.5f, .5f, .5f));
         std::shared_ptr<Material> green_wall_material = std::make_shared<DiffuseMaterial>(glm::vec3(.15f, .4f, .05f));
@@ -84,9 +86,9 @@ class CornellBoxScene : public Scene
         // spheres.push_back(refractive_sphere);
 
         AxisAlignedBox refractive_box =
-            AxisAlignedBox({.tl = glm::vec3(-.5f, -2.0f, -.5f), .br = glm::vec3(.5f, .5f, .5f)}, green_wall_material);
+            AxisAlignedBox({.tl = glm::vec3(-.5f, -2.0f, -.5f), .br = glm::vec3(.5f, .5f, .5f)}, glass_material);
         glm::mat4x4 box_rotate = glm::rotate(glm::mat4x4(1.f), glm::radians(45.f), glm::vec3(0.f, 1.f, 0.f));
-        glm::mat4x4 box_translate = glm::translate(glm::mat4x4(1.f), glm::vec3(1.f, 0.f, -1.f));
+        glm::mat4x4 box_translate = glm::translate(glm::mat4x4(1.f), glm::vec3(3.f, 0.f, -2.f));
         refractive_box.transform(box_rotate);
         refractive_box.transform(box_translate);
         boxes.push_back(refractive_box);

@@ -1,9 +1,9 @@
 - [X] Copper material
 - [X] Transform ray before/after collision
-  - [ ] Sphere
-  - [ ] Plane
-  - [ ] AxisAlignedBox
-  - [ ] Triangle
+  - [X] Sphere
+  - [X] Plane
+  - [X] AxisAlignedBox
+  - [X] Triangle
 - [X] Mouse right click camera
 - [ ] Multisampling
 - [ ] Path tracing
