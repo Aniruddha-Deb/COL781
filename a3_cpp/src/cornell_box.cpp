@@ -36,7 +36,7 @@ class CornellBoxScene : public Scene
         LightSource l1(glm::vec3(0.f, 1.f, -4.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
         point_lights.push_back(l1);
 
-        std::shared_ptr<Material> white_wall_material = std::make_shared<MetallicMaterial>(glm::vec3(0.9f, 0.7f, 0.8f));
+        std::shared_ptr<Material> white_wall_material = std::make_shared<DiffuseMaterial>(glm::vec3(.5f, .5f, .5f));
         std::shared_ptr<Material> green_wall_material = std::make_shared<DiffuseMaterial>(glm::vec3(.15f, .4f, .05f));
         std::shared_ptr<Material> red_wall_material = std::make_shared<DiffuseMaterial>(glm::vec3(.4f, .15f, .05f));
         std::shared_ptr<Material> mirror_material = std::make_shared<BlinnPhongMaterial>(
