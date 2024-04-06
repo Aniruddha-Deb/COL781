@@ -12,24 +12,27 @@ static std::random_device rd;
 static std::mt19937 gen(rd());
 static std::uniform_real_distribution<float> uniform(0.0, 1.0);
 
-glm::vec3 sample_hemisphere_cosine_weighted() {
+glm::vec3 sample_hemisphere_cosine_weighted()
+{
     float u = uniform(gen);
     float v = uniform(gen);
     float theta = 2 * PI * v;
 
-    float x = sqrt(1-u*u) * cos(theta);
-    float y = sqrt(1-u*u) * sin(theta);
+    float x = sqrt(1 - u * u) * cos(theta);
+    float y = sqrt(1 - u * u) * sin(theta);
     float z = u;
     return glm::vec3(x, y, z);
 }
 
-glm::vec3 trace_path_russian_roulette(Ray& r, Scene& s, float p) {
+glm::vec3 trace_path_russian_roulette(Ray& r, Scene& s, float p)
+{
     if (uniform(gen) <= p)
         return s.trace_path(r) / p;
     return SKY;
 }
 
-glm::vec3 EmissiveMaterial::shade(HitRecord& rec, Scene& scene) {
+glm::vec3 EmissiveMaterial::shade(HitRecord& rec, Scene& scene)
+{
     return emissivity;
 }
 
@@ -45,7 +48,7 @@ glm::vec3 DiffuseMaterial::shade(HitRecord& rec, Scene& scene)
     Ray ray(rec.pos, sample_hemisphere_cosine_weighted());
     // Hmm, how will we get irradiance at a point? Will require knowing the distance!
     // can get from rec.ray's length, but hmm
-    return gamma_restore(gamma_correct(albedo) * gamma_correct(trace_path_russian_roulette(ray, scene, 0.9f)));
+    return gamma_restore(gamma_correct(albedo) * gamma_correct(trace_path_russian_roulette(ray, scene, 0.99f)));
 }
 
 glm::vec3 BlinnPhongMaterial::shade(HitRecord& rec, Scene& scene)
@@ -66,7 +69,7 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
         if (acosf(glm::dot(i, rec.normal)) > critical_angle)
         {
             // total internal reflection.
-            return scene.trace_ray_rec(reflected_ray, rec.n_bounces_left);
+            return trace_path_russian_roulette(reflected_ray, scene, 0.99f);
         }
     }
     float mu_r = rec.mu_1 / rec.mu_2;
@@ -78,12 +81,19 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
     float R_0 = glm::pow((rec.mu_1 - rec.mu_2) / (rec.mu_1 + rec.mu_2), 2);
     float cos_theta_max = glm::max(ndoti, glm::dot(refracted_ray.d, -n));
 
-
     float R = R_0 + (1 - R_0) * glm::pow(1 - cos_theta_max, 5);
-    glm::vec3 refract_color = (1 - R) * gamma_correct(scene.trace_ray_rec(refracted_ray, rec.n_bounces_left));
-    return glm::min(glm::vec3(1.f, 1.f, 1.f),
-                    gamma_restore(R * gamma_correct(scene.trace_ray_rec(reflected_ray, rec.n_bounces_left)) +
-                                  refract_color));
+
+    bool reflect = (uniform(gen) < R);
+    if (reflect)
+    {
+        glm::vec3 reflect_color = gamma_correct(trace_path_russian_roulette(reflected_ray, scene, 0.99f));
+        return gamma_restore(reflect_color);
+    }
+    else
+    {
+        glm::vec3 refract_color = gamma_correct(trace_path_russian_roulette(refracted_ray, scene, 0.99f));
+        return gamma_restore(refract_color);
+    }
 }
 
 glm::vec3 MetallicMaterial::shade(HitRecord& rec, Scene& scene)
@@ -96,7 +106,5 @@ glm::vec3 MetallicMaterial::shade(HitRecord& rec, Scene& scene)
     float ndoti = glm::dot(n, i);
     // fresnel formula
     glm::vec3 F = F_0 + (1.f - F_0) * float(glm::pow(1 - ndoti, 5));
-    return glm::min(glm::vec3(1.f, 1.f, 1.f),
-                    gamma_restore(F * gamma_correct(scene.trace_ray_rec(reflected_ray, rec.n_bounces_left)))
-                    );
+    return gamma_restore(F * gamma_correct(trace_path_russian_roulette(reflected_ray, scene, 0.99)));
 }

@@ -5,46 +5,52 @@
 #include "iostream"
 #include "constants.hpp"
 
-glm::vec3 point_os_to_ws(const glm::vec3& os_pt, const Object& obj) {
+glm::vec3 point_os_to_ws(const glm::vec3& os_pt, const Object& obj)
+{
     glm::vec4 ws_pt_hom = glm::inverse(obj.inv_transform_mat) * glm::vec4(os_pt, 1.f);
     return glm::vec3(ws_pt_hom) / ws_pt_hom[3];
 }
 
-glm::vec3 point_ws_to_os(const glm::vec3& ws_pt, const Object& obj) {
+glm::vec3 point_ws_to_os(const glm::vec3& ws_pt, const Object& obj)
+{
     glm::vec4 os_pt_hom = obj.inv_transform_mat * glm::vec4(ws_pt, 1.f);
     return glm::vec3(os_pt_hom) / os_pt_hom[3];
 }
 
-glm::vec3 direction_os_to_ws(const glm::vec3& os_dir, const Object& obj) {
+glm::vec3 direction_os_to_ws(const glm::vec3& os_dir, const Object& obj)
+{
     return glm::vec3(glm::inverse(obj.inv_transform_mat) * glm::vec4(os_dir, 0.f));
 }
 
-glm::vec3 direction_ws_to_os(const glm::vec3& ws_dir, const Object& obj) {
+glm::vec3 direction_ws_to_os(const glm::vec3& ws_dir, const Object& obj)
+{
     return glm::vec3(obj.inv_transform_mat * glm::vec4(ws_dir, 0.f));
 }
 
-glm::vec3 normal_os_to_ws(const glm::vec3& os_normal, const Object& obj) {
+glm::vec3 normal_os_to_ws(const glm::vec3& os_normal, const Object& obj)
+{
     return glm::normalize(glm::transpose(obj.inv_transform_normal_mat) * os_normal);
 }
 
-Ray ray_os_to_ws(const Ray& os_ray, const Object& obj) {
+Ray ray_os_to_ws(const Ray& os_ray, const Object& obj)
+{
     Ray ws_ray = os_ray;
     ws_ray.o = point_os_to_ws(os_ray.o, obj);
     ws_ray.d = glm::normalize(direction_ws_to_os(os_ray.d, obj));
     return ws_ray;
 }
 
-Ray ray_ws_to_os(const Ray& ws_ray, const Object& obj) {
+Ray ray_ws_to_os(const Ray& ws_ray, const Object& obj)
+{
     Ray os_ray = ws_ray;
     os_ray.o = point_ws_to_os(ws_ray.o, obj);
     os_ray.d = glm::normalize(direction_ws_to_os(ws_ray.d, obj));
     return os_ray;
 }
 
-void populate_hitrecord(const Ray& ws_ray, const Ray& os_ray,
-                        glm::vec3 os_pos, glm::vec3 os_normal,
-                        bool ray_originated_in_object,
-                        const Object& obj, HitRecord& rec) {
+void populate_hitrecord(const Ray& ws_ray, const Ray& os_ray, glm::vec3 os_pos, glm::vec3 os_normal,
+                        bool ray_originated_in_object, const Object& obj, HitRecord& rec)
+{
     // the HitRecord is in world space.
     glm::vec3 ws_pos = point_os_to_ws(os_pos, obj);
     float ws_t = glm::length(ws_pos - ws_ray.o);
@@ -70,7 +76,8 @@ void populate_hitrecord(const Ray& ws_ray, const Ray& os_ray,
             rec.mu_2 = transp_mat->mu;
         }
     }
-    else {
+    else
+    {
         rec.mu_1 = rec.mu_2 = 1.f;
     }
 }
@@ -103,7 +110,7 @@ bool Sphere::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) co
 
     glm::vec3 os_pos = o + root * d;
     glm::vec3 os_normal = (os_pos - center) / radius;
-    bool ray_originated_in_object = (glm::length(o - center) <= radius + EPS);
+    bool ray_originated_in_object = (glm::length(o - center) <= radius + 1e-3);
 
     populate_hitrecord(ws_ray, os_ray, os_pos, os_normal, ray_originated_in_object, *this, rec);
     return true;
@@ -128,7 +135,7 @@ bool Plane::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) con
     if (t < t_min || t > t_max)
         return false;
 
-    glm::vec3 os_pos = o + t*d;
+    glm::vec3 os_pos = o + t * d;
     populate_hitrecord(ws_ray, os_ray, os_pos, n, false, *this, rec);
     return true;
 }
@@ -194,9 +201,8 @@ bool AxisAlignedBox::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord&
     else if (glm::abs(os_pos.z - box.br.z) < EPS)
         os_normal = glm::vec3(0, 0, 1);
 
-    bool ray_originated_in_object = 
-        (box.tl.x - EPS < o.x && box.br.x + EPS > o.x && box.tl.y - EPS < o.y &&
-         box.br.y + EPS > o.y && box.tl.z - EPS < o.z && box.br.z + EPS > o.z);
+    bool ray_originated_in_object = (box.tl.x - EPS < o.x && box.br.x + EPS > o.x && box.tl.y - EPS < o.y &&
+                                     box.br.y + EPS > o.y && box.tl.z - EPS < o.z && box.br.z + EPS > o.z);
 
     populate_hitrecord(ws_ray, os_ray, os_pos, os_normal, ray_originated_in_object, *this, rec);
     return true;
@@ -232,7 +238,7 @@ bool Triangle::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) 
     if (t < t_min || t > t_max)
         return false;
 
-    glm::vec3 os_pos = o + t*d;
+    glm::vec3 os_pos = o + t * d;
     glm::vec3 os_normal = glm::normalize(glm::cross(e1, e2));
     populate_hitrecord(ws_ray, os_ray, os_pos, os_normal, false, *this, rec);
 
@@ -247,7 +253,8 @@ Box Triangle::bounding_box()
     return box;
 }
 
-void Mesh::load_from_file(std::string objfile_path) {
+void Mesh::load_from_file(std::string objfile_path)
+{
 
     std::ifstream objFile(objfile_path);
     if (!objFile.is_open())
@@ -288,7 +295,8 @@ void Mesh::load_from_file(std::string objfile_path) {
     objFile.close();
 }
 
-Box Mesh::bounding_box() {
+Box Mesh::bounding_box()
+{
     return {glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f)};
 }
 
@@ -301,7 +309,8 @@ bool Mesh::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) cons
     glm::vec3 os_pos, os_normal;
     bool hit = false;
 
-    for (const glm::ivec3& tri : idxs) {
+    for (const glm::ivec3& tri : idxs)
+    {
 
         glm::vec3 p0 = verts[tri[0]], p1 = verts[tri[1]], p2 = verts[tri[2]];
         glm::vec3 e1 = p1 - p0;
@@ -309,27 +318,33 @@ bool Mesh::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) cons
         // std::cout << vec3_to_str(e1) << " " << vec3_to_str(e2) << "\n";
         glm::vec3 pvec = glm::cross(d, e2);
         float det = glm::dot(e1, pvec);
-        if (glm::abs(det) < EPS) continue;
+        if (glm::abs(det) < EPS)
+            continue;
         float inv_det = 1.0f / det;
         glm::vec3 tvec = o - p0;
         float u = glm::dot(tvec, pvec) * inv_det;
-        if (u < 0.0f || u > 1.0f) continue;
+        if (u < 0.0f || u > 1.0f)
+            continue;
         glm::vec3 qvec = glm::cross(tvec, e1);
         float v = glm::dot(d, qvec) * inv_det;
-        if (v < 0.0f || u + v > 1.0f) continue;
+        if (v < 0.0f || u + v > 1.0f)
+            continue;
         float t = glm::dot(e2, qvec) * inv_det;
-        if (t < t_min || t > t_max) continue;
+        if (t < t_min || t > t_max)
+            continue;
 
-        if (t < min_t) {
+        if (t < min_t)
+        {
             // we've hit the tri here.
             hit = true;
-            os_pos = o + t*d;
+            os_pos = o + t * d;
             os_normal = glm::normalize(glm::cross(e2, e1));
             min_t = t;
         }
     }
-    
-    if (hit) {
+
+    if (hit)
+    {
         populate_hitrecord(ws_ray, os_ray, os_pos, os_normal, false, *this, rec);
         return true;
     }

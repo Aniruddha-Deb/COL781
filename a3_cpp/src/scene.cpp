@@ -83,6 +83,7 @@ glm::vec3 Scene::trace_path(Ray& r)
         Object& obj = obj_rw.get();
         if (obj.hit(r, RAY_EPS, closest_hit, rec))
         {
+            // std::cout << "hit\n";
             hit_found = true;
             closest_hit_rec = rec;
             closest_hit = rec.t;
@@ -94,6 +95,7 @@ glm::vec3 Scene::trace_path(Ray& r)
     {
         closest_hit_rec.ray = r;
         glm::vec3 color = hit_obj->mat->shade(closest_hit_rec, *this);
+        // std::cout << vec3_to_str(color) << "\n";
         return color;
     }
     else

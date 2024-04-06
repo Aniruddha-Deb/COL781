@@ -8,7 +8,8 @@
 #include "window.hpp"
 #include "scene.hpp"
 
-class Renderer {
+class Renderer
+{
 
     SDL_Surface* framebuffer;
     std::vector<glm::vec3> samplebuffer;
@@ -18,14 +19,14 @@ class Renderer {
     int spp;
     bool path_traced;
 
-    public:
-    Renderer(Window& w, Scene& s, int _spp=1, bool path_traced=false);
+  public:
+    Renderer(Window& w, Scene& s, int _spp = 1, bool path_traced = false, int _curr_sample_no = 0);
     ~Renderer();
 
     void render();
     void view();
 
-    private:
+  private:
     void pan(float deltaPosX, float deltaPosY);
     void move(float delta);
     std::pair<int, int> handle_events(int lastxPos, int lastyPos);

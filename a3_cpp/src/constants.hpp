@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-constexpr glm::vec3 SKY = glm::vec3(0.f, 0.f, 0.f);
+constexpr glm::vec3 SKY = glm::vec3(0.2f, 0.f, 0.f);
 constexpr float PI = 3.141592;
 constexpr float EPS = 1e-6f;
 constexpr float RAY_EPS = 1e-3f;

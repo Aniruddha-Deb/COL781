@@ -13,14 +13,17 @@
 #define vec3_to_color(fmt, color)                                                                                      \
     SDL_MapRGBA(fmt, (Uint8)(color[0] * 255), (Uint8)(color[1] * 255), (Uint8)(color[2] * 255), (Uint8)(255))
 
-glm::vec3 tone_map(glm::vec3 color) {
+glm::vec3 tone_map(glm::vec3 color)
+{
     return glm::min(glm::vec3(1.f, 1.f, 1.f), color);
 }
 
-Renderer::Renderer(Window &_w, Scene &_s, int _spp, bool _path_traced) : win{_w}, scene{_s}, spp{_spp}, path_traced{_path_traced}
+Renderer::Renderer(Window &_w, Scene &_s, int _spp, bool _path_traced, int _curr_sample_no)
+    : win{_w}, scene{_s}, spp{_spp}, path_traced{_path_traced}, curr_sample_no{_curr_sample_no}
 {
     framebuffer = SDL_CreateRGBSurface(0, win.w, win.h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0);
-    if (path_traced) {
+    if (path_traced)
+    {
         samplebuffer = std::vector<glm::vec3>(win.w * win.h, glm::vec3(0.f, 0.f, 0.f));
     }
 }
@@ -42,30 +45,34 @@ void Renderer::render()
         {
             Ray r = scene.generate_ray(px, py);
             glm::vec3 pxcolor;
-            if (path_traced) {
+            if (path_traced)
+            {
                 glm::vec3 pathcolor = scene.trace_path(r);
-                pxcolor = tone_map((samplebuffer[py*win.w + px] += pathcolor) / float(curr_sample_no+1));
+                pxcolor = tone_map((samplebuffer[py * win.w + px] += pathcolor) / float(curr_sample_no + 1));
             }
-            else {
+            else
+            {
                 pxcolor = tone_map(scene.trace_ray(r));
             }
             pixels[py * win.w + px] = vec3_to_color(format, pxcolor);
         }
     }
     SDL_UnlockSurface(framebuffer);
-    if (path_traced) {
+    if (path_traced)
+    {
         curr_sample_no++;
     }
 }
 
-void Renderer::pan(float deltaPosX, float deltaPosY) {
+void Renderer::pan(float deltaPosX, float deltaPosY)
+{
     Camera &camera = scene.camera;
     glm::vec4 pivot = glm::vec4(camera.lookAt.x, camera.lookAt.y, camera.lookAt.z, 1.0f);
     glm::vec4 position = glm::vec4(camera.position.x, camera.position.y, camera.position.z, 1.0f);
 
     // float deltaAngleY = CAMERA_DELTA_ANGLE_Y;
-    float xAngle = (float)(deltaPosX) * CAMERA_DELTA_ANGLE_X;
-    float yAngle = (float)(deltaPosY) * CAMERA_DELTA_ANGLE_Y;
+    float xAngle = (float)(deltaPosX)*CAMERA_DELTA_ANGLE_X;
+    float yAngle = (float)(deltaPosY)*CAMERA_DELTA_ANGLE_Y;
 
     float cosAngle = dot(camera.getViewDir(), camera.up);
 
@@ -83,7 +90,8 @@ void Renderer::pan(float deltaPosX, float deltaPosY) {
     camera.updateViewMatrix();
 }
 
-void Renderer::move(float delta) {
+void Renderer::move(float delta)
+{
     Camera &camera = scene.camera;
     float deltaY = (float)(delta) * 0.01f;
     glm::mat4 dollyTransform = glm::mat4(1.0f);
@@ -96,31 +104,35 @@ void Renderer::move(float delta) {
     }
 }
 
-void Renderer::reset_samplebuffer() {
-    for (auto& v : samplebuffer) {
+void Renderer::reset_samplebuffer()
+{
+    for (auto &v : samplebuffer)
+    {
         v = glm::vec3(0.f, 0.f, 0.f);
     }
     curr_sample_no = 0;
     cdebug << "resetting samplebuffer\n";
 }
 
-std::pair<int,int> Renderer::handle_events(int lastxPos, int lastyPos) {
+std::pair<int, int> Renderer::handle_events(int lastxPos, int lastyPos)
+{
 
     int xPos, yPos;
     Uint32 buttonState = SDL_GetMouseState(&xPos, &yPos);
     bool dirty = false;
     if (buttonState & SDL_BUTTON(SDL_BUTTON_LEFT))
     {
-        pan(float(lastxPos-xPos), float(lastyPos-yPos));
+        pan(float(lastxPos - xPos), float(lastyPos - yPos));
         dirty = true;
     }
     buttonState = SDL_GetMouseState(&xPos, &yPos);
     if (buttonState & SDL_BUTTON(SDL_BUTTON_RIGHT))
     {
-        move(float(lastyPos-yPos));
+        move(float(lastyPos - yPos));
         dirty = true;
     }
-    if (dirty && path_traced) {
+    if (dirty && path_traced)
+    {
         reset_samplebuffer();
     }
     return {xPos, yPos};
