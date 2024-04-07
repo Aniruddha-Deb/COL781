@@ -4,7 +4,7 @@
 
 constexpr glm::vec3 SKY = glm::vec3(0.0f, 0.0f, 0.0f);
 constexpr float PI = 3.141592;
-constexpr float EPS = 1e-6f;
+constexpr float EPS = 1e-5f;
 constexpr float RAY_EPS = 1e-3f;
 constexpr float GAMMA = 2.2f;
 constexpr int RAY_TRACING_DEPTH = 6;

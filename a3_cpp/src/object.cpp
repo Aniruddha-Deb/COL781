@@ -206,7 +206,7 @@ bool AxisAlignedBox::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord&
     if (!aabb_hit_test(os_ray, ray_originated_in_object, box, info)) return false;
 
     populate_hitrecord(ws_ray, os_ray, info.os_pos, info.os_normal, ray_originated_in_object, *this, rec);
-    if (rec.t - EPS < t_min || rec.t + EPS > t_max) return false;
+    if (rec.t < t_min || rec.t > t_max) return false;
     return true;
 }
 

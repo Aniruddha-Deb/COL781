@@ -23,3 +23,6 @@
 - [X] Multisampling?
 - [X] Parallelizing
 
+- [ ] debug box shadow acne
+- [ ] clean up interesting scene, more color, less light
+- [ ] debug mesh
