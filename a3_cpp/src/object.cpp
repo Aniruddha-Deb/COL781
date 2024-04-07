@@ -5,7 +5,8 @@
 #include "iostream"
 #include "constants.hpp"
 
-struct HitInfo {
+struct HitInfo
+{
     glm::vec3 os_pos;
     glm::vec3 os_normal;
     float t;
@@ -108,22 +109,25 @@ bool Sphere::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) co
         return false;
     float sqrt_discr = sqrt(discr);
     float root = (-b - sqrt_discr) / 2.f;
-    if (ray_originated_in_object) root = (-b + sqrt_discr) / 2.f;
-    if (root < 0) return false;
+    if (ray_originated_in_object)
+        root = (-b + sqrt_discr) / 2.f;
+    if (root < 0)
+        return false;
 
     glm::vec3 os_pos = o + root * d;
     glm::vec3 os_normal = (os_pos - center) / radius;
 
     populate_hitrecord(ws_ray, os_ray, os_pos, os_normal, ray_originated_in_object, *this, rec);
-    if (rec.t < t_min || rec.t > t_max) return false;
+    if (rec.t < t_min || rec.t > t_max)
+        return false;
     return true;
 }
 
 Box Sphere::bounding_box()
 {
     Box box;
-    box.min_vert = center - glm::vec3(radius, radius, radius);
-    box.max_vert = center + glm::vec3(radius, radius, radius);
+    box.min_vert = center - glm::vec3(radius, radius, radius) - EPS;
+    box.max_vert = center + glm::vec3(radius, radius, radius) + EPS;
     return box;
 }
 
@@ -135,11 +139,13 @@ bool Plane::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) con
     if (glm::abs(denom) < EPS)
         return false;
     float t = glm::dot(pt - o, n) / denom;
-    if (t < 0) return false;
+    if (t < 0)
+        return false;
 
     glm::vec3 os_pos = o + t * d;
     populate_hitrecord(ws_ray, os_ray, os_pos, n, false, *this, rec);
-    if (rec.t - EPS < t_min || rec.t + EPS > t_max) return false;
+    if (rec.t - EPS < t_min || rec.t + EPS > t_max)
+        return false;
     return true;
 }
 
@@ -152,13 +158,14 @@ Box Plane::bounding_box()
     return box;
 }
 
-bool aabb_hit_test(const Ray& os_ray, bool ray_originated_in_object, const Box& box, HitInfo& info) {
+bool aabb_hit_test(const Ray& os_ray, bool ray_originated_in_object, const Box& box, HitInfo& info)
+{
 
     glm::vec3 o = os_ray.o, d = os_ray.d;
     glm::vec3 inv_direction = 1.0f / d;
 
-    glm::vec3 t0 = (box.min_vert - o) * inv_direction;
-    glm::vec3 t1 = (box.max_vert - o) * inv_direction;
+    glm::vec3 t0 = (box.min_vert - EPS - o) * inv_direction;
+    glm::vec3 t1 = (box.max_vert + EPS - o) * inv_direction;
 
     glm::vec3 tmin = glm::min(t0, t1);
     glm::vec3 tmax = glm::max(t0, t1);
@@ -166,27 +173,30 @@ bool aabb_hit_test(const Ray& os_ray, bool ray_originated_in_object, const Box& 
     float t_enter = glm::max(glm::max(tmin.x, tmin.y), tmin.z);
     float t_exit = glm::min(glm::min(tmax.x, tmax.y), tmax.z);
 
-    if (t_exit < 0 || t_enter < 0 || t_enter > t_exit) return false;
+    if (t_exit < 0 || t_enter < 0 || t_enter > t_exit)
+        return false;
 
     float os_t;
 
-    if (ray_originated_in_object) os_t = t_exit;
-    else os_t = t_enter;
+    if (ray_originated_in_object)
+        os_t = t_exit;
+    else
+        os_t = t_enter;
 
     glm::vec3 os_pos = o + os_t * d;
     glm::vec3 os_normal;
 
-    if (glm::abs(os_pos.x - box.min_vert.x) < EPS)
+    if (glm::abs(os_pos.x - box.min_vert.x + EPS) < EPS)
         os_normal = glm::vec3(-1, 0, 0);
-    else if (glm::abs(os_pos.x - box.max_vert.x) < EPS)
+    else if (glm::abs(os_pos.x - box.max_vert.x - EPS) < EPS)
         os_normal = glm::vec3(1, 0, 0);
-    else if (glm::abs(os_pos.y - box.min_vert.y) < EPS)
+    else if (glm::abs(os_pos.y - box.min_vert.y + EPS) < EPS)
         os_normal = glm::vec3(0, -1, 0);
-    else if (glm::abs(os_pos.y - box.max_vert.y) < EPS)
+    else if (glm::abs(os_pos.y - box.max_vert.y - EPS) < EPS)
         os_normal = glm::vec3(0, 1, 0);
-    else if (glm::abs(os_pos.z - box.min_vert.z) < EPS)
+    else if (glm::abs(os_pos.z - box.min_vert.z + EPS) < EPS)
         os_normal = glm::vec3(0, 0, -1);
-    else if (glm::abs(os_pos.z - box.max_vert.z) < EPS)
+    else if (glm::abs(os_pos.z - box.max_vert.z - EPS) < EPS)
         os_normal = glm::vec3(0, 0, 1);
 
     info.os_pos = os_pos;
@@ -200,13 +210,16 @@ bool AxisAlignedBox::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord&
     Ray os_ray = ray_ws_to_os(ws_ray, *this);
     glm::vec3 o = os_ray.o, d = os_ray.d;
     HitInfo info;
-    bool ray_originated_in_object = (box.min_vert.x - EPS < o.x && box.max_vert.x + EPS > o.x && box.min_vert.y - EPS < o.y &&
-                                     box.max_vert.y + EPS > o.y && box.min_vert.z - EPS < o.z && box.max_vert.z + EPS > o.z);
+    bool ray_originated_in_object =
+        (box.min_vert.x - EPS < o.x && box.max_vert.x + EPS > o.x && box.min_vert.y - EPS < o.y &&
+         box.max_vert.y + EPS > o.y && box.min_vert.z - EPS < o.z && box.max_vert.z + EPS > o.z);
 
-    if (!aabb_hit_test(os_ray, ray_originated_in_object, box, info)) return false;
+    if (!aabb_hit_test(os_ray, ray_originated_in_object, box, info))
+        return false;
 
     populate_hitrecord(ws_ray, os_ray, info.os_pos, info.os_normal, ray_originated_in_object, *this, rec);
-    if (rec.t < t_min || rec.t > t_max) return false;
+    if (rec.t < t_min || rec.t > t_max)
+        return false;
     return true;
 }
 
@@ -215,7 +228,8 @@ Box AxisAlignedBox::bounding_box()
     return box;
 }
 
-bool triangle_hit_test(const Ray& os_ray, glm::vec3 tri[3], HitInfo& info) {
+bool triangle_hit_test(const Ray& os_ray, glm::vec3 tri[3], HitInfo& info)
+{
 
     glm::vec3 p0 = tri[0], p1 = tri[1], p2 = tri[2];
     glm::vec3 o = os_ray.o, d = os_ray.d;
@@ -235,7 +249,8 @@ bool triangle_hit_test(const Ray& os_ray, glm::vec3 tri[3], HitInfo& info) {
     if (v < 0.0f || u + v > 1.0f)
         return false;
     float t = glm::dot(e2, qvec) * inv_det;
-    if (t < 0) return false;
+    if (t < 0)
+        return false;
     // if (t < t_min || t > t_max)
     //     return false;
 
@@ -253,10 +268,12 @@ bool Triangle::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) 
     glm::vec3 o = os_ray.o, d = os_ray.d;
     glm::vec3 tri[3] = {p0, p1, p2};
 
-    if(!triangle_hit_test(os_ray, tri, info)) return false;
+    if (!triangle_hit_test(os_ray, tri, info))
+        return false;
 
     populate_hitrecord(ws_ray, os_ray, info.os_pos, info.os_normal, false, *this, rec);
-    if (rec.t - EPS < t_min || rec.t + EPS > t_max) return false;
+    if (rec.t - EPS < t_min || rec.t + EPS > t_max)
+        return false;
     return true;
 }
 
@@ -328,7 +345,8 @@ bool Mesh::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) cons
     HitInfo info, min_hit_info;
     HitRecord temp_rec;
 
-    if (!aabb_hit_test(os_ray, false, bbox, info)) return false;
+    if (!aabb_hit_test(os_ray, false, bbox, info))
+        return false;
 
     min_hit_info.t = std::numeric_limits<float>::max();
     bool hit = false;
@@ -338,11 +356,14 @@ bool Mesh::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) cons
 
         // glm::vec3 p0 = verts[tri[0]], p1 = verts[tri[1]], p2 = verts[tri[2]];
         glm::vec3 tri_verts[3] = {verts[tri[0]], verts[tri[1]], verts[tri[2]]};
-        if (!triangle_hit_test(os_ray, tri_verts, info)) continue;
+        if (!triangle_hit_test(os_ray, tri_verts, info))
+            continue;
         glm::vec3 ws_pos = point_os_to_ws(info.os_pos, *this);
         float ws_t = glm::length(ws_pos - ws_ray.o);
-        if (ws_t < t_min || ws_t > t_max) continue;
-        if (ws_t < min_hit_info.t) {
+        if (ws_t < t_min || ws_t > t_max)
+            continue;
+        if (ws_t < min_hit_info.t)
+        {
             hit = true;
             min_hit_info = info;
         }

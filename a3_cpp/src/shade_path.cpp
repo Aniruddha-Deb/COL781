@@ -12,7 +12,7 @@ static std::random_device rd;
 static std::mt19937 gen(rd());
 static std::uniform_real_distribution<float> uniform(0.0, 1.0);
 
-constexpr float RR_PROB = 0.9f;
+constexpr float RR_PROB = 0.90f;
 
 glm::vec3 sample_hemisphere_cosine_weighted()
 {
@@ -120,5 +120,5 @@ glm::vec3 MetallicMaterial::shade(HitRecord& rec, Scene& scene)
     float ndoti = glm::dot(n, i);
     // fresnel formula
     glm::vec3 F = F_0 + (1.f - F_0) * float(glm::pow(1 - ndoti, 5));
-    return gamma_restore(F * gamma_correct(trace_path_russian_roulette(reflected_ray, scene, 0.90)));
+    return gamma_restore(F * gamma_correct(trace_path_russian_roulette(reflected_ray, scene, RR_PROB)));
 }

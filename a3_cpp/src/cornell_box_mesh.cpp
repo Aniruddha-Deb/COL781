@@ -34,8 +34,8 @@ class CornellBoxScene : public Scene
   public:
     CornellBoxScene(Camera& cam) : Scene(WIN_WIDTH, WIN_HEIGHT, cam, RAY_TRACING_DEPTH)
     {
-        LightSource l1(glm::vec3(0.f, 1.f, -3.f), glm::vec3(1.f, 1.f, 1.f), 20.f);
-        LightSource l2(glm::vec3(0.f, 0.f, -3.f), glm::vec3(1.f, 1.f, 1.f), 20.f);
+        LightSource l1(glm::vec3(0.f, 1.f, -3.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
+        LightSource l2(glm::vec3(0.f, 0.f, -3.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
         // point_lights.push_back(l1);
         point_lights.push_back(l2);
 
@@ -81,8 +81,8 @@ class CornellBoxScene : public Scene
 
         Mesh m(green_wall_material);
         // glm::mat4x4 scale = glm::scale(glm::mat4x4(1.f), glm::vec3(2.f, 2.f, 2.f));
-        glm::mat4x4 translate = glm::translate(glm::mat4x4(1.f), glm::vec3(0.f, -1.f, -3.5f));
-        m.load_from_file("meshes/bunny-1k.obj");
+        glm::mat4x4 translate = glm::translate(glm::mat4x4(1.f), glm::vec3(0.f, -1.f, -3.9f));
+        m.load_from_file("meshes/cube.obj");
         // m.transform(scale);
         m.transform(translate);
         meshes.push_back(m);
