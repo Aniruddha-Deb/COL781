@@ -1,20 +1,31 @@
 #include <glm/glm.hpp>
 #include <iostream>
+#include <random>
 
 #include "scene.hpp"
 #include "debug.hpp"
 #include "constants.hpp"
+
+static std::random_device rd;
+static std::mt19937 gen(rd());
+static std::uniform_real_distribution<float> jitter_dist(-.5f, .5f);
 
 Scene::Scene(int _w, int _h, Camera& _camera, int _max_bounces)
     : w{_w}, h{_h}, camera{_camera}, objects(), lights(), max_bounces{_max_bounces}
 {
 }
 
-Ray Scene::generate_ray(int px, int py)
+Ray Scene::generate_ray(int px, int py, bool jitter)
 {
     // Normalize pixel coordinates to the range [-1, 1]
-    float screen_x = (2.0f * (px + 0.5)) / w - 1.0f;
-    float screen_y = 1.0f - (2.0f * (py + 0.5)) / h;
+    float px_f = px + 0.5;
+    float py_f = py + 0.5;
+    if (jitter) {
+        px_f += jitter_dist(gen);
+        py_f += jitter_dist(gen);
+    }
+    float screen_x = (2.0f * px_f) / w - 1.0f;
+    float screen_y = 1.0f - (2.0f * py_f) / h;
 
     float camera_x = (screen_x * w * tan(camera.fov / 2.0f)) / h;
     float camera_y = screen_y * tan(camera.fov / 2.0f);

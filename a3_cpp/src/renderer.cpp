@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
+#include <omp.h>
 
 #include "constants.hpp"
 #include "renderer.hpp"
@@ -35,23 +36,31 @@ Renderer::~Renderer()
 
 void Renderer::render()
 {
-    // TODO possibly parallelize
     SDL_LockSurface(framebuffer);
     Uint32 *pixels = (Uint32 *)framebuffer->pixels;
     SDL_PixelFormat *format = framebuffer->format;
     for (int px = 0; px < win.w; px++)
     {
+        #pragma omp parallel for
         for (int py = 0; py < win.h; py++)
         {
-            Ray r = scene.generate_ray(px, py);
+            Ray r;
             glm::vec3 pxcolor;
             if (path_traced)
             {
+                if (curr_sample_no > 1) {
+                    r = scene.generate_ray(px, py, true);
+                }
+                else {
+                    r = scene.generate_ray(px, py, false);
+                }
                 glm::vec3 pathcolor = scene.trace_path(r);
-                pxcolor = tone_map((samplebuffer[py * win.w + px] += pathcolor) / float(curr_sample_no + 1));
+                samplebuffer[py*win.w + px] = (samplebuffer[py * win.w + px]*float(curr_sample_no) + pathcolor) / float(curr_sample_no + 1);
+                pxcolor = tone_map(samplebuffer[py*win.w + px]);
             }
             else
             {
+                r = scene.generate_ray(px, py);
                 pxcolor = tone_map(scene.trace_ray(r));
             }
             pixels[py * win.w + px] = vec3_to_color(format, pxcolor);

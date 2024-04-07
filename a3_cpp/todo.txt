@@ -16,11 +16,10 @@
     - [X] Transparent
 - [X] Mesh loading
 - [X] Mesh intersection
-- [ ] BB hit test (early exit)
-  - [ ] Get max, min of all verts that make up the mesh
+- [X] BB hit test (early exit)
+  - [X] Get max, min of all verts that make up the mesh
 - [X] Interesting Scene
 
-- [ ] Multisampling?
-- [ ] Parallelizing
-- [ ] Cook-Torrance material?
+- [X] Multisampling?
+- [X] Parallelizing
 

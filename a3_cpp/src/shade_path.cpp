@@ -12,6 +12,8 @@ static std::random_device rd;
 static std::mt19937 gen(rd());
 static std::uniform_real_distribution<float> uniform(0.0, 1.0);
 
+constexpr float RR_PROB = 0.9f;
+
 glm::vec3 sample_hemisphere_cosine_weighted()
 {
     float u = uniform(gen);
@@ -60,7 +62,7 @@ glm::vec3 DiffuseMaterial::shade(HitRecord& rec, Scene& scene)
     glm::vec3 perp2 = glm::cross(n, perp1);
     glm::vec3 sample = sample_hemisphere_cosine_weighted();
     Ray ray(rec.pos, perp2 * sample[0] + perp1 * sample[1] + n * sample[2]);
-    return gamma_restore(gamma_correct(albedo) * gamma_correct(trace_path_russian_roulette(ray, scene, 0.90f)));
+    return gamma_restore(gamma_correct(albedo) * gamma_correct(trace_path_russian_roulette(ray, scene, RR_PROB)));
 }
 
 glm::vec3 BlinnPhongMaterial::shade(HitRecord& rec, Scene& scene)
@@ -81,7 +83,7 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
         if (acosf(glm::dot(i, rec.normal)) > critical_angle)
         {
             // total internal reflection.
-            return trace_path_russian_roulette(reflected_ray, scene, 0.90f);
+            return trace_path_russian_roulette(reflected_ray, scene, RR_PROB);
         }
     }
     float mu_r = rec.mu_1 / rec.mu_2;
@@ -98,12 +100,12 @@ glm::vec3 TransparentMaterial::shade(HitRecord& rec, Scene& scene)
     bool reflect = (uniform(gen) < R);
     if (reflect)
     {
-        glm::vec3 reflect_color = gamma_correct(trace_path_russian_roulette(reflected_ray, scene, 0.90f));
+        glm::vec3 reflect_color = gamma_correct(trace_path_russian_roulette(reflected_ray, scene, RR_PROB));
         return gamma_restore(reflect_color);
     }
     else
     {
-        glm::vec3 refract_color = gamma_correct(trace_path_russian_roulette(refracted_ray, scene, 0.90f));
+        glm::vec3 refract_color = gamma_correct(trace_path_russian_roulette(refracted_ray, scene, RR_PROB));
         return gamma_restore(refract_color);
     }
 }

@@ -2,12 +2,13 @@ UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
 	CC=g++
-	CFLAGS=-std=c++17 -Wall -O2
-	LDFLAGS=-lGLEW -lGLU -lGL -lSDL2
+	CFLAGS=-std=c++17 -fopenmp -Wall -O2
+	LDFLAGS=-lGLEW -fopenmp -lGLU -lGL -lSDL2
 else
-	CC=clang++
-	CFLAGS=-std=c++17 -O2 -Wall -I/opt/homebrew/include
-	LDFLAGS=-L/opt/homebrew/lib -lSDL2 -lGLEW -framework OpenGL -framework Cocoa
+	# apple clang doesn't support openmp, g++-13 has a bug
+	CC=/opt/homebrew/opt/llvm/bin/clang++
+	CFLAGS=-std=c++17 -O2 -Wall -fopenmp -I/opt/homebrew/include
+	LDFLAGS=-L/opt/homebrew/lib -fopenmp -L/opt/homebrew/opt/llvm/lib -lSDL2 -lGLEW -framework OpenGL -framework Cocoa
 endif
 
 SRC = src/light.cpp src/object.cpp src/camera.cpp src/renderer.cpp src/scene.cpp src/window.cpp src/material.cpp src/debug.cpp
