@@ -19,7 +19,7 @@ struct Ray
 
 struct Box
 {
-    glm::vec3 tl, br;
+    glm::vec3 min_vert, max_vert;
 };
 
 struct HitRecord

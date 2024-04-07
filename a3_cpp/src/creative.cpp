@@ -98,7 +98,7 @@ class CornellBoxScene : public Scene
         spheres.push_back(refractive_sphere);
 
         AxisAlignedBox reflective_box =
-            AxisAlignedBox({.tl = glm::vec3(0.75f, 0.0f, -4.f), .br = glm::vec3(1.0f, 1.0f, -5.0f)}, copper_material);
+            AxisAlignedBox({.min_vert = glm::vec3(1.5f, 0.0f, -4.f), .max_vert = glm::vec3(2.0f, 1.0f, -3.0f)}, glass_material);
         boxes.push_back(reflective_box);
 
         reflective_box.transform(glm::rotate(glm::mat4(1.0f), glm::radians(10.0f), glm::vec3(1.0f, 0.0f, 0.0f)));

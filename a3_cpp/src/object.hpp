@@ -88,6 +88,7 @@ class Mesh : public Object
   public:
     std::vector<glm::vec3> verts;
     std::vector<glm::ivec3> idxs;
+    Box bbox;
     Mesh(std::shared_ptr<Material>& _mat) :
         Object{_mat} {}
 

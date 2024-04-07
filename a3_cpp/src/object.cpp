@@ -119,8 +119,8 @@ bool Sphere::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) co
 Box Sphere::bounding_box()
 {
     Box box;
-    box.tl = center - glm::vec3(radius, radius, radius);
-    box.br = center + glm::vec3(radius, radius, radius);
+    box.min_vert = center - glm::vec3(radius, radius, radius);
+    box.max_vert = center + glm::vec3(radius, radius, radius);
     return box;
 }
 
@@ -144,8 +144,8 @@ Box Plane::bounding_box()
 {
     Box box;
     // Assume the plane is infinite, so return a large bounding box
-    box.tl = glm::vec3(-1e9, -1e9, -1e9);
-    box.br = glm::vec3(1e9, 1e9, 1e9);
+    box.min_vert = glm::vec3(-1e9, -1e9, -1e9);
+    box.max_vert = glm::vec3(1e9, 1e9, 1e9);
     return box;
 }
 
@@ -156,8 +156,8 @@ bool AxisAlignedBox::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord&
 
     glm::vec3 inv_direction = 1.0f / d;
 
-    glm::vec3 t0 = (box.tl - o) * inv_direction;
-    glm::vec3 t1 = (box.br - o) * inv_direction;
+    glm::vec3 t0 = (box.min_vert - o) * inv_direction;
+    glm::vec3 t1 = (box.max_vert - o) * inv_direction;
 
     glm::vec3 tmin = glm::min(t0, t1);
     glm::vec3 tmax = glm::max(t0, t1);
@@ -188,21 +188,21 @@ bool AxisAlignedBox::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord&
     glm::vec3 os_pos = o + os_t * d;
     glm::vec3 os_normal;
 
-    if (glm::abs(os_pos.x - box.tl.x) < EPS)
+    if (glm::abs(os_pos.x - box.min_vert.x) < EPS)
         os_normal = glm::vec3(-1, 0, 0);
-    else if (glm::abs(os_pos.x - box.br.x) < EPS)
+    else if (glm::abs(os_pos.x - box.max_vert.x) < EPS)
         os_normal = glm::vec3(1, 0, 0);
-    else if (glm::abs(os_pos.y - box.tl.y) < EPS)
+    else if (glm::abs(os_pos.y - box.min_vert.y) < EPS)
         os_normal = glm::vec3(0, -1, 0);
-    else if (glm::abs(os_pos.y - box.br.y) < EPS)
+    else if (glm::abs(os_pos.y - box.max_vert.y) < EPS)
         os_normal = glm::vec3(0, 1, 0);
-    else if (glm::abs(os_pos.z - box.tl.z) < EPS)
+    else if (glm::abs(os_pos.z - box.min_vert.z) < EPS)
         os_normal = glm::vec3(0, 0, -1);
-    else if (glm::abs(os_pos.z - box.br.z) < EPS)
+    else if (glm::abs(os_pos.z - box.max_vert.z) < EPS)
         os_normal = glm::vec3(0, 0, 1);
 
-    bool ray_originated_in_object = (box.tl.x - EPS < o.x && box.br.x + EPS > o.x && box.tl.y - EPS < o.y &&
-                                     box.br.y + EPS > o.y && box.tl.z - EPS < o.z && box.br.z + EPS > o.z);
+    bool ray_originated_in_object = (box.min_vert.x - EPS < o.x && box.max_vert.x + EPS > o.x && box.min_vert.y - EPS < o.y &&
+                                     box.max_vert.y + EPS > o.y && box.min_vert.z - EPS < o.z && box.max_vert.z + EPS > o.z);
 
     populate_hitrecord(ws_ray, os_ray, os_pos, os_normal, ray_originated_in_object, *this, rec);
     return true;
@@ -248,8 +248,8 @@ bool Triangle::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) 
 Box Triangle::bounding_box()
 {
     Box box;
-    box.tl = glm::min(glm::min(p0, p1), p2);
-    box.br = glm::max(glm::max(p0, p1), p2);
+    box.min_vert = glm::min(glm::min(p0, p1), p2);
+    box.max_vert = glm::max(glm::max(p0, p1), p2);
     return box;
 }
 

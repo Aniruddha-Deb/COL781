@@ -84,7 +84,7 @@ class CornellBoxScene : public Scene
         // spheres.push_back(refractive_sphere);
 
         AxisAlignedBox refractive_box =
-            AxisAlignedBox({.tl = glm::vec3(-.5f, -2.0f, -.5f), .br = glm::vec3(.5f, .5f, .5f)}, glass_material);
+            AxisAlignedBox({.min_vert = glm::vec3(-.5f, -2.0f, -.5f), .max_vert = glm::vec3(.5f, .5f, .5f)}, glass_material);
         glm::mat4x4 box_rotate = glm::rotate(glm::mat4x4(1.f), glm::radians(45.f), glm::vec3(0.f, 1.f, 0.f));
         glm::mat4x4 box_translate = glm::translate(glm::mat4x4(1.f), glm::vec3(3.f, 0.f, -2.f));
         refractive_box.transform(box_rotate);

@@ -18,8 +18,8 @@ glm::vec3 tone_map(glm::vec3 color)
     return glm::min(glm::vec3(1.f, 1.f, 1.f), color);
 }
 
-Renderer::Renderer(Window &_w, Scene &_s, int _spp, bool _path_traced, int _curr_sample_no)
-    : win{_w}, scene{_s}, spp{_spp}, path_traced{_path_traced}, curr_sample_no{_curr_sample_no}
+Renderer::Renderer(Window &_w, Scene &_s, int _spp, bool _path_traced)
+    : win{_w}, scene{_s}, spp{_spp}, path_traced{_path_traced}, curr_sample_no{0}
 {
     framebuffer = SDL_CreateRGBSurface(0, win.w, win.h, 32, 0xFF000000, 0x00FF0000, 0x0000FF00, 0);
     if (path_traced)

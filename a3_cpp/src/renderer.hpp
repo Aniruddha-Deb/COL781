@@ -20,7 +20,7 @@ class Renderer
     bool path_traced;
 
   public:
-    Renderer(Window& w, Scene& s, int _spp = 1, bool path_traced = false, int _curr_sample_no = 0);
+    Renderer(Window& w, Scene& s, int _spp = 1, bool path_traced = false);
     ~Renderer();
 
     void render();
