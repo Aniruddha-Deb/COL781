@@ -36,7 +36,7 @@ class CornellBoxScene : public Scene
     {
         LightSource l1(glm::vec3(0.f, 1.f, -3.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
         LightSource l2(glm::vec3(0.f, 0.f, -3.f), glm::vec3(1.f, 1.f, 1.f), 10.f);
-        // point_lights.push_back(l1);
+        point_lights.push_back(l1);
         point_lights.push_back(l2);
 
         std::shared_ptr<Material> white_wall_material = std::make_shared<DiffuseMaterial>(glm::vec3(.5f, .5f, .5f));
@@ -80,10 +80,10 @@ class CornellBoxScene : public Scene
         }
 
         Mesh m(green_wall_material);
-        // glm::mat4x4 scale = glm::scale(glm::mat4x4(1.f), glm::vec3(2.f, 2.f, 2.f));
-        glm::mat4x4 translate = glm::translate(glm::mat4x4(1.f), glm::vec3(0.f, -1.f, -3.9f));
-        m.load_from_file("meshes/cube.obj");
-        // m.transform(scale);
+        glm::mat4x4 scale = glm::scale(glm::mat4x4(1.f), glm::vec3(2.f, 2.f, 2.f));
+        glm::mat4x4 translate = glm::translate(glm::mat4x4(1.f), glm::vec3(0.f, -.4f, -2.f));
+        m.load_from_file("meshes/bunny-1k.obj");
+        m.transform(scale);
         m.transform(translate);
         meshes.push_back(m);
         cdebug << "Verts: " << m.verts.size() << std::endl;
