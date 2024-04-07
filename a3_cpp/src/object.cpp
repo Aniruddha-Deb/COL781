@@ -291,6 +291,12 @@ void Mesh::load_from_file(std::string objfile_path)
             glm::vec3 v;
             iss >> v.x >> v.y >> v.z;
             verts.push_back(v);
+            bbox.min_vert.x = glm::min(bbox.min_vert.x, v.x);
+            bbox.min_vert.y = glm::min(bbox.min_vert.y, v.y);
+            bbox.min_vert.z = glm::min(bbox.min_vert.z, v.z);
+            bbox.max_vert.x = glm::max(bbox.max_vert.x, v.x);
+            bbox.max_vert.y = glm::max(bbox.max_vert.y, v.y);
+            bbox.max_vert.z = glm::max(bbox.max_vert.z, v.z);
         }
         else if (token == "f")
         {
@@ -312,55 +318,39 @@ void Mesh::load_from_file(std::string objfile_path)
 
 Box Mesh::bounding_box()
 {
-    return {glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f)};
+    return bbox;
 }
 
 bool Mesh::hit(const Ray& ws_ray, float t_min, float t_max, HitRecord& rec) const
 {
     Ray os_ray = ray_ws_to_os(ws_ray, *this);
     glm::vec3 o = os_ray.o, d = os_ray.d;
+    HitInfo info, min_hit_info;
+    HitRecord temp_rec;
 
-    float min_t = std::numeric_limits<float>::max();
-    glm::vec3 os_pos, os_normal;
+    if (!aabb_hit_test(os_ray, false, bbox, info)) return false;
+
+    min_hit_info.t = std::numeric_limits<float>::max();
     bool hit = false;
 
     for (const glm::ivec3& tri : idxs)
     {
 
-        glm::vec3 p0 = verts[tri[0]], p1 = verts[tri[1]], p2 = verts[tri[2]];
-        glm::vec3 e1 = p1 - p0;
-        glm::vec3 e2 = p2 - p0;
-        // std::cout << vec3_to_str(e1) << " " << vec3_to_str(e2) << "\n";
-        glm::vec3 pvec = glm::cross(d, e2);
-        float det = glm::dot(e1, pvec);
-        if (glm::abs(det) < EPS)
-            continue;
-        float inv_det = 1.0f / det;
-        glm::vec3 tvec = o - p0;
-        float u = glm::dot(tvec, pvec) * inv_det;
-        if (u < 0.0f || u > 1.0f)
-            continue;
-        glm::vec3 qvec = glm::cross(tvec, e1);
-        float v = glm::dot(d, qvec) * inv_det;
-        if (v < 0.0f || u + v > 1.0f)
-            continue;
-        float t = glm::dot(e2, qvec) * inv_det;
-        if (t < t_min || t > t_max)
-            continue;
-
-        if (t < min_t)
-        {
-            // we've hit the tri here.
+        // glm::vec3 p0 = verts[tri[0]], p1 = verts[tri[1]], p2 = verts[tri[2]];
+        glm::vec3 tri_verts[3] = {verts[tri[0]], verts[tri[1]], verts[tri[2]]};
+        if (!triangle_hit_test(os_ray, tri_verts, info)) continue;
+        glm::vec3 ws_pos = point_os_to_ws(info.os_pos, *this);
+        float ws_t = glm::length(ws_pos - ws_ray.o);
+        if (ws_t < t_min || ws_t > t_max) continue;
+        if (ws_t < min_hit_info.t) {
             hit = true;
-            os_pos = o + t * d;
-            os_normal = glm::normalize(glm::cross(e2, e1));
-            min_t = t;
+            min_hit_info = info;
         }
     }
 
     if (hit)
     {
-        populate_hitrecord(ws_ray, os_ray, os_pos, os_normal, false, *this, rec);
+        populate_hitrecord(ws_ray, os_ray, info.os_pos, info.os_normal, false, *this, rec);
         return true;
     }
     return false;

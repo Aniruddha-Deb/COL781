@@ -80,37 +80,16 @@ class CornellBoxScene : public Scene
         }
 
         Mesh m(green_wall_material);
-        glm::mat4x4 scale = glm::scale(glm::mat4x4(1.f), glm::vec3(3.f, 3.f, 3.f));
+        // glm::mat4x4 scale = glm::scale(glm::mat4x4(1.f), glm::vec3(2.f, 2.f, 2.f));
         glm::mat4x4 translate = glm::translate(glm::mat4x4(1.f), glm::vec3(0.f, -1.f, -3.5f));
-        m.load_from_file("meshes/bunny-1k.obj");
-        m.transform(scale);
+        m.load_from_file("meshes/cube.obj");
+        // m.transform(scale);
         m.transform(translate);
         meshes.push_back(m);
-        cdebug << m.verts.size() << std::endl;
-        cdebug << m.idxs.size() << std::endl;
-
-        for (const auto& vert : m.verts) {
-            std::cout << vec3_to_str(vert) << std::endl;
-        }
-
-        for (const auto& idx : m.idxs) {
-            std::cout << vec3_to_str(idx) << std::endl;
-        }
-
-        // Sphere reflective_sphere = Sphere(glm::vec3(-.75f, -.5f, -5.f), .75f, copper_material);
-        // glm::mat4x4 scale_y_by_2 = glm::scale(glm::mat4x4(1.f), glm::vec3(1.f, 2.f, 1.f));
-        // reflective_sphere.transform(scale_y_by_2);
-        // Sphere refractive_sphere = Sphere(glm::vec3(.75f, -1.25f, -4.f), .75f, glass_material);
-        // spheres.push_back(reflective_sphere);
-        // spheres.push_back(refractive_sphere);
-
-        // AxisAlignedBox refractive_box =
-        //     AxisAlignedBox({.min_vert = glm::vec3(0.f, -2.f, -5.f), .max_vert = glm::vec3(1.f, 0.f, -4.5f)}, glass_material);
-        // boxes.push_back(refractive_box);
+        cdebug << "Verts: " << m.verts.size() << std::endl;
+        cdebug << "Faces: " << m.idxs.size() << std::endl;
 
         objects.insert(objects.end(), walls.begin(), walls.end());
-        // objects.insert(objects.end(), spheres.begin(), spheres.end());
-        // objects.insert(objects.end(), boxes.begin(), boxes.end());
         objects.insert(objects.end(), meshes.begin(), meshes.end());
         lights.insert(lights.end(), point_lights.begin(), point_lights.end());
     }
