@@ -2,4 +2,5 @@ build/
 *.o
 *.out
 *settings.json
+compile_flags.txt
 .vscode/
