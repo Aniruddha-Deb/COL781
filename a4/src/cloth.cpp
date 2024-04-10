@@ -25,7 +25,16 @@ Cloth::Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w,
         }
     }
     vert_velocity.resize(res_w * res_h, glm::vec3(0.0f, 0.0f, 0.0f));
-    vert_normals.resize(res_w * res_h, glm::vec3(0.0f, 0.0f, 0.0f));
+    vert_normals.resize(res_w * res_h, glm::vec3(0.0f, 0.0f, 1.0f));
+    faces.resize((res_w - 1) * (res_h - 1));
+    for (int i = 0; i < res_h - 1; i++)
+    {
+        for (int j = 0; j < res_w - 1; j++)
+        {
+            faces.push_back(glm::ivec3(i * res_w + j, i * res_w + j + 1, (i + 1) * res_w + j + 1));
+            faces.push_back(glm::ivec3(i * res_w + j, (i + 1) * res_w + j + 1, (i + 1) * res_w + j));
+        }
+    }
 }
 
 void Cloth::fix_vertex(int row, int col)

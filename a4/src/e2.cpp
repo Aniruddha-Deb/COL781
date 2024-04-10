@@ -22,7 +22,7 @@ CameraControl camCtl;
 
 void initializeScene()
 {
-    object = r.createObject();
+
     vertices[0] = vec3(0, 0, 1);
     vertices[1] = vec3(1, 0, 1);
     vertices[2] = vec3(1, 0, 0);
@@ -61,15 +61,28 @@ int main()
         return EXIT_FAILURE;
     }
     camCtl.initialize(width, height);
-    camCtl.camera.setCameraView(vec3(0.5, -0.5, 1.5), vec3(0.5, -0.5, 0.0), vec3(0.0, 1.0, 0.0));
+    camCtl.camera.setCameraView(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f), vec3(0.0, 1.0, 0.0));
     program = r.createShaderProgram(r.vsBlinnPhong(), r.fsBlinnPhong());
 
-    initializeScene();
+    // initializeScene();
+
+    object = r.createObject();
+    Cloth cloth(glm::vec3(-0.5f, 0.5f, -1.0f), glm::vec3(0.5f, 0.5f, -1.0f), glm::vec3(0.5f, -0.5f, -1.0f),
+                glm::vec3(-0.5f, -0.5f, -1.0f), 10, 10, 0.1, 0.07, 0.01, 0.1, SDL_GetTicks64() * 1e-3);
+    for (int i = 0; i < cloth.res_w; i++)
+    {
+        cloth.fix_vertex(0, i);
+    }
+    vertexBuf = r.createVertexAttribs(object, 0, cloth.vert_pos.size(), cloth.vert_pos.data());
+    normalBuf = r.createVertexAttribs(object, 1, cloth.vert_normals.size(), cloth.vert_normals.data());
+    r.createTriangleIndices(object, cloth.faces.size(), cloth.faces.data());
 
     while (!r.shouldQuit())
     {
         float t = SDL_GetTicks64() * 1e-3;
-        updateScene(t);
+        cloth.update(t);
+        // r.updateVertexAttribs(vertexBuf, cloth.vert_pos.size(), cloth.vert_pos.data());
+        // r.updateVertexAttribs(normalBuf, cloth.vert_normals.size(), cloth.vert_normals.data());
 
         camCtl.update();
         Camera &camera = camCtl.camera;
