@@ -68,7 +68,7 @@ int main()
 
     object = r.createObject();
     Cloth cloth(glm::vec3(-0.5f, 0.5f, -1.0f), glm::vec3(0.5f, 0.5f, -1.0f), glm::vec3(0.5f, -0.5f, -1.0f),
-                glm::vec3(-0.5f, -0.5f, -1.0f), 10, 10, 0.1, 0.07, 0.01, 0.1, SDL_GetTicks64() * 1e-3);
+                glm::vec3(-0.5f, -0.5f, -1.0f), 10, 10, 100000.0f, 7, 1, 100, SDL_GetTicks64() * 1e-3);
     for (int i = 0; i < cloth.res_w; i++)
     {
         cloth.fix_vertex(0, i);
@@ -81,8 +81,8 @@ int main()
     {
         float t = SDL_GetTicks64() * 1e-3;
         cloth.update(t);
-        // r.updateVertexAttribs(vertexBuf, cloth.vert_pos.size(), cloth.vert_pos.data());
-        // r.updateVertexAttribs(normalBuf, cloth.vert_normals.size(), cloth.vert_normals.data());
+        r.updateVertexAttribs(vertexBuf, cloth.vert_pos.size(), cloth.vert_pos.data());
+        r.updateVertexAttribs(normalBuf, cloth.vert_normals.size(), cloth.vert_normals.data());
 
         camCtl.update();
         Camera &camera = camCtl.camera;
