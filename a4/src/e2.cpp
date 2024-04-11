@@ -61,14 +61,14 @@ int main()
         return EXIT_FAILURE;
     }
     camCtl.initialize(width, height);
-    camCtl.camera.setCameraView(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f), vec3(0.0, 1.0, 0.0));
+    camCtl.camera.setCameraView(vec3(0.0f, -1.0f, 0.0f), vec3(0.0f, -1.0f, -1.0f), vec3(0.0, 1.0, 0.0));
     program = r.createShaderProgram(r.vsBlinnPhong(), r.fsBlinnPhong());
 
     // initializeScene();
 
     object = r.createObject();
     Cloth cloth(glm::vec3(-0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -1.0f),
-                glm::vec3(-0.5f, 0.0f, -1.0f), 10, 10, 10000.0f, 500.0f, 100.0f, 100, SDL_GetTicks64() * 1e-3);
+                glm::vec3(-0.5f, 0.0f, -1.0f), 10, 10, 1.0f, 0.05f, 0.01f, 1e-3, SDL_GetTicks64() * 1e-3);
     for (int i = 0; i < cloth.res_w; i++)
     {
         cloth.fix_vertex(0, i);
