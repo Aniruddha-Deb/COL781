@@ -5,7 +5,7 @@
 class Cloth
 {
   public:
-    int w, h;
+    float w, h;
     int res_w, res_h;
     float k_struct, k_shear, k_bend;
     float mass;

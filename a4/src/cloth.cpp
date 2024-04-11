@@ -46,6 +46,7 @@ glm::vec3 Cloth::structural_force(int row, int col)
 {
     float spacing_w = w / (res_w - 1);
     float spacing_h = h / (res_h - 1);
+    // std::cout << spacing_w << " " << glm::distance(vert_pos[0], vert_pos[1]) << "\n";
     int idx = row * res_w + col;
     glm::vec3 force(0.0f, 0.0f, 0.0f);
     if (row > 0)
