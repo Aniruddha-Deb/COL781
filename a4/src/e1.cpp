@@ -14,6 +14,8 @@ GL::Object object;
 GL::AttribBuf vertexBuf, normalBuf;
 
 CameraControl camCtl;
+std::vector<vec3> verts;
+std::vector<ivec3> tris;
 
 Timeline timeline;
 
@@ -47,7 +49,16 @@ void create_body() {
     timeline.model.push_back({limb_mesh, l_upper_leg_bone});
     timeline.model.push_back({limb_mesh, l_lower_leg_bone});
 
-    timeline.frames.push_back({0.f, glm::vec3(0.f, 0.f, 0.f), std::vector<float>(timeline.model.size(), 0.f)});
+    std::vector<float> rot_vec(timeline.model.size(), 0.f);
+    rot_vec[2] = glm::radians(45.f);
+    rot_vec[3] = glm::radians(-45.f);
+
+    std::vector<float> rot_vec_2(timeline.model.size(), 0.f);
+    rot_vec[2] = glm::radians(-45.f);
+    rot_vec[3] = glm::radians(45.f);
+
+    timeline.add_frame({0.f, glm::vec3(0.f, 0.f, 0.f), rot_vec});
+    timeline.add_frame({1.f, glm::vec3(0.f, 0.f, 0.f), rot_vec_2});
 }
 
 void initializeScene()
@@ -55,8 +66,6 @@ void initializeScene()
     // TODO create timeline
     create_body();
     object = r.createObject();
-    std::vector<vec3> verts;
-    std::vector<ivec3> tris;
     timeline.request_frame(0, verts, tris);
     vertexBuf = r.createVertexAttribs(object, 0, verts.size(), verts.data());
     r.createTriangleIndices(object, tris.size(), tris.data());
@@ -65,8 +74,8 @@ void initializeScene()
 void updateScene(float t)
 {
     // TODO update timeline
-    std::vector<vec3> verts;
-    std::vector<ivec3> tris;
+    verts.clear();
+    tris.clear();
     timeline.request_frame(t, verts, tris);
     r.updateVertexAttribs(vertexBuf, verts.size(), verts.data());
     //r.updateVertexAttribs(normalBuf, nv, normals);

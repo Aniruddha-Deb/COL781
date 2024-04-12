@@ -16,8 +16,16 @@ glm::quat Bone::world_rot_quat() {
     return rot_quat;
 }
 
+glm::vec3 quat_to_vec3(glm::quat q) {
+    return glm::vec3(q.x, q.y, q.z);
+}
+
+glm::vec3 rotate_pt(glm::vec3 pt, glm::quat q) {
+    return quat_to_vec3(q * glm::quat(0.f, pt) * glm::conjugate(q));
+}
+
 glm::vec3 Bone::world_attachment_pos() {
-    if (parent) return parent->world_attachment_pos() + attachment_pos;
+    if (parent) return parent->world_attachment_pos() + rotate_pt(attachment_pos, parent->world_rot_quat());
     return attachment_pos;
 }
 
