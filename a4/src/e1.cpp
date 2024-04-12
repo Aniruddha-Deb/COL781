@@ -49,16 +49,45 @@ void create_body() {
     timeline.model.push_back({limb_mesh, l_upper_leg_bone});
     timeline.model.push_back({limb_mesh, l_lower_leg_bone});
 
-    std::vector<float> rot_vec(timeline.model.size(), 0.f);
-    rot_vec[2] = glm::radians(45.f);
-    rot_vec[3] = glm::radians(-45.f);
+    std::vector<float> rv0(timeline.model.size(), 0.f);
+    rv0[2] = glm::radians(-15.f);
+    rv0[4] = glm::radians(15.f);
+    rv0[8] = glm::radians(-45.f);
+    rv0[9] = glm::radians(30.f);
 
-    std::vector<float> rot_vec_2(timeline.model.size(), 0.f);
-    rot_vec_2[2] = glm::radians(-45.f);
-    rot_vec_2[3] = glm::radians(45.f);
+    std::vector<float> rv1(timeline.model.size(), 0.f);
+    rv1[2] = glm::radians(-30.f);
+    rv1[3] = glm::radians(-30.f);
+    rv1[4] = glm::radians(30.f);
+    rv1[5] = glm::radians(-30.f);
+    rv1[6] = glm::radians(30.f);
+    rv1[8] = glm::radians(-30.f);
 
-    timeline.add_frame({0.f, glm::vec3(0.f, 0.f, 0.f), rot_vec});
-    timeline.add_frame({2.f, glm::vec3(0.f, 0.f, 0.f), rot_vec_2});
+    std::vector<float> rv2(timeline.model.size(), 0.f);
+    rv2[2] = glm::radians(15.f);
+    rv2[4] = glm::radians(-15.f);
+    rv2[6] = glm::radians(-45.f);
+    rv2[7] = glm::radians(30.f);
+
+    std::vector<float> rv3(timeline.model.size(), 0.f);
+    rv3[2] = glm::radians(30.f);
+    rv3[3] = glm::radians(-30.f);
+    rv3[4] = glm::radians(-30.f);
+    rv3[5] = glm::radians(-30.f);
+    rv3[6] = glm::radians(-30.f);
+    rv3[8] = glm::radians(30.f);
+
+    std::vector<float> rv4(timeline.model.size(), 0.f);
+    rv4[2] = glm::radians(-15.f);
+    rv4[4] = glm::radians(15.f);
+    rv4[8] = glm::radians(-45.f);
+    rv4[9] = glm::radians(30.f);
+
+    timeline.add_frame({0.f, glm::vec3(0.f, 0.f, 0.f), rv0});
+    timeline.add_frame({1.f, glm::vec3(0.f, 0.f, 1.f), rv1});
+    timeline.add_frame({2.f, glm::vec3(0.f, 0.f, 2.f), rv2});
+    timeline.add_frame({3.f, glm::vec3(0.f, 0.f, 3.f), rv3});
+    timeline.add_frame({4.f, glm::vec3(0.f, 0.f, 4.f), rv4});
 }
 
 void initializeScene()
