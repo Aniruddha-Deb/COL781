@@ -8,7 +8,7 @@ float estimate_derivative(float q0, float q1, float q2, float t0, float t1, floa
     float dq1 = q1 - q0;
     float dq2  = q2 - q1;
 
-    return (dt1/(dt1 + dt2)) * (dq1/dt1 + dq2/dt2) + dq1/dt1;
+    return (dt1/(dt1 + dt2)) * (dq2/dt2 - dq1/dt1) + dq1/dt1;
 }
 
 glm::vec3 estimate_derivative(glm::vec3 q0, glm::vec3 q1, glm::vec3 q2, float t0, float t1, float t2) {
@@ -18,7 +18,7 @@ glm::vec3 estimate_derivative(glm::vec3 q0, glm::vec3 q1, glm::vec3 q2, float t0
     glm::vec3 dq1 = q1 - q0;
     glm::vec3 dq2  = q2 - q1;
 
-    return (dt1/(dt1 + dt2)) * (dq1/dt1 + dq2/dt2) + dq1/dt1;
+    return (dt1/(dt1 + dt2)) * (dq2/dt2 - dq1/dt1) + dq1/dt1;
 }
 
 float cubic_hermite(float u, float q0, float q1, float qp0, float qp1) {
@@ -60,7 +60,7 @@ Keyframe compute_frame_derivative(Keyframe& k0, Keyframe& k1, Keyframe& k2) {
 }
 
 Keyframe interpolate_frame_catmull_rom(float time, Keyframe& k0, Keyframe& k1, Keyframe& kp0, Keyframe& kp1) {
-    float u = (time - k0.time) / (k0.time - k1.time);
+    float u = (time - k0.time) / (k1.time - k0.time);
 
     Keyframe k;
     k.time = time;
@@ -88,18 +88,17 @@ void Timeline::add_frame(Keyframe frame) {
             frame_derivatives[0].bone_rotations[i] = frame_derivatives[1].bone_rotations[i] = 
                 frames[1].bone_rotations[i] - frames[0].bone_rotations[i];
         }
-        // std::cout << "Added frame\n";
     }
     else {
         int n = frames.size();
         frames.push_back(frame);
         frame_derivatives.push_back(frame);
 
-        frame_derivatives[n].root_bone_pos = frames[n-1].root_bone_pos - frames[n].root_bone_pos;
+        frame_derivatives[n].root_bone_pos = frames[n].root_bone_pos - frames[n-1].root_bone_pos;
 
         for (int i=0; i<frame.bone_rotations.size(); i++) {
-            frame_derivatives[n].bone_rotations[i] = frame_derivatives[1].bone_rotations[i] = 
-                frames[n-1].bone_rotations[i] - frames[n-1].bone_rotations[i];
+            frame_derivatives[n].bone_rotations[i] =
+                frames[n].bone_rotations[i] - frames[n-1].bone_rotations[i];
         }
 
         frame_derivatives[n-1] = compute_frame_derivative(frames[n-2], frames[n-1], frames[n]);
@@ -116,7 +115,7 @@ Keyframe Timeline::interpolate_frame(float time) {
         });
     int idx = it - frames.begin();
 
-    Keyframe frame = frames[idx];
+    Keyframe frame = frames[idx-1];
     if (frames.size() > 1) {
         frame = interpolate_frame_catmull_rom(time, frames[idx-1], frames[idx], frame_derivatives[idx-1], frame_derivatives[idx]);
     }

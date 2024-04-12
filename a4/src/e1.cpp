@@ -54,11 +54,11 @@ void create_body() {
     rot_vec[3] = glm::radians(-45.f);
 
     std::vector<float> rot_vec_2(timeline.model.size(), 0.f);
-    rot_vec[2] = glm::radians(-45.f);
-    rot_vec[3] = glm::radians(45.f);
+    rot_vec_2[2] = glm::radians(-45.f);
+    rot_vec_2[3] = glm::radians(45.f);
 
     timeline.add_frame({0.f, glm::vec3(0.f, 0.f, 0.f), rot_vec});
-    timeline.add_frame({1.f, glm::vec3(0.f, 0.f, 0.f), rot_vec_2});
+    timeline.add_frame({2.f, glm::vec3(0.f, 0.f, 0.f), rot_vec_2});
 }
 
 void initializeScene()
@@ -96,8 +96,8 @@ int main()
 
     while (!r.shouldQuit())
     {
-        SDL_Delay(50);
         float t = SDL_GetTicks64() * 1e-3;
+        // std::cout << t << std::endl;
         updateScene(t);
 
         camCtl.update();
