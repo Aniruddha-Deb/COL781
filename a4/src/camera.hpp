@@ -35,11 +35,6 @@ namespace COL781 {
 		float deltaAngleX, deltaAngleY;
 	};
 
-	class Mesh {
-	public:
-		bool initialize(int nv, int nt);
-	};
-
 }
 
 #endif
