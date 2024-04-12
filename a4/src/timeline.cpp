@@ -1,5 +1,6 @@
 #include "timeline.hpp"
 #include <iostream>
+#include <algorithm>
 
 float estimate_derivative(float q0, float q1, float q2, float t0, float t1, float t2) {
     float dt1 = t1 - t0;
