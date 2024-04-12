@@ -7,7 +7,7 @@ constexpr float GRAVITY = 1;
 
 Cloth::Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w, int _res_h, float _k_struct,
              float _k_shear, float _k_bend, float _mass, float _time)
-    : res_w{_res_w}, res_h{_res_h}, k_struct{_k_struct}, k_shear{_k_shear}, k_bend{_k_bend}, damp_factor{0.01},
+    : res_w{_res_w}, res_h{_res_h}, k_struct{_k_struct}, k_shear{_k_shear}, k_bend{_k_bend}, damp_factor{0.02},
       mass{_mass}, time{_time}
 {
     assert(glm::distance(p1, p2) == glm::distance(p3, p4));
