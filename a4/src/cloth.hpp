@@ -8,6 +8,7 @@ class Cloth
     float w, h;
     int res_w, res_h;
     float k_struct, k_shear, k_bend;
+    float damp_factor;
     float mass;
     float time;
     std::vector<glm::vec3> vert_normals;

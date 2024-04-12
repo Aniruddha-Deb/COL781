@@ -67,8 +67,14 @@ int main()
     // initializeScene();
 
     object = r.createObject();
+    // Cloth cloth(glm::vec3(-0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -1.0f),
+    //             glm::vec3(-0.5f, 0.0f, -1.0f), 20, 20, 1.0f, 0.5f, 0.1f, 1e-3, SDL_GetTicks64() * 1e-3);
+    float k_struct = 1.0f;
+    float k_shear = 0.5f;
+    float k_bend = 0.1f;
+    float mass = 1e-3;
     Cloth cloth(glm::vec3(-0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -1.0f),
-                glm::vec3(-0.5f, 0.0f, -1.0f), 10, 10, 1.0f, 0.05f, 0.01f, 1e-3, SDL_GetTicks64() * 1e-3);
+                glm::vec3(-0.5f, 0.0f, -1.0f), 20, 20, k_struct, k_shear, k_bend, mass, SDL_GetTicks64() * 1e-3);
     for (int i = 0; i < cloth.res_w; i++)
     {
         cloth.fix_vertex(0, i);
