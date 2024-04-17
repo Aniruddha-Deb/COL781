@@ -7,7 +7,7 @@ constexpr float GRAVITY = 1;
 
 Cloth::Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w, int _res_h, float _k_struct,
              float _k_shear, float _k_bend, float _mass, float _time)
-    : res_w{_res_w}, res_h{_res_h}, k_struct{_k_struct}, k_shear{_k_shear}, k_bend{_k_bend}, damp_factor{0.02},
+    : res_w{_res_w}, res_h{_res_h}, k_struct{_k_struct}, k_shear{_k_shear}, k_bend{_k_bend}, damp_factor{0.04},
       mass{_mass}, time{_time}
 {
     assert(glm::distance(p1, p2) == glm::distance(p3, p4));
@@ -27,6 +27,36 @@ Cloth::Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w,
     }
     vert_velocity.resize(res_w * res_h, glm::vec3(0.0f, 0.0f, 0.0f));
     vert_normals.resize(res_w * res_h, glm::vec3(0.0f, 0.0f, 1.0f));
+    for (int i = 0; i < res_h; i++)
+    {
+        for (int j = 0; j < res_w; j++)
+        {
+            if (i > 0 && j > 0)
+            {
+                vert_normals[i * res_w + j] =
+                    glm::normalize(glm::cross(vert_pos[(i - 1) * res_w + j] - vert_pos[i * res_w + j],
+                                              vert_pos[(i - 1) * res_w + j - 1] - vert_pos[i * res_w + j]));
+            }
+            else if (i > 0)
+            {
+                vert_normals[i * res_w + j] =
+                    glm::normalize(glm::cross(vert_pos[(i - 1) * res_w + j + 1] - vert_pos[i * res_w + j],
+                                              vert_pos[(i - 1) * res_w + j] - vert_pos[i * res_w + j]));
+            }
+            else if (j > 0)
+            {
+                vert_normals[i * res_w + j] =
+                    glm::normalize(glm::cross(vert_pos[(i + 1) * res_w + j - 1] - vert_pos[i * res_w + j],
+                                              vert_pos[(i + 1) * res_w + j] - vert_pos[i * res_w + j]));
+            }
+            else
+            {
+                vert_normals[i * res_w + j] =
+                    glm::normalize(glm::cross(vert_pos[(i + 1) * res_w + j] - vert_pos[i * res_w + j],
+                                              vert_pos[(i + 1) * res_w + j + 1] - vert_pos[i * res_w + j]));
+            }
+        }
+    }
     faces.resize((res_w - 1) * (res_h - 1));
     for (int i = 0; i < res_h - 1; i++)
     {
@@ -49,6 +79,14 @@ glm::vec3 Cloth::structural_force(int row, int col)
     float spacing_h = h / (res_h - 1);
     // std::cout << spacing_w << " " << glm::distance(vert_pos[0], vert_pos[1]) << "\n";
     int idx = row * res_w + col;
+    // if (row == 5)
+    // {
+    //     std::cout << glm::length(damp_factor *
+    //                              glm::dot(vert_velocity[idx] - vert_velocity[idx - res_w],
+    //                                       glm::normalize(vert_pos[idx] - vert_pos[idx - res_w])) *
+    //                              glm::normalize(vert_pos[idx] - vert_pos[idx - res_w]))
+    //               << "\n";
+    // }
     glm::vec3 force(0.0f, 0.0f, 0.0f);
     if (row > 0)
     {
@@ -186,6 +224,30 @@ void Cloth::update(float t)
     {
         for (int j = 0; j < res_w; j++)
         {
+            if (i > 0 && j > 0)
+            {
+                vert_normals[i * res_w + j] =
+                    glm::normalize(glm::cross(vert_pos[(i - 1) * res_w + j] - vert_pos[i * res_w + j],
+                                              vert_pos[(i - 1) * res_w + j - 1] - vert_pos[i * res_w + j]));
+            }
+            else if (i > 0)
+            {
+                vert_normals[i * res_w + j] =
+                    glm::normalize(glm::cross(vert_pos[(i - 1) * res_w + j + 1] - vert_pos[i * res_w + j],
+                                              vert_pos[(i - 1) * res_w + j] - vert_pos[i * res_w + j]));
+            }
+            else if (j > 0)
+            {
+                vert_normals[i * res_w + j] =
+                    glm::normalize(glm::cross(vert_pos[(i + 1) * res_w + j - 1] - vert_pos[i * res_w + j],
+                                              vert_pos[(i + 1) * res_w + j] - vert_pos[i * res_w + j]));
+            }
+            else
+            {
+                vert_normals[i * res_w + j] =
+                    glm::normalize(glm::cross(vert_pos[(i + 1) * res_w + j] - vert_pos[i * res_w + j],
+                                              vert_pos[(i + 1) * res_w + j + 1] - vert_pos[i * res_w + j]));
+            }
             if (fixed.find(i * res_w + j) != fixed.end())
             {
                 new_velocity[i * res_w + j] = glm::vec3(0.0f, 0.0f, 0.0f);

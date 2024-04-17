@@ -28,7 +28,7 @@ int main()
         return EXIT_FAILURE;
     }
     camCtl.initialize(width, height);
-    camCtl.camera.setCameraView(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, -0.5f, -1.0f), vec3(0.0, 1.0, 0.0));
+    camCtl.camera.setCameraView(vec3(-1.0f, 0.0f, -0.5f), vec3(0.0f, -0.5f, -1.5f), vec3(0.0, 1.0, 0.0));
     program = r.createShaderProgram(r.vsBlinnPhong(), r.fsBlinnPhong());
 
     // initializeScene();
@@ -36,9 +36,9 @@ int main()
     object = r.createObject();
     // Cloth cloth(glm::vec3(-0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -1.0f),
     //             glm::vec3(-0.5f, 0.0f, -1.0f), 20, 20, 1.0f, 0.5f, 0.1f, 1e-3, SDL_GetTicks64() * 1e-3);
-    float k_struct = 1.0f;
-    float k_shear = 0.5f;
-    float k_bend = 0.1f;
+    float k_struct = 5.0f;
+    float k_shear = 2.0f;
+    float k_bend = 0.6f;
     float mass = 1e-3;
     Cloth cloth(glm::vec3(-0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -1.0f),
                 glm::vec3(-0.5f, 0.0f, -1.0f), 20, 20, k_struct, k_shear, k_bend, mass, SDL_GetTicks64() * 1e-3);
@@ -46,18 +46,20 @@ int main()
     {
         cloth.fix_vertex(0, i);
     }
-    for (int i = 0; i < cloth.res_h; i++)
-    {
-        cloth.fix_vertex(i, 0);
-    }
     vertexBuf = r.createVertexAttribs(object, 0, cloth.vert_pos.size(), cloth.vert_pos.data());
     normalBuf = r.createVertexAttribs(object, 1, cloth.vert_normals.size(), cloth.vert_normals.data());
     r.createTriangleIndices(object, cloth.faces.size(), cloth.faces.data());
 
+    int interpolate = 15;
     while (!r.shouldQuit())
     {
         float t = SDL_GetTicks64() * 1e-3;
-        cloth.update(t);
+        float prev = cloth.time;
+
+        for (int i = 1; i <= interpolate; i++)
+        {
+            cloth.update(prev + i * ((t - prev) / interpolate));
+        }
         r.updateVertexAttribs(vertexBuf, cloth.vert_pos.size(), cloth.vert_pos.data());
         r.updateVertexAttribs(normalBuf, cloth.vert_normals.size(), cloth.vert_normals.data());
 

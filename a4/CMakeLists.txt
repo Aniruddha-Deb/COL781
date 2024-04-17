@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(a4)
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "-O3 -Wall")
 
 find_package(glm REQUIRED)
 find_package(OpenGL REQUIRED)
