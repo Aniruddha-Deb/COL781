@@ -7,7 +7,7 @@ constexpr float GRAVITY = 3;
 
 Cloth::Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w, int _res_h, float _k_struct,
              float _k_shear, float _k_bend, float _mass, float _time)
-    : res_w{_res_w}, res_h{_res_h}, k_struct{_k_struct}, k_shear{_k_shear}, k_bend{_k_bend}, damp_factor{0.04},
+    : res_w{_res_w}, res_h{_res_h}, k_struct{_k_struct}, k_shear{_k_shear}, k_bend{_k_bend}, damp_factor{0.05},
       mass{_mass}, spheres(), time{_time}
 {
     assert(glm::distance(p1, p2) == glm::distance(p3, p4));
@@ -216,28 +216,6 @@ void Cloth::update(float t)
 {
     std::vector<glm::vec3> new_velocity(res_w * res_h);
 
-    // Check collision
-    for (int i = 9; i < res_h; i++)
-    {
-        for (int j = 0; j < res_w; j++)
-        {
-            if (fixed.find(i * res_w + j) != fixed.end())
-            {
-                new_velocity[i * res_w + j] = glm::vec3(0.0f, 0.0f, 0.0f);
-                continue;
-            }
-            for (const auto& sphere_rw : spheres)
-            {
-                Sphere& sphere = sphere_rw.get();
-                if (glm::length(vert_pos[i * res_w + j] - sphere.center) <= sphere.radius)
-                {
-                    // collided
-                    // TODO: Write the collision formulas
-                    std::cout << "collided\n";
-                }
-            }
-        }
-    }
     for (int i = 0; i < res_h; i++)
     {
         for (int j = 0; j < res_w; j++)
@@ -264,6 +242,46 @@ void Cloth::update(float t)
         }
     }
     vert_velocity = new_velocity;
+    // Check collision
+    for (int i = 9; i < res_h; i++)
+    {
+        for (int j = 0; j < res_w; j++)
+        {
+            if (fixed.find(i * res_w + j) != fixed.end())
+            {
+                new_velocity[i * res_w + j] = glm::vec3(0.0f, 0.0f, 0.0f);
+                continue;
+            }
+            for (const auto& sphere_rw : spheres)
+            {
+                Sphere& sphere = sphere_rw.get();
+                if (glm::length(vert_pos[i * res_w + j] - sphere.center) <= sphere.radius)
+                {
+                    // collided
+                    // TODO: Write the collision formulas
+                    glm::vec3 c_point =
+                        sphere.center + sphere.radius * glm::normalize(vert_pos[i * res_w + j] - sphere.center);
+                    glm::vec3 c_velocity = sphere.velocity + glm::cross(sphere.ang_velocity, c_point - sphere.center);
+                    glm::vec3 c_normal = glm::normalize(c_point - sphere.center);
+                    glm::vec3 rel_vel = vert_velocity[i * res_w + j] - c_velocity;
+                    glm::vec3 normal_vel = glm::dot(c_normal, rel_vel) * c_normal;
+                    if (glm::dot(c_normal, rel_vel) < 0)
+                    {
+                        float normal_impulse = (1 + sphere.eps) * mass * glm::length(normal_vel);
+                        float tangential_impulse =
+                            -std::min(sphere.mu * normal_impulse, mass * glm::length(rel_vel - normal_vel));
+                        vert_velocity[i * res_w + j] =
+                            rel_vel +
+                            (normal_impulse * c_normal + tangential_impulse * glm::normalize(rel_vel - normal_vel)) /
+                                mass +
+                            c_velocity;
+                    }
+                    vert_pos[i * res_w + j] = c_point;
+                }
+            }
+        }
+    }
+    // vert_velocity = new_velocity;
     calculate_normals();
     time = t;
 }

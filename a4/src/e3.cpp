@@ -44,8 +44,8 @@ int main()
     float mass = 1e-3;
     Cloth cloth(glm::vec3(-0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -1.0f),
                 glm::vec3(-0.5f, 0.0f, -1.0f), 20, 20, k_struct, k_shear, k_bend, mass, SDL_GetTicks64() * 1e-3);
-    Sphere sphere(glm::vec3(0.0, -1.0f, -10.0f), 0.4f, glm::vec3(0.0f, 0.0f, 1.f), glm::vec3(1.0f, 0.0f, 0.0f), 0.0f,
-                  0.0f, SDL_GetTicks64() * 1e-3);
+    Sphere sphere(glm::vec3(0.0, -0.5f, -6.0f), 0.4f, glm::vec3(0.0f, 0.0f, 0.8f), glm::vec3(-1.0f, 0.0f, 0.0f), 0.5f,
+                  0.4f, SDL_GetTicks64() * 1e-3);
     for (int i = 0; i < cloth.res_w; i++)
     {
         cloth.fix_vertex(0, i);
@@ -66,8 +66,8 @@ int main()
 
         for (int i = 1; i <= interpolate; i++)
         {
-            cloth.update(prev + i * ((t - prev) / interpolate));
             sphere.update(prev + i * ((t - prev) / interpolate));
+            cloth.update(prev + i * ((t - prev) / interpolate));
         }
         r.updateVertexAttribs(vertexBuf1, cloth.vert_pos.size(), cloth.vert_pos.data());
         r.updateVertexAttribs(normalBuf1, cloth.vert_normals.size(), cloth.vert_normals.data());
