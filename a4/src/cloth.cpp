@@ -3,12 +3,12 @@
 
 #include "cloth.hpp"
 
-constexpr float GRAVITY = 1;
+constexpr float GRAVITY = 3;
 
 Cloth::Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w, int _res_h, float _k_struct,
              float _k_shear, float _k_bend, float _mass, float _time)
     : res_w{_res_w}, res_h{_res_h}, k_struct{_k_struct}, k_shear{_k_shear}, k_bend{_k_bend}, damp_factor{0.04},
-      mass{_mass}, time{_time}
+      mass{_mass}, spheres(), time{_time}
 {
     assert(glm::distance(p1, p2) == glm::distance(p3, p4));
     assert(glm::distance(p2, p3) == glm::distance(p4, p1));
@@ -27,6 +27,20 @@ Cloth::Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w,
     }
     vert_velocity.resize(res_w * res_h, glm::vec3(0.0f, 0.0f, 0.0f));
     vert_normals.resize(res_w * res_h, glm::vec3(0.0f, 0.0f, 1.0f));
+    calculate_normals();
+    faces.resize((res_w - 1) * (res_h - 1));
+    for (int i = 0; i < res_h - 1; i++)
+    {
+        for (int j = 0; j < res_w - 1; j++)
+        {
+            faces.push_back(glm::ivec3(i * res_w + j, i * res_w + j + 1, (i + 1) * res_w + j + 1));
+            faces.push_back(glm::ivec3(i * res_w + j, (i + 1) * res_w + j + 1, (i + 1) * res_w + j));
+        }
+    }
+}
+
+void Cloth::calculate_normals()
+{
     for (int i = 0; i < res_h; i++)
     {
         for (int j = 0; j < res_w; j++)
@@ -57,15 +71,6 @@ Cloth::Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w,
             }
         }
     }
-    faces.resize((res_w - 1) * (res_h - 1));
-    for (int i = 0; i < res_h - 1; i++)
-    {
-        for (int j = 0; j < res_w - 1; j++)
-        {
-            faces.push_back(glm::ivec3(i * res_w + j, i * res_w + j + 1, (i + 1) * res_w + j + 1));
-            faces.push_back(glm::ivec3(i * res_w + j, (i + 1) * res_w + j + 1, (i + 1) * res_w + j));
-        }
-    }
 }
 
 void Cloth::fix_vertex(int row, int col)
@@ -77,16 +82,7 @@ glm::vec3 Cloth::structural_force(int row, int col)
 {
     float spacing_w = w / (res_w - 1);
     float spacing_h = h / (res_h - 1);
-    // std::cout << spacing_w << " " << glm::distance(vert_pos[0], vert_pos[1]) << "\n";
     int idx = row * res_w + col;
-    // if (row == 5)
-    // {
-    //     std::cout << glm::length(damp_factor *
-    //                              glm::dot(vert_velocity[idx] - vert_velocity[idx - res_w],
-    //                                       glm::normalize(vert_pos[idx] - vert_pos[idx - res_w])) *
-    //                              glm::normalize(vert_pos[idx] - vert_pos[idx - res_w]))
-    //               << "\n";
-    // }
     glm::vec3 force(0.0f, 0.0f, 0.0f);
     if (row > 0)
     {
@@ -218,36 +214,34 @@ glm::vec3 Cloth::bending_force(int row, int col)
 
 void Cloth::update(float t)
 {
-    // TODO
     std::vector<glm::vec3> new_velocity(res_w * res_h);
+
+    // Check collision
+    for (int i = 9; i < res_h; i++)
+    {
+        for (int j = 0; j < res_w; j++)
+        {
+            if (fixed.find(i * res_w + j) != fixed.end())
+            {
+                new_velocity[i * res_w + j] = glm::vec3(0.0f, 0.0f, 0.0f);
+                continue;
+            }
+            for (const auto& sphere_rw : spheres)
+            {
+                Sphere& sphere = sphere_rw.get();
+                if (glm::length(vert_pos[i * res_w + j] - sphere.center) <= sphere.radius)
+                {
+                    // collided
+                    // TODO: Write the collision formulas
+                    std::cout << "collided\n";
+                }
+            }
+        }
+    }
     for (int i = 0; i < res_h; i++)
     {
         for (int j = 0; j < res_w; j++)
         {
-            if (i > 0 && j > 0)
-            {
-                vert_normals[i * res_w + j] =
-                    glm::normalize(glm::cross(vert_pos[(i - 1) * res_w + j] - vert_pos[i * res_w + j],
-                                              vert_pos[(i - 1) * res_w + j - 1] - vert_pos[i * res_w + j]));
-            }
-            else if (i > 0)
-            {
-                vert_normals[i * res_w + j] =
-                    glm::normalize(glm::cross(vert_pos[(i - 1) * res_w + j + 1] - vert_pos[i * res_w + j],
-                                              vert_pos[(i - 1) * res_w + j] - vert_pos[i * res_w + j]));
-            }
-            else if (j > 0)
-            {
-                vert_normals[i * res_w + j] =
-                    glm::normalize(glm::cross(vert_pos[(i + 1) * res_w + j - 1] - vert_pos[i * res_w + j],
-                                              vert_pos[(i + 1) * res_w + j] - vert_pos[i * res_w + j]));
-            }
-            else
-            {
-                vert_normals[i * res_w + j] =
-                    glm::normalize(glm::cross(vert_pos[(i + 1) * res_w + j] - vert_pos[i * res_w + j],
-                                              vert_pos[(i + 1) * res_w + j + 1] - vert_pos[i * res_w + j]));
-            }
             if (fixed.find(i * res_w + j) != fixed.end())
             {
                 new_velocity[i * res_w + j] = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -258,7 +252,6 @@ void Cloth::update(float t)
             new_velocity[i * res_w + j] = vert_velocity[i * res_w + j] + (t - time) * force / mass;
         }
     }
-    vert_velocity = new_velocity;
     for (int i = 0; i < res_h; i++)
     {
         for (int j = 0; j < res_w; j++)
@@ -270,5 +263,7 @@ void Cloth::update(float t)
             vert_pos[i * res_w + j] += (t - time) * vert_velocity[i * res_w + j];
         }
     }
+    vert_velocity = new_velocity;
+    calculate_normals();
     time = t;
 }
