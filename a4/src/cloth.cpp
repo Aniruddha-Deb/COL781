@@ -215,7 +215,8 @@ glm::vec3 Cloth::bending_force(int row, int col)
 void Cloth::update(float t)
 {
     std::vector<glm::vec3> new_velocity(res_w * res_h);
-
+    float spacing_w = w / (res_w - 1);
+    float spacing_h = h / (res_h - 1);
     for (int i = 0; i < res_h; i++)
     {
         for (int j = 0; j < res_w; j++)
@@ -243,7 +244,7 @@ void Cloth::update(float t)
     }
     vert_velocity = new_velocity;
     // Check collision
-    for (int i = 9; i < res_h; i++)
+    for (int i = 0; i < res_h; i++)
     {
         for (int j = 0; j < res_w; j++)
         {
@@ -252,6 +253,35 @@ void Cloth::update(float t)
                 new_velocity[i * res_w + j] = glm::vec3(0.0f, 0.0f, 0.0f);
                 continue;
             }
+            // for (int row = 0; row < res_h; row++)
+            // {
+            //     for (int col = 0; col < res_w; col++)
+            //     {
+            //         // std::cout << glm::length(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]) << "\n";
+            //         if (row == i || col == j)
+            //         {
+            //             continue;
+            //         }
+            //         if (glm::length(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]) <=
+            //             -10.0f * std::min(spacing_w, spacing_h))
+            //         {
+            //             glm::vec3 rel_vel = vert_velocity[i * res_w + j] - vert_velocity[row * res_w + col];
+            //             if (glm::dot(rel_vel, vert_pos[row * res_w + col] - vert_pos[i * res_w + j]) < 0)
+            //             {
+            //                 vert_velocity[i * res_w + j] =
+            //                     rel_vel +
+            //                     glm::dot(vert_velocity[i * res_w + j],
+            //                              glm::normalize(vert_pos[row * res_w + col] - vert_pos[i * res_w + j])) *
+            //                         glm::normalize(vert_pos[row * res_w + col] - vert_pos[i * res_w + j]) +
+            //                     vert_velocity[row * res_w + col];
+            //             }
+            //             vert_pos[i * res_w + j] =
+            //                 vert_pos[row * res_w + col] +
+            //                 1.0f * std::min(spacing_w, spacing_h) *
+            //                     glm::normalize(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]);
+            //         }
+            //     }
+            // }
             for (const auto& sphere_rw : spheres)
             {
                 Sphere& sphere = sphere_rw.get();
@@ -276,7 +306,30 @@ void Cloth::update(float t)
                                 mass +
                             c_velocity;
                     }
-                    vert_pos[i * res_w + j] = c_point;
+                    vert_pos[i * res_w + j] = c_point + c_normal * 0.01f;
+                }
+            }
+            for (const auto& plane_rw : planes)
+            {
+                Plane& plane = plane_rw.get();
+                if (fabs(glm::dot(plane.normal, plane.center - vert_pos[i * res_w + j])) <= 0.01)
+                {
+                    // collided
+                    // TODO: Write the collision formulas
+                    glm::vec3 c_point = vert_pos[i * res_w + j] -
+                                        glm::dot(plane.normal, vert_pos[i * res_w + j] - plane.center) * plane.normal;
+                    glm::vec3 normal_vel = glm::dot(plane.normal, vert_velocity[i * res_w + j]) * plane.normal;
+                    if (glm::dot(plane.normal, vert_velocity[i * res_w + j]) < 0)
+                    {
+                        float normal_impulse = (1 + plane.eps) * mass * glm::length(normal_vel);
+                        float tangential_impulse = -std::min(
+                            plane.mu * normal_impulse, mass * glm::length(vert_velocity[i * res_w + j] - normal_vel));
+                        vert_velocity[i * res_w + j] +=
+                            (normal_impulse * plane.normal +
+                             tangential_impulse * glm::normalize(vert_velocity[i * res_w + j] - normal_vel)) /
+                            mass;
+                    }
+                    vert_pos[i * res_w + j] = c_point + plane.normal * 0.01f;
                 }
             }
         }

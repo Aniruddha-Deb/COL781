@@ -5,6 +5,7 @@
 #include <set>
 #include <functional>
 #include "sphere.hpp"
+#include "plane.hpp"
 
 class Cloth
 {
@@ -20,6 +21,7 @@ class Cloth
     std::vector<glm::vec3> vert_velocity;
     std::vector<glm::ivec3> faces;
     std::vector<std::reference_wrapper<Sphere>> spheres;
+    std::vector<std::reference_wrapper<Plane>> planes;
     std::set<int> fixed;
     Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w, int _res_h, float _k_struct,
           float _k_shear, float _k_bend, float _mass, float _time);

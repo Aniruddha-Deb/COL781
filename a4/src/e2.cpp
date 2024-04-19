@@ -9,12 +9,6 @@ using namespace glm;
 GL::Rasterizer r;
 GL::ShaderProgram program;
 
-const int nv = 4;
-const int nt = 2;
-vec3 vertices[nv];
-vec3 normals[nv];
-ivec3 triangles[nt];
-
 GL::Object object;
 GL::AttribBuf vertexBuf, normalBuf;
 

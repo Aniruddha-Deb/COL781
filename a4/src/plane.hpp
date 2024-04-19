@@ -3,18 +3,15 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-class Sphere
+class Plane
 {
   public:
     glm::vec3 center;
-    float radius;
+    glm::vec3 normal;
     float time;
     float eps;
     float mu;
-    glm::vec3 velocity;
-    glm::vec3 ang_velocity;
-    Sphere(glm::vec3 _center, float _radius, glm::vec3 _velocity, glm::vec3 _ang_velocity, float _eps, float _mu,
-           float _time);
+    Plane(glm::vec3 _center, glm::vec3 _normal, float _eps, float _mu, float _time);
     std::vector<glm::vec3> vert_pos;
     std::vector<glm::vec3> vert_normals;
     std::vector<glm::ivec3> faces;

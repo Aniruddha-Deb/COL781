@@ -8,7 +8,7 @@ find_package(glm REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
 
-add_library(col781 src/hw.cpp src/camera.cpp src/mesh.cpp src/bone.cpp src/cloth.cpp src/sphere.cpp src/timeline.cpp deps/src/gl.c)
+add_library(col781 src/hw.cpp src/camera.cpp src/mesh.cpp src/bone.cpp src/cloth.cpp src/sphere.cpp src/plane.cpp src/timeline.cpp deps/src/gl.c)
 target_include_directories(col781 PUBLIC /opt/homebrew/include)
 target_include_directories(col781 PUBLIC deps/include)
 target_link_libraries(col781 glm::glm OpenGL::GL SDL2::SDL2)

@@ -3,6 +3,8 @@
 #include <iostream>
 #include "sphere.hpp"
 
+constexpr float THICKNESS = 0.03f;
+
 Sphere::Sphere(glm::vec3 _center, float _radius, glm::vec3 _velocity, glm::vec3 _ang_velocity, float _eps, float _mu,
                float _time)
     : center{_center}, radius{_radius}, velocity{_velocity}, ang_velocity{_ang_velocity}, eps{_eps}, mu{_mu},
@@ -13,22 +15,22 @@ Sphere::Sphere(glm::vec3 _center, float _radius, glm::vec3 _velocity, glm::vec3 
     float latitude_dist = M_PI / n;
     float longitude_dist = 2 * M_PI / m;
 
-    vert_pos.push_back(center + radius * glm::vec3(0.0, 1.0, 0.0));
-    vert_normals.push_back((vert_pos.back() - center) / radius);
+    vert_pos.push_back(center + (radius - THICKNESS) * glm::vec3(0.0, 1.0, 0.0));
+    vert_normals.push_back((vert_pos.back() - center) / (radius - THICKNESS));
     for (int i = 1; i < n; i++)
     {
         float curr_latitude = i * latitude_dist;
         for (int j = 0; j < m; j++)
         {
             float curr_longitude = j * longitude_dist;
-            vert_pos.push_back(center + radius * glm::vec3(cosf(curr_longitude) * sinf(curr_latitude),
-                                                           cosf(curr_latitude),
-                                                           sinf(curr_longitude) * sinf(curr_latitude)));
-            vert_normals.push_back((vert_pos.back() - center) / radius);
+            vert_pos.push_back(center + (radius - THICKNESS) * glm::vec3(cosf(curr_longitude) * sinf(curr_latitude),
+                                                                         cosf(curr_latitude),
+                                                                         sinf(curr_longitude) * sinf(curr_latitude)));
+            vert_normals.push_back((vert_pos.back() - center) / (radius - THICKNESS));
         }
     }
-    vert_pos.push_back(center + radius * glm::vec3(0, -1.0, 0.0));
-    vert_normals.push_back((vert_pos.back() - center) / radius);
+    vert_pos.push_back(center + (radius - THICKNESS) * glm::vec3(0, -1.0, 0.0));
+    vert_normals.push_back((vert_pos.back() - center) / (radius - THICKNESS));
 
     for (int j = 0; j < m; j++)
     {
