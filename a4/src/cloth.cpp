@@ -4,10 +4,11 @@
 #include "cloth.hpp"
 
 constexpr float GRAVITY = 3;
+constexpr bool SELF_COLLISION = false;
 
 Cloth::Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w, int _res_h, float _k_struct,
-             float _k_shear, float _k_bend, float _mass, float _time)
-    : res_w{_res_w}, res_h{_res_h}, k_struct{_k_struct}, k_shear{_k_shear}, k_bend{_k_bend}, damp_factor{0.05},
+             float _k_shear, float _k_bend, float _damp_factor, float _mass, float _time)
+    : res_w{_res_w}, res_h{_res_h}, k_struct{_k_struct}, k_shear{_k_shear}, k_bend{_k_bend}, damp_factor{_damp_factor},
       mass{_mass}, spheres(), time{_time}
 {
     assert(glm::distance(p1, p2) == glm::distance(p3, p4));
@@ -253,35 +254,6 @@ void Cloth::update(float t)
                 new_velocity[i * res_w + j] = glm::vec3(0.0f, 0.0f, 0.0f);
                 continue;
             }
-            // for (int row = 0; row < res_h; row++)
-            // {
-            //     for (int col = 0; col < res_w; col++)
-            //     {
-            //         // std::cout << glm::length(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]) << "\n";
-            //         if (row == i || col == j)
-            //         {
-            //             continue;
-            //         }
-            //         if (glm::length(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]) <=
-            //             -10.0f * std::min(spacing_w, spacing_h))
-            //         {
-            //             glm::vec3 rel_vel = vert_velocity[i * res_w + j] - vert_velocity[row * res_w + col];
-            //             if (glm::dot(rel_vel, vert_pos[row * res_w + col] - vert_pos[i * res_w + j]) < 0)
-            //             {
-            //                 vert_velocity[i * res_w + j] =
-            //                     rel_vel +
-            //                     glm::dot(vert_velocity[i * res_w + j],
-            //                              glm::normalize(vert_pos[row * res_w + col] - vert_pos[i * res_w + j])) *
-            //                         glm::normalize(vert_pos[row * res_w + col] - vert_pos[i * res_w + j]) +
-            //                     vert_velocity[row * res_w + col];
-            //             }
-            //             vert_pos[i * res_w + j] =
-            //                 vert_pos[row * res_w + col] +
-            //                 1.0f * std::min(spacing_w, spacing_h) *
-            //                     glm::normalize(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]);
-            //         }
-            //     }
-            // }
             for (const auto& sphere_rw : spheres)
             {
                 Sphere& sphere = sphere_rw.get();
@@ -330,6 +302,36 @@ void Cloth::update(float t)
                             mass;
                     }
                     vert_pos[i * res_w + j] = c_point + plane.normal * 0.01f;
+                }
+            }
+            for (int row = 0; row < res_h; row++)
+            {
+                for (int col = 0; col < res_w; col++)
+                {
+                    // std::cout << glm::length(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]) << "\n";
+                    if ((row == i && col == j) || !SELF_COLLISION)
+                    {
+                        continue;
+                    }
+                    if (glm::length(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]) <=
+                        0.8 * std::min(spacing_w, spacing_h))
+                    {
+                        glm::vec3 rel_vel = vert_velocity[i * res_w + j] - vert_velocity[row * res_w + col];
+                        if (glm::dot(rel_vel, vert_pos[row * res_w + col] - vert_pos[i * res_w + j]) > 0)
+                        {
+                            vert_velocity[i * res_w + j] =
+                                rel_vel +
+                                1.1f *
+                                    glm::dot(rel_vel,
+                                             glm::normalize(vert_pos[row * res_w + col] - vert_pos[i * res_w + j])) *
+                                    glm::normalize(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]) +
+                                vert_velocity[row * res_w + col];
+                        }
+                        vert_pos[i * res_w + j] =
+                            vert_pos[row * res_w + col] +
+                            1.1f * std::min(spacing_w, spacing_h) *
+                                glm::normalize(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]);
+                    }
                 }
             }
         }

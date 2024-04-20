@@ -24,7 +24,7 @@ class Cloth
     std::vector<std::reference_wrapper<Plane>> planes;
     std::set<int> fixed;
     Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w, int _res_h, float _k_struct,
-          float _k_shear, float _k_bend, float _mass, float _time);
+          float _k_shear, float _k_bend, float _damp_factor, float _mass, float _time);
 
     void update(float t);
     void calculate_normals();

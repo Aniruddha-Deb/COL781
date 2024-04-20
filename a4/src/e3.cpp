@@ -40,8 +40,10 @@ int main()
     float k_shear = 2.0f;
     float k_bend = 0.6f;
     float mass = 1e-3;
+    float damping_factor = 0.05;
     Cloth cloth(glm::vec3(-0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, 0.0f),
-                glm::vec3(-0.5f, 0.0f, 0.0f), 30, 30, k_struct, k_shear, k_bend, mass, SDL_GetTicks64() * 1e-3);
+                glm::vec3(-0.5f, 0.0f, 0.0f), 20, 20, k_struct, k_shear, k_bend, damping_factor, mass,
+                SDL_GetTicks64() * 1e-3);
     for (int i = 0; i < cloth.res_w; i++)
     {
         cloth.fix_vertex(0, i);
@@ -50,8 +52,8 @@ int main()
     normalBuf1 = r.createVertexAttribs(object1, 1, cloth.vert_normals.size(), cloth.vert_normals.data());
     r.createTriangleIndices(object1, cloth.faces.size(), cloth.faces.data());
 
-    Sphere sphere(glm::vec3(0.0, -0.9f, -4.0f), 0.3f, glm::vec3(0.0f, 0.0f, 0.3f), glm::vec3(-1.0f, -1.0f, 3.0f), 0.0f,
-                  2.0f, SDL_GetTicks64() * 1e-3);
+    Sphere sphere(glm::vec3(0.0, -0.9f, -4.0f), 0.3f, glm::vec3(0.0f, 0.0f, 0.2f), glm::vec3(-2.0f, -2.0f, 8.0f), 0.0f,
+                  5.0f, SDL_GetTicks64() * 1e-3);
     vertexBuf2 = r.createVertexAttribs(object2, 0, sphere.vert_pos.size(), sphere.vert_pos.data());
     normalBuf2 = r.createVertexAttribs(object2, 1, sphere.vert_normals.size(), sphere.vert_normals.data());
     r.createTriangleIndices(object2, sphere.faces.size(), sphere.faces.data());
