@@ -4,7 +4,7 @@
 #include "cloth.hpp"
 
 constexpr float GRAVITY = 3;
-constexpr bool SELF_COLLISION = false;
+constexpr bool SELF_COLLISION = true;
 
 Cloth::Cloth(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, int _res_w, int _res_h, float _k_struct,
              float _k_shear, float _k_bend, float _damp_factor, float _mass, float _time)
