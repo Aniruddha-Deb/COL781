@@ -304,12 +304,16 @@ void Cloth::update(float t)
                     vert_pos[i * res_w + j] = c_point + plane.normal * 0.01f;
                 }
             }
+            if (!SELF_COLLISION)
+            {
+                continue;
+            }
             for (int row = 0; row < res_h; row++)
             {
                 for (int col = 0; col < res_w; col++)
                 {
                     // std::cout << glm::length(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]) << "\n";
-                    if ((row == i && col == j) || !SELF_COLLISION)
+                    if (row == i && col == j)
                     {
                         continue;
                     }
@@ -321,7 +325,7 @@ void Cloth::update(float t)
                         {
                             vert_velocity[i * res_w + j] =
                                 rel_vel +
-                                1.1f *
+                                1.05f *
                                     glm::dot(rel_vel,
                                              glm::normalize(vert_pos[row * res_w + col] - vert_pos[i * res_w + j])) *
                                     glm::normalize(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]) +
@@ -329,7 +333,7 @@ void Cloth::update(float t)
                         }
                         vert_pos[i * res_w + j] =
                             vert_pos[row * res_w + col] +
-                            1.1f * std::min(spacing_w, spacing_h) *
+                            1.05f * std::min(spacing_w, spacing_h) *
                                 glm::normalize(vert_pos[i * res_w + j] - vert_pos[row * res_w + col]);
                     }
                 }

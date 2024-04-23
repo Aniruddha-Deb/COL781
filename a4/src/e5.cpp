@@ -22,7 +22,7 @@ CameraControl camCtl;
 
 int main()
 {
-    int width = 960, height = 720;
+    int width = 640, height = 480;
     if (!r.initialize("Animation", width, height))
     {
         return EXIT_FAILURE;
@@ -36,24 +36,24 @@ int main()
     object1 = r.createObject();
     object2 = r.createObject();
     object3 = r.createObject();
-    float k_struct = 5.0f;
-    float k_shear = 2.0f;
-    float k_bend = 0.6f;
+    float k_struct = 0.5f;
+    float k_shear = 0.1f;
+    float k_bend = 0.02f;
     float mass = 1e-3;
     float damping_factor = 0.05;
-    Cloth cloth(glm::vec3(-0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, 0.0f),
-                glm::vec3(-0.5f, 0.0f, 0.0f), 20, 20, k_struct, k_shear, k_bend, damping_factor, mass,
+    Cloth cloth(glm::vec3(-0.5f, 3.0f, -2.5f), glm::vec3(0.5f, 3.0f, -2.5f), glm::vec3(0.5f, -0.0f, -2.0f),
+                glm::vec3(-0.5f, -0.0f, -2.0f), 20, 20, k_struct, k_shear, k_bend, damping_factor, mass,
                 SDL_GetTicks64() * 1e-3);
-    for (int i = 0; i < cloth.res_w; i++)
-    {
-        cloth.fix_vertex(0, i);
-    }
+    // for (int i = 0; i < cloth.res_w; i++)
+    // {
+    //     cloth.fix_vertex(0, i);
+    // }
     vertexBuf1 = r.createVertexAttribs(object1, 0, cloth.vert_pos.size(), cloth.vert_pos.data());
     normalBuf1 = r.createVertexAttribs(object1, 1, cloth.vert_normals.size(), cloth.vert_normals.data());
     r.createTriangleIndices(object1, cloth.faces.size(), cloth.faces.data());
 
-    Sphere sphere(glm::vec3(0.0, -0.9f, -4.0f), 0.3f, glm::vec3(0.0f, 0.0f, 0.2f), glm::vec3(-2.0f, -3.0f, 5.0f), 0.5f,
-                  1.0f, SDL_GetTicks64() * 1e-3);
+    Sphere sphere(glm::vec3(0.0, -0.9f, -4.0f), 0.3f, glm::vec3(0.0f, 0.0f, 0.2f), glm::vec3(-2.0f, -2.0f, 8.0f), 0.0f,
+                  5.0f, SDL_GetTicks64() * 1e-3);
     vertexBuf2 = r.createVertexAttribs(object2, 0, sphere.vert_pos.size(), sphere.vert_pos.data());
     normalBuf2 = r.createVertexAttribs(object2, 1, sphere.vert_normals.size(), sphere.vert_normals.data());
     r.createTriangleIndices(object2, sphere.faces.size(), sphere.faces.data());
@@ -64,7 +64,7 @@ int main()
     normalBuf3 = r.createVertexAttribs(object3, 1, plane.vert_normals.size(), plane.vert_normals.data());
     r.createTriangleIndices(object3, plane.faces.size(), plane.faces.data());
 
-    cloth.spheres.push_back(sphere);
+    // cloth.spheres.push_back(sphere);
     cloth.planes.push_back(plane);
     int interpolate = 15;
     while (!r.shouldQuit())

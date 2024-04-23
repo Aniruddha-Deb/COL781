@@ -19,24 +19,38 @@ std::vector<ivec3> tris;
 
 Timeline timeline;
 
-void create_body() {
+void create_body()
+{
 
-    const float EPS = 1.f/2;
+    const float EPS = 1.f / 2;
 
-    std::shared_ptr<Mesh> torso_mesh = std::make_shared<BoxMesh>(glm::vec3(-1.f, 0.f, -.5f)*EPS, glm::vec3(1.f, 3.f, .5f)*EPS);
-    std::shared_ptr<Mesh> head_mesh = std::make_shared<BoxMesh>(glm::vec3(-1.f, 0.f, -1.f)*EPS, glm::vec3(1.f, 2.f, 1.f)*EPS);
-    std::shared_ptr<Mesh> limb_mesh = std::make_shared<BoxMesh>(glm::vec3(-.5f, -1.5f, -.5f)*EPS, glm::vec3(.5f, 0.f, .5f)*EPS);
+    std::shared_ptr<Mesh> torso_mesh =
+        std::make_shared<BoxMesh>(glm::vec3(-1.f, 0.f, -.5f) * EPS, glm::vec3(1.f, 3.f, .5f) * EPS);
+    std::shared_ptr<Mesh> head_mesh =
+        std::make_shared<BoxMesh>(glm::vec3(-1.f, 0.f, -1.f) * EPS, glm::vec3(1.f, 2.f, 1.f) * EPS);
+    std::shared_ptr<Mesh> limb_mesh =
+        std::make_shared<BoxMesh>(glm::vec3(-.5f, -1.5f, -.5f) * EPS, glm::vec3(.5f, 0.f, .5f) * EPS);
 
-    std::shared_ptr<Bone> torso_bone = std::make_shared<Bone>(nullptr, glm::vec3(0.f, 0.f, 0.f)*EPS, glm::vec3(0.f, 0.f, 0.f));
-    std::shared_ptr<Bone> head_bone = std::make_shared<Bone>(torso_bone, glm::vec3(0.f, 3.f, 0.f)*EPS, glm::vec3(1.f, 0.f, 0.f));
-    std::shared_ptr<Bone> r_upper_arm_bone = std::make_shared<Bone>(torso_bone, glm::vec3(1.5f, 3.f, 0.f)*EPS, glm::vec3(1.f, 0.f, 0.f));
-    std::shared_ptr<Bone> r_lower_arm_bone = std::make_shared<Bone>(r_upper_arm_bone, glm::vec3(0.f, -1.5f, 0.f)*EPS, glm::vec3(1.f, 0.f, 0.f));
-    std::shared_ptr<Bone> l_upper_arm_bone = std::make_shared<Bone>(torso_bone, glm::vec3(-1.5f, 3.f, 0.f)*EPS, glm::vec3(1.f, 0.f, 0.f));
-    std::shared_ptr<Bone> l_lower_arm_bone = std::make_shared<Bone>(l_upper_arm_bone, glm::vec3(0.f, -1.5f, 0.f)*EPS, glm::vec3(1.f, 0.f, 0.f));
-    std::shared_ptr<Bone> r_upper_leg_bone = std::make_shared<Bone>(torso_bone, glm::vec3(.5f, 0.f, 0.f)*EPS, glm::vec3(1.f, 0.f, 0.f));
-    std::shared_ptr<Bone> r_lower_leg_bone = std::make_shared<Bone>(r_upper_leg_bone, glm::vec3(0.f, -1.5f, 0.f)*EPS, glm::vec3(1.f, 0.f, 0.f));
-    std::shared_ptr<Bone> l_upper_leg_bone = std::make_shared<Bone>(torso_bone, glm::vec3(-.5f, 0.f, 0.f)*EPS, glm::vec3(1.f, 0.f, 0.f));
-    std::shared_ptr<Bone> l_lower_leg_bone = std::make_shared<Bone>(l_upper_leg_bone, glm::vec3(0.f, -1.5f, 0.f)*EPS, glm::vec3(1.f, 0.f, 0.f));
+    std::shared_ptr<Bone> torso_bone =
+        std::make_shared<Bone>(nullptr, glm::vec3(0.f, 0.f, 0.f) * EPS, glm::vec3(0.f, 0.f, 0.f));
+    std::shared_ptr<Bone> head_bone =
+        std::make_shared<Bone>(torso_bone, glm::vec3(0.f, 3.f, 0.f) * EPS, glm::vec3(1.f, 0.f, 0.f));
+    std::shared_ptr<Bone> r_upper_arm_bone =
+        std::make_shared<Bone>(torso_bone, glm::vec3(1.5f, 3.f, 0.f) * EPS, glm::vec3(1.f, 0.f, 0.f));
+    std::shared_ptr<Bone> r_lower_arm_bone =
+        std::make_shared<Bone>(r_upper_arm_bone, glm::vec3(0.f, -1.5f, 0.f) * EPS, glm::vec3(1.f, 0.f, 0.f));
+    std::shared_ptr<Bone> l_upper_arm_bone =
+        std::make_shared<Bone>(torso_bone, glm::vec3(-1.5f, 3.f, 0.f) * EPS, glm::vec3(1.f, 0.f, 0.f));
+    std::shared_ptr<Bone> l_lower_arm_bone =
+        std::make_shared<Bone>(l_upper_arm_bone, glm::vec3(0.f, -1.5f, 0.f) * EPS, glm::vec3(1.f, 0.f, 0.f));
+    std::shared_ptr<Bone> r_upper_leg_bone =
+        std::make_shared<Bone>(torso_bone, glm::vec3(.5f, 0.f, 0.f) * EPS, glm::vec3(1.f, 0.f, 0.f));
+    std::shared_ptr<Bone> r_lower_leg_bone =
+        std::make_shared<Bone>(r_upper_leg_bone, glm::vec3(0.f, -1.5f, 0.f) * EPS, glm::vec3(1.f, 0.f, 0.f));
+    std::shared_ptr<Bone> l_upper_leg_bone =
+        std::make_shared<Bone>(torso_bone, glm::vec3(-.5f, 0.f, 0.f) * EPS, glm::vec3(1.f, 0.f, 0.f));
+    std::shared_ptr<Bone> l_lower_leg_bone =
+        std::make_shared<Bone>(l_upper_leg_bone, glm::vec3(0.f, -1.5f, 0.f) * EPS, glm::vec3(1.f, 0.f, 0.f));
 
     timeline.model.push_back({torso_mesh, torso_bone});
     timeline.model.push_back({head_mesh, head_bone});
@@ -107,12 +121,12 @@ void updateScene(float t)
     tris.clear();
     timeline.request_frame(t, verts, tris);
     r.updateVertexAttribs(vertexBuf, verts.size(), verts.data());
-    //r.updateVertexAttribs(normalBuf, nv, normals);
+    // r.updateVertexAttribs(normalBuf, nv, normals);
 }
 
 int main()
 {
-    int width = 640, height = 480;
+    int width = 960, height = 720;
     if (!r.initialize("Animation", width, height))
     {
         return EXIT_FAILURE;

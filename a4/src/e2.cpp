@@ -16,7 +16,7 @@ CameraControl camCtl;
 
 int main()
 {
-    int width = 640, height = 480;
+    int width = 960, height = 720;
     if (!r.initialize("Animation", width, height))
     {
         return EXIT_FAILURE;
@@ -38,10 +38,12 @@ int main()
     Cloth cloth(glm::vec3(-0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -2.0f), glm::vec3(0.5f, 0.0f, -1.0f),
                 glm::vec3(-0.5f, 0.0f, -1.0f), 20, 20, k_struct, k_shear, k_bend, damping_factor, mass,
                 SDL_GetTicks64() * 1e-3);
-    for (int i = 0; i < cloth.res_w; i++)
-    {
-        cloth.fix_vertex(0, i);
-    }
+    // for (int i = 0; i < cloth.res_w; i++)
+    // {
+    //     cloth.fix_vertex(0, i);
+    // }
+    cloth.fix_vertex(0, 0);
+    cloth.fix_vertex(0, cloth.res_w - 1);
     vertexBuf = r.createVertexAttribs(object, 0, cloth.vert_pos.size(), cloth.vert_pos.data());
     normalBuf = r.createVertexAttribs(object, 1, cloth.vert_normals.size(), cloth.vert_normals.data());
     r.createTriangleIndices(object, cloth.faces.size(), cloth.faces.data());

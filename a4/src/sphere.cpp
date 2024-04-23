@@ -57,18 +57,20 @@ void Sphere::update(float t)
 {
     for (int i = 0; i < vert_pos.size(); i++)
     {
-        vert_pos[i] =
-            glm::translate(center) *
-            glm::rotate(glm::mat4(1.0f), (t - time) * glm::length(ang_velocity), glm::normalize(ang_velocity)) *
-            glm::translate(-center) * glm::vec4(vert_pos[i], 1.0f);
+        if (glm::length(ang_velocity) >= 1e-3)
+            vert_pos[i] =
+                glm::translate(center) *
+                glm::rotate(glm::mat4(1.0f), (t - time) * glm::length(ang_velocity), glm::normalize(ang_velocity)) *
+                glm::translate(-center) * glm::vec4(vert_pos[i], 1.0f);
         vert_pos[i] += velocity * (t - time);
     }
     center += velocity * (t - time);
     for (int i = 0; i < vert_normals.size(); i++)
     {
-        vert_normals[i] =
-            glm::rotate(glm::mat4(1.0f), (t - time) * glm::length(ang_velocity), glm::normalize(ang_velocity)) *
-            glm::vec4(vert_normals[i], 0.0f);
+        if (glm::length(ang_velocity) >= 1e-3)
+            vert_normals[i] =
+                glm::rotate(glm::mat4(1.0f), (t - time) * glm::length(ang_velocity), glm::normalize(ang_velocity)) *
+                glm::vec4(vert_normals[i], 0.0f);
     }
     time = t;
 }

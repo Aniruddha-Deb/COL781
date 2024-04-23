@@ -16,7 +16,7 @@ CameraControl camCtl;
 
 int main()
 {
-    int width = 640, height = 480;
+    int width = 960, height = 720;
     if (!r.initialize("Animation", width, height))
     {
         return EXIT_FAILURE;
